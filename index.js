@@ -4264,9 +4264,11 @@ auth2 = {
 				userConfirmCallback: function() {},
 				paymentFrameItem: function(object) {},
 				getGameInventoryItems: function() {}
-			};)} catch (e) {alert(e)};	
+			})} catch (e) {alert(e)};	
 					
 			console.log(my_games_api);
+			
+			my_games_api.userProfile();
 			let _player;
 
 			
