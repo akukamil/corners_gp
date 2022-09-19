@@ -4276,14 +4276,15 @@ auth2 = {
 				getGameInventoryItems: function() {}
 			})} catch (e) {alert(e)};	
 					
-			console.log(my_games_api);
-			
+						
 			//my_games_api.registerUser();
 			//my_games_api.getLoginStatus();
 			let _player = await this.get_mygames_user_data();
 			console.log(_player);
-
-			await new Promise((resolve, reject) => setTimeout(resolve, 200000));
+			
+			my_data.uid = 'MG_' + _player.uid;
+			my_data.name = _player.nick;
+			my_data.pic_url = _player.avatar;			
 			return;
 		}	
 
