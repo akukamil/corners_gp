@@ -4273,7 +4273,7 @@ auth2 = {
 			my_games_api.userProfile();
 			let _player;
 
-			
+			await new Promise((resolve, reject) => setTimeout(resolve, 200000));
 			return;
 		}	
 
