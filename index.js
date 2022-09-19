@@ -4212,7 +4212,7 @@ auth2 = {
 			my_games_api.userProfile();	  
 		});	
 		
-	}
+	},
 	
 	init : async function() {	
 	
