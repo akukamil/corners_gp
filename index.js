@@ -4265,7 +4265,7 @@ auth2 = {
 			try {await this.load_script('//store.my.games/app/19671/static/mailru.core.js')} catch (e) {alert(e)};													
 			try {my_games_api = await window.iframeApi({
 				appid: 19671,
-				getLoginStatusCallback: function(status) {console.log(status)},
+				getLoginStatusCallback: function(status) {auth2.my_games_login_status_resolve(status)},
 				userInfoCallback: function(info) {},
 				userProfileCallback: function(profile) {auth2.my_games_user_profile_resolve(profile)},
 				registerUserCallback: function(info) {console.log(info)},
