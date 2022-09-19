@@ -4379,7 +4379,7 @@ async function init_game_env(lang) {
 		
 		
 	//если это гугл плей то показываем выбор языка
-	if (window.location.href.includes('google_play') === true) {
+	if (window.location.href.includes('google_play') === true || window.location.href.includes('my_games') === true) {
 		
 		if (lang === undefined) {
 			
@@ -4391,8 +4391,6 @@ async function init_game_env(lang) {
 		lang = 1;		
 	}
 	
-	//MY_GAMES
-	if (window.location.href.includes('my_games') === true)	lang = 0;
 		
 		
 		
