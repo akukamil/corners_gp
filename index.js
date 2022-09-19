@@ -4268,6 +4268,7 @@ auth2 = {
 					
 			console.log(my_games_api);
 			
+			my_games_api.getLoginStatus();
 			my_games_api.userProfile();
 			let _player;
 
