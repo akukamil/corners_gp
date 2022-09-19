@@ -4121,6 +4121,7 @@ var stickers = {
 auth2 = {
 	
 	my_games_user_profile_resolve : {},
+	my_games_login_status_resolve : {},
 		
 	load_script : function(src) {
 	  return new Promise((resolve, reject) => {
@@ -4214,6 +4215,15 @@ auth2 = {
 		
 	},
 	
+	get_mygames_login_status : function() {
+		
+		return new Promise(function(resolve, reject){			
+			auth2.my_games_login_status_resolve = resolve;
+			my_games_api.getLoginStatus();	  
+		});	
+		
+	},
+	
 	init : async function() {	
 	
 		
@@ -4268,11 +4278,15 @@ auth2 = {
 				getGameInventoryItems: function() {}
 			})} catch (e) {alert(e)};	
 					
-						
-			my_games_api.registerUser();						
-			my_games_api.authUser();
+					
+			let res = this.get_mygames_login_status();
+			console.log(res);
+			if (res.loginStatus === 0) {
+				my_games_api.authUser();				
+				return;				
+			}
 
-			my_games_api.getLoginStatus();
+
 			let _player = await this.get_mygames_user_data();
 			console.log(_player);
 			
