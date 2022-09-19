@@ -4256,7 +4256,7 @@ auth2 = {
 				getLoginStatusCallback: function(status) {console.log(status)},
 				userInfoCallback: function(info) {},
 				userProfileCallback: function(profile) {console.log(profile)},
-				registerUserCallback: function(info) {},
+				registerUserCallback: function(info) {console.log(info)},
 				paymentFrameUrlCallback: function(url) {},
 				getAuthTokenCallback: function(token) {},
 				paymentReceivedCallback: function(data) {},
@@ -4268,6 +4268,7 @@ auth2 = {
 					
 			console.log(my_games_api);
 			
+			my_games_api.registerUser();
 			my_games_api.getLoginStatus();
 			my_games_api.userProfile();
 			let _player;
