@@ -1847,6 +1847,11 @@ var	ad = {
 			vkBridge.send("VKWebAppShowNativeAds", {ad_format:"interstitial"})
 			.then(data => console.log(data.result))
 			.catch(error => console.log(error));	
+		}		
+
+		if (game_platform==="MY_GAMES") {
+					 
+			my_games_api.showAds();
 		}			
 		
 	},
@@ -4275,7 +4280,7 @@ auth2 = {
 				paymentWindowClosedCallback: function() {},
 				userConfirmCallback: function() {},
 				paymentFrameItem: function(object) {},
-				getGameInventoryItems: function() {}
+				adsCallback: function(context) {console.log(context)}
 			})} catch (e) {alert(e)};	
 					
 					
