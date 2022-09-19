@@ -3,7 +3,7 @@ var app, game_res, game, client_id, objects={}, state="",my_role="", game_tick=0
 var min_move_amount=0, h_state=0, game_platform="", hidden_state_start = 0, room_name = 'states2';
 g_board=[];
 var players="", pending_player="",tm={}, some_process = {};
-var my_data={opp_id : ''},opp_data={};
+var my_data={opp_id : ''},opp_data={}, my_games_api = {};
 var WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 
 
@@ -4119,6 +4119,8 @@ var stickers = {
 }
 
 auth2 = {
+	
+	my_games_user_profile_resolve : {},
 		
 	load_script : function(src) {
 	  return new Promise((resolve, reject) => {
@@ -4203,6 +4205,15 @@ auth2 = {
 		
 	},
 	
+	get_mygames_user_data : function() {
+		
+		return new Promise(function(resolve, reject){			
+			auth2.my_games_user_profile_resolve = resolve;
+			my_games_api.userProfile();	  
+		});	
+		
+	}
+	
 	init : async function() {	
 	
 		//смотрим что есть в локальном хранилище
@@ -4249,13 +4260,12 @@ auth2 = {
 			
 			game_platform = 'MY_GAMES';
 			
-			let my_games_api = {};
 			try {await this.load_script('//store.my.games/app/19671/static/mailru.core.js')} catch (e) {alert(e)};													
 			try {my_games_api = await window.iframeApi({
 				appid: 19671,
 				getLoginStatusCallback: function(status) {console.log(status)},
 				userInfoCallback: function(info) {},
-				userProfileCallback: function(profile) {console.log(profile)},
+				userProfileCallback: function(profile) {auth2.my_games_user_profile_resolve(profile)},
 				registerUserCallback: function(info) {console.log(info)},
 				paymentFrameUrlCallback: function(url) {},
 				getAuthTokenCallback: function(token) {},
@@ -4268,10 +4278,10 @@ auth2 = {
 					
 			console.log(my_games_api);
 			
-			my_games_api.registerUser();
-			my_games_api.getLoginStatus();
-			my_games_api.userProfile();
-			let _player;
+			//my_games_api.registerUser();
+			//my_games_api.getLoginStatus();
+			let _player = await this.get_mygames_user_data();
+			console.log(_player);
 
 			await new Promise((resolve, reject) => setTimeout(resolve, 200000));
 			return;
