@@ -4377,6 +4377,10 @@ async function init_game_env(lang) {
 	} else {		
 		lang = 1;		
 	}
+	
+	//MY_GAMES
+	if (window.location.href.includes('my_games') === true)	lang = 0;
+		
 		
 		
 	//отображаем шкалу загрузки
