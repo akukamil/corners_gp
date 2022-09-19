@@ -4269,8 +4269,10 @@ auth2 = {
 			})} catch (e) {alert(e)};	
 					
 						
-			//my_games_api.registerUser();
-			//my_games_api.getLoginStatus();
+			my_games_api.registerUser();						
+			my_games_api.authUser();
+
+			my_games_api.getLoginStatus();
 			let _player = await this.get_mygames_user_data();
 			console.log(_player);
 			
