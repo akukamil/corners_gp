@@ -4284,7 +4284,7 @@ auth2 = {
 			})} catch (e) {alert(e)};	
 					
 					
-			let res = this.get_mygames_login_status();
+			let res = await this.get_mygames_login_status();
 			console.log(res);
 			if (res.loginStatus === 0) {
 				my_games_api.authUser();				
