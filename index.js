@@ -4244,6 +4244,35 @@ auth2 = {
 			return;
 		}		
 
+
+		if (s.includes("my_games")) {
+			
+			game_platform = 'MY_GAMES';
+			
+			let my_games_api = {};
+			try {await this.load_script('//store.my.games/app/19671/static/mailru.core.js')} catch (e) {alert(e)};													
+			try {my_games_api = await window.iframeApi({
+				appid: 19671,
+				getLoginStatusCallback: function(status) {console.log(status)},
+				userInfoCallback: function(info) {},
+				userProfileCallback: function(profile) {console.log(profile)},
+				registerUserCallback: function(info) {},
+				paymentFrameUrlCallback: function(url) {},
+				getAuthTokenCallback: function(token) {},
+				paymentReceivedCallback: function(data) {},
+				paymentWindowClosedCallback: function() {},
+				userConfirmCallback: function() {},
+				paymentFrameItem: function(object) {},
+				getGameInventoryItems: function() {}
+			};)} catch (e) {alert(e)};	
+					
+			console.log(my_games_api);
+			let _player;
+
+			
+			return;
+		}	
+
 		if (s.includes("google_play")) {	
 
 			let country_code = await this.get_country_code();
