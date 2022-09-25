@@ -4127,7 +4127,8 @@ auth2 = {
 	
 	my_games_user_profile_resolve : {},
 	my_games_login_status_resolve : {},
-		
+	ok_resolve : {},
+	
 	load_script : function(src) {
 	  return new Promise((resolve, reject) => {
 		const script = document.createElement('script')
@@ -4229,10 +4230,33 @@ auth2 = {
 		
 	},
 	
+	fapi_init : function() {
+		
+		
+		return new Promise(function(resolve, reject){
+						
+			var rParams = FAPI.Util.getRequestParameters();			
+			FAPI.init(rParams["api_server"], rParams["apiconnection"],  resolve(), reject() });			
+			
+		});
+		
+	},
+	
+	
 	init : async function() {	
 	
 		
 		let s = window.location.href;
+		
+		if (s.includes('ok.ru')) {
+			
+			game_platform = 'OK';			
+			try {await this.load_script('//api.ok.ru/js/fapi5.js')} catch (e) {alert(e)};	
+			
+			await fapi_init();			
+			
+			return;
+		}
 					
 		if (s.includes("yandex")) {
 			
