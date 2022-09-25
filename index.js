@@ -4247,14 +4247,19 @@ auth2 = {
 	
 		
 		let s = window.location.href;
-		console.log(decodeURIComponent(s));
 		
 		if (s.includes('ok.ru')) {
 			
 			game_platform = 'OK';			
 			try {await this.load_script('//api.ok.ru/js/fapi5.js')} catch (e) {alert(e)};	
 			
-			await this.fapi_init();			
+			await this.fapi_init();	
+			
+			const urlParams = new URLSearchParams(decodeURIComponent(s));
+			let get_url_str = decodeURIComponent(s);
+			my_data.uid = 'OK_'+urlParams.get('logged_user_id');
+			my_data.name = urlParams.get('user_name');
+			my_data.pic_url = urlParams.get('user_image');
 			
 			return;
 		}
