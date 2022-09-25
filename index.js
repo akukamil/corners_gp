@@ -4421,7 +4421,8 @@ async function init_game_env(lang) {
 		lang = 1;		
 	}
 	
-		
+	if (window.location.href.includes('lang=ru') === true)
+		lang = 0;	
 		
 		
 	//отображаем шкалу загрузки
