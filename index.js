@@ -4247,7 +4247,7 @@ auth2 = {
 	
 		
 		let s = window.location.href;
-		console.log(s);
+		console.log(decodeURIComponent(s));
 		
 		if (s.includes('ok.ru')) {
 			
