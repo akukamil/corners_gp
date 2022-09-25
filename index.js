@@ -4254,7 +4254,7 @@ auth2 = {
 			game_platform = 'OK';			
 			try {await this.load_script('//api.ok.ru/js/fapi5.js')} catch (e) {alert(e)};	
 			
-			await fapi_init();			
+			await this.fapi_init();			
 			
 			return;
 		}
