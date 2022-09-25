@@ -4236,7 +4236,7 @@ auth2 = {
 		return new Promise(function(resolve, reject){
 						
 			var rParams = FAPI.Util.getRequestParameters();			
-			FAPI.init(rParams["api_server"], rParams["apiconnection"],  resolve(), reject() });			
+			FAPI.init(rParams["api_server"], rParams["apiconnection"],  resolve(), reject() );			
 			
 		});
 		
@@ -4247,6 +4247,7 @@ auth2 = {
 	
 		
 		let s = window.location.href;
+		console.log(s);
 		
 		if (s.includes('ok.ru')) {
 			
