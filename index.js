@@ -4764,7 +4764,8 @@ async function load_resources() {
 	
 	await new Promise((resolve, reject)=> game_res.load(resolve))
 	
-
+	//убираем элементы загрузки
+	document.getElementById("m_progress").outerHTML = "";	
 
 	//короткое обращение к ресурсам
 	gres=game_res.resources;
