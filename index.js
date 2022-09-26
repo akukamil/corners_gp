@@ -4123,12 +4123,92 @@ var stickers = {
 
 }
 
+auth1 = {
+		
+	load_script : function(src) {
+	  return new Promise((resolve, reject) => {
+		const script = document.createElement('script')
+		script.type = 'text/javascript'
+		script.onload = resolve
+		script.onerror = reject
+		script.src = src
+		document.head.appendChild(script)
+	  })
+	},
+		
+	get_random_name : function(e_str) {
+		
+		let rnd_names = ['Gamma','Жираф','Зебра','Тигр','Ослик','Мамонт','Волк','Лиса','Мышь','Сова','Hot','Енот','Кролик','Бизон','Super','ZigZag','Magik','Alpha','Beta','Foxy','Fazer','King','Kid','Rock'];
+		let chars = '+0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+		if (e_str !== undefined) {
+			
+			let e_num1 = chars.indexOf(e_str[0]) + chars.indexOf(e_str[1]) + chars.indexOf(e_str[2]) +	chars.indexOf(e_str[3]);
+			e_num1 = Math.abs(e_num1) % (rnd_names.length - 1);					
+			let e_num2 = chars.indexOf(e_str[4]).toString()  + chars.indexOf(e_str[5]).toString()  + chars.indexOf(e_str[6]).toString() ;	
+			e_num2 = e_num2.substring(0, 3);
+			return rnd_names[e_num1] + e_num2;					
+			
+		} else {
+
+			let rnd_num = irnd(0, rnd_names.length - 1);
+			let rand_uid = irnd(0, 999999)+ 100;
+			let name_postfix = rand_uid.toString().substring(0, 3);
+			let name =	rnd_names[rnd_num] + name_postfix;				
+			return name;
+		}							
+
+	},		
+	
+	init : async function() {	
+			
+		if (game_platform === 'YANDEX') {
+			
+			
+			try {await this.load_script('https://yandex.ru/games/sdk/v2')} catch (e) {alert(e)};									
+					
+			let _player;
+			
+			try {
+				window.ysdk = await YaGames.init({});			
+				_player = await window.ysdk.getPlayer();
+			} catch (e) { alert(e)};
+			
+			my_data.name 	= _player.getName();
+			my_data.uid 	= _player.getUniqueID().replace(/\//g, "Z");
+			my_data.pic_url = _player.getPhoto('medium');						
+			my_data.name = my_data.name || this.get_random_name(my_data.uid);
+			
+			return;
+		}
+		
+		if (game_platform === 'VK') {
+			
+			game_platform = 'VK';
+			
+			try {await this.load_script('https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js')} catch (e) {alert(e)};
+			
+			let _player;
+			
+			try {
+				await vkBridge.send('VKWebAppInit');
+				_player = await vkBridge.send('VKWebAppGetUserInfo');				
+			} catch (e) {alert(e)};
+
+			
+			my_data.name 	= _player.first_name + ' ' + _player.last_name;
+			my_data.uid 	= "vk"+_player.id;
+			my_data.pic_url = _player.photo_100;
+			
+			return;
+			
+		}
+		
+	}
+	
+}
+
 auth2 = {
-	
-	my_games_user_profile_resolve : {},
-	my_games_login_status_resolve : {},
-	ok_resolve : {},
-	
+		
 	load_script : function(src) {
 	  return new Promise((resolve, reject) => {
 		const script = document.createElement('script')
@@ -4155,7 +4235,7 @@ auth2 = {
 		
 		//сохраняем этот uid в локальном хранилище
 		try {
-			localStorage.setItem('corners_uid', uid);
+			localStorage.setItem('poker_uid', uid);
 		} catch (e) {alert(e)}
 					
 		return uid;
@@ -4203,7 +4283,7 @@ auth2 = {
 		let local_uid = null;
 		
 		try {
-			local_uid = localStorage.getItem('corners_uid');
+			local_uid = localStorage.getItem('poker_uid');
 		} catch (e) {alert(e)}
 				
 		if (local_uid !== null) return local_uid;
@@ -4212,62 +4292,10 @@ auth2 = {
 		
 	},
 	
-	get_mygames_user_data : function() {
-		
-		return new Promise(function(resolve, reject){			
-			auth2.my_games_user_profile_resolve = resolve;
-			my_games_api.userProfile();	  
-		});	
-		
-	},
-	
-	get_mygames_login_status : function() {
-		
-		return new Promise(function(resolve, reject){			
-			auth2.my_games_login_status_resolve = resolve;
-			my_games_api.getLoginStatus();	  
-		});	
-		
-	},
-	
-	fapi_init : function() {
-		
-		
-		return new Promise(function(resolve, reject){
-						
-			var rParams = FAPI.Util.getRequestParameters();			
-			FAPI.init(rParams["api_server"], rParams["apiconnection"],  resolve(), reject() );			
-			
-		});
-		
-	},
-	
-	
 	init : async function() {	
-	
+				
+		if (game_platform === 'YANDEX') {			
 		
-		let s = window.location.href;
-		
-		if (s.includes('ok.ru')) {
-			
-			game_platform = 'OK';			
-			try {await this.load_script('//api.ok.ru/js/fapi5.js')} catch (e) {alert(e)};	
-			
-			await this.fapi_init();	
-			
-			const urlParams = new URLSearchParams(decodeURIComponent(s));
-			let get_url_str = decodeURIComponent(s);
-			my_data.uid = 'OK_'+urlParams.get('logged_user_id');
-			my_data.name = urlParams.get('user_name');
-			my_data.pic_url = urlParams.get('user_image');
-			
-			return;
-		}
-					
-		if (s.includes("yandex")) {
-			
-			game_platform = 'YANDEX';
-			
 			try {await this.load_script('https://yandex.ru/games/sdk/v2')} catch (e) {alert(e)};										
 					
 			let _player;
@@ -4284,80 +4312,74 @@ auth2 = {
 			if (my_data.pic_url === 'https://games-sdk.yandex.ru/games/api/sdk/v1/player/avatar/0/islands-retina-medium')
 				my_data.pic_url = 'https://avatars.dicebear.com/api/adventurer/' + my_data.uid + '.svg';
 			
-			if (my_data.name === '') {				
-				let country_code = await this.get_country_code();
-				my_data.name = this.get_random_name(my_data.uid) +  ' (' + country_code + ')';;				
-			}
+			if (my_data.name === '')
+				my_data.name = this.get_random_name(my_data.uid);
+			
+			//если английский яндекс до добавляем к имени страну
+			let country_code = await this.get_country_code();
+			my_data.name = my_data.name + ' (' + country_code + ')';			
+
 
 			
 			return;
-		}		
-
-		if (s.includes("my_games")) {
+		}
+		
+		if (game_platform === 'VK') {
 			
-			game_platform = 'MY_GAMES';
+			try {await this.load_script('https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js')} catch (e) {alert(e)};
 			
-			try {await this.load_script('//store.my.games/app/19671/static/mailru.core.js')} catch (e) {alert(e)};													
-			try {my_games_api = await window.iframeApi({
-				appid: 19671,
-				getLoginStatusCallback: function(status) {auth2.my_games_login_status_resolve(status)},
-				userInfoCallback: function(info) {},
-				userProfileCallback: function(profile) {auth2.my_games_user_profile_resolve(profile)},
-				registerUserCallback: function(info) {console.log(info)},
-				paymentFrameUrlCallback: function(url) {},
-				getAuthTokenCallback: function(token) {},
-				paymentReceivedCallback: function(data) {},
-				paymentWindowClosedCallback: function() {},
-				userConfirmCallback: function() {},
-				paymentFrameItem: function(object) {},
-				adsCallback: function(context) {console.log(context)}
-			})} catch (e) {alert(e)};	
-					
-					
-			let res = await this.get_mygames_login_status();
-			console.log(res);
-			if (res.loginStatus === 0) {
-				my_games_api.authUser();				
-				return;				
-			}
-
-
-			let _player = await this.get_mygames_user_data();
-			console.log(_player);
+			let _player;
 			
-			my_data.uid = 'MG_' + _player.uid;
-			my_data.name = _player.nick;
-			my_data.pic_url = _player.avatar;			
+			try {
+				await vkBridge.send('VKWebAppInit');
+				_player = await vkBridge.send('VKWebAppGetUserInfo');				
+			} catch (e) {alert(e)};
+
+			
+			my_data.name 	= _player.first_name + ' ' + _player.last_name;
+			my_data.uid 	= "vk"+_player.id;
+			my_data.pic_url = _player.photo_100;
+			
 			return;
-		}	
-
-		if (s.includes("google_play")) {	
+			
+		}
+		
+		if (game_platform === 'GOOGLE_PLAY') {	
 
 			let country_code = await this.get_country_code();
-			game_platform = 'GOOGLE_PLAY';	
 			my_data.uid = this.search_in_local_storage() || this.get_random_uid_for_local('GP_');
 			my_data.name = this.get_random_name(my_data.uid) + ' (' + country_code + ')';
 			my_data.pic_url = 'https://avatars.dicebear.com/api/adventurer/' + my_data.uid + '.svg';	
 			return;
 		}
 		
-		if (s.includes("192.168")) {		
+		if (game_platform === 'DEBUG') {		
 
-			game_platform = 'DEBUG';
 			my_data.name = my_data.uid = 'debug' + prompt('Отладка. Введите ID', 100);
 			my_data.pic_url = 'https://avatars.dicebear.com/api/adventurer/' + my_data.uid + '.svg';		
 			return;
 		}
 		
+		if (game_platform === 'CRAZYGAMES') {
+			
+			let country_code = await this.get_country_code();
+			try {await this.load_script('https://sdk.crazygames.com/crazygames-sdk-v1.js')} catch (e) {alert(e)};			
+			my_data.uid = this.search_in_local_storage() || this.get_random_uid_for_local('CG_');
+			my_data.name = this.get_random_name(my_data.uid) + ' (' + country_code + ')';
+			my_data.pic_url = 'https://avatars.dicebear.com/api/adventurer/' + my_data.uid + '.svg';	
+			let crazysdk = window.CrazyGames.CrazySDK.getInstance();
+			crazysdk.init();			
+			return;
+		}
 		
-		//если не нашли платформу
-		alert('Неизвестная платформа. Кто Вы?')
-		game_platform = 'UNKNOWN';
-		my_data.uid = this.search_in_local_storage() || this.get_random_uid_for_local('LS_');
-		my_data.name = this.get_random_name(my_data.uid);
-		my_data.pic_url = 'https://avatars.dicebear.com/api/adventurer/' + my_data.uid + '.svg';	
-
-
+		if (game_platform === 'UNKNOWN') {
+			
+			//если не нашли платформу
+			alert('Неизвестная платформа. Кто Вы?')
+			my_data.uid = this.search_in_local_storage() || this.get_random_uid_for_local('LS_');
+			my_data.name = this.get_random_name(my_data.uid);
+			my_data.pic_url = 'https://avatars.dicebear.com/api/adventurer/' + my_data.uid + '.svg';	
+		}
 	}
 	
 }
@@ -4405,38 +4427,90 @@ function vis_change() {
 		
 }
 
-async function init_game_env(lang) {
-		
-		
-	//если это гугл плей то показываем выбор языка
-	if (window.location.href.includes('google_play') === true || window.location.href.includes('my_games') === true) {
-		
-		if (lang === undefined) {
-			
-			document.body.innerHTML='<style>html,body {margin: 0;padding: 0;height: 100%;}body {display: flex;align-items: center;justify-content: center;background-color: rgba(24,24,64,1);flex-direction: column}.two_buttons_area {  width: 70%;  height: 50%;  margin: 20px 20px 0px 20px;  display: flex;  flex-direction: row;}.button {margin: 5px 5px 5px 5px;width: 50%;height: 100%;color:white;display: block;background-color: rgba(44,55,100,1);font-size: 10vw;padding: 0px;}  #m_progress {  background: rgba(11,255,255,0.1);  justify-content: flex-start;  border-radius: 100px;  align-items: center;  position: relative;  padding: 0 5px;  display: none;  height: 50px;  width: 70%;}#m_bar {  box-shadow: 0 10px 40px -10px #fff;  border-radius: 100px;  background: #fff;  height: 70%;  width: 0%;}</style><div id ="two_buttons" class="two_buttons_area"><button class="button" id ="but_ref1" onclick="init_game_env(0)">RUS</button><button class="button" id ="but_ref2"  onclick="init_game_env(1)">ENG</button></div><div id="m_progress">  <div id="m_bar"></div></div>';
-			return;			
-		}
+language_dialog = {
+	
+	p_resolve : {},
+	
+	show : function() {
+				
+		return new Promise(function(resolve, reject){
 
-	} else {		
-		lang = 1;		
+
+			document.body.innerHTML='<style>		html,		body {		margin: 0;		padding: 0;		height: 100%;	}		body {		display: flex;		align-items: center;		justify-content: center;		background-color: rgba(24,24,64,1);		flex-direction: column	}		.two_buttons_area {	  width: 70%;	  height: 50%;	  margin: 20px 20px 0px 20px;	  display: flex;	  flex-direction: row;	}		.button {		margin: 5px 5px 5px 5px;		width: 50%;		height: 100%;		color:white;		display: block;		background-color: rgba(44,55,100,1);		font-size: 10vw;		padding: 0px;	}  	#m_progress {	  background: rgba(11,255,255,0.1);	  justify-content: flex-start;	  border-radius: 100px;	  align-items: center;	  position: relative;	  padding: 0 5px;	  display: none;	  height: 50px;	  width: 70%;	}	#m_bar {	  box-shadow: 0 10px 40px -10px #fff;	  border-radius: 100px;	  background: #fff;	  height: 70%;	  width: 0%;	}	</style><div id ="two_buttons" class="two_buttons_area">	<button class="button" id ="but_ref1" onclick="language_dialog.p_resolve(0)">RUS</button>	<button class="button" id ="but_ref2"  onclick="language_dialog.p_resolve(1)">ENG</button></div><div id="m_progress">  <div id="m_bar"></div></div>';
+			
+			language_dialog.p_resolve = resolve;	
+						
+		})
+		
 	}
 	
-	if (window.location.href.includes('lang=ru') === true)
-		lang = 0;	
+}
+
+async function define_platform_and_language() {
+	
+	let s = window.location.href;
+	
+	if (s.includes('yandex')) {
 		
+		game_platform = 'YANDEX';
 		
+		if (s.match(/yandex\.ru|yandex\.by|yandex\.kg|yandex\.kz|yandex\.tj|yandex\.ua|yandex\.uz/))
+			LANG = 0;
+		else 
+			LANG = 1;		
+		return;
+	}
+	
+	if (s.includes('vk.com')) {
+		game_platform = 'VK';	
+		LANG = 0;	
+		return;
+	}
+	
+	if (s.includes('google_play')) {
+			
+		game_platform = 'GOOGLE_PLAY';	
+		LANG = await language_dialog.show();
+		return;
+	}	
+
+	if (s.includes('google_play')) {
+			
+		game_platform = 'GOOGLE_PLAY';	
+		LANG = await language_dialog.show();
+		return;	
+	}	
+	
+	if (s.includes('192.168')) {
+			
+		game_platform = 'DEBUG';	
+		LANG = await language_dialog.show();
+		return;	
+	}	
+	
+	game_platform = 'UNKNOWN';	
+	LANG = await language_dialog.show();
+	
+	
+
+}
+
+async function init_game_env(lang) {
+				
+	
+	await define_platform_and_language();
+	console.log(game_platform, LANG);
+						
 	//отображаем шкалу загрузки
 	document.body.innerHTML='<style>html,body {margin: 0;padding: 0;height: 100%;	}body {display: flex;align-items: center;justify-content: center;background-color: rgba(41,41,41,1);flex-direction: column	}#m_progress {	  background: #1a1a1a;	  justify-content: flex-start;	  border-radius: 5px;	  align-items: center;	  position: relative;	  padding: 0 5px;	  display: none;	  height: 50px;	  width: 70%;	}	#m_bar {	  box-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset;	  border-radius: 5px;	  background: rgb(119, 119, 119);	  height: 70%;	  width: 0%;	}	</style></div><div id="m_progress">  <div id="m_bar"></div></div>';
-				
-	//устанаваем язык
-	LANG = lang;
-	
+			
 	await load_resources();
 	
-	//убираем элементы загрузки
-	document.getElementById("m_progress").outerHTML = "";	
+	if ((game_platform === 'YANDEX' || game_platform === 'VK') && LANG === 0)
+		await auth1.init();
+	else
+		await auth2.init();
 	
-	await auth2.init();
 
 	//инициируем файербейс
 	if (firebase.apps.length===0) {
@@ -4649,8 +4723,8 @@ async function load_resources() {
 
 	document.getElementById("m_progress").style.display = 'flex';
 
-	//let git_src="https://akukamil.github.io/corners/"
-	let git_src=""
+	let git_src="https://akukamil.github.io/corners/"
+	//let git_src=""
 
 	//подпапка с ресурсами
 	let lang_pack = ['RUS','ENG'][LANG];
