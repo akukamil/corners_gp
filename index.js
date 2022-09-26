@@ -4723,7 +4723,7 @@ async function load_resources() {
 
 	document.getElementById("m_progress").style.display = 'flex';
 
-	let git_src="https://akukamil.github.io/corners/"
+	let git_src="https://akukamil.github.io/corners_gp/"
 	//let git_src=""
 
 	//подпапка с ресурсами
