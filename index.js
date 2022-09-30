@@ -4535,7 +4535,7 @@ async function define_platform_and_language() {
 	if (s.includes('my_games')) {
 			
 		game_platform = 'MY_GAMES';	
-		LANG = await language_dialog.show();
+		LANG = 0;
 		return;	
 	}	
 	
