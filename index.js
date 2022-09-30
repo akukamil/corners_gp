@@ -4353,6 +4353,15 @@ auth2 = {
 			return;
 		}
 		
+		if (game_platform === 'MY_GAMES') {	
+
+			let country_code = await this.get_country_code();
+			my_data.uid = this.search_in_local_storage() || this.get_random_uid_for_local('MG_');
+			my_data.name = this.get_random_name(my_data.uid) + ' (' + country_code + ')';
+			my_data.pic_url = 'https://avatars.dicebear.com/api/adventurer/' + my_data.uid + '.svg';	
+			return;
+		}
+		
 		if (game_platform === 'DEBUG') {		
 
 			my_data.name = my_data.uid = 'debug' + prompt('Отладка. Введите ID', 100);
@@ -4466,7 +4475,7 @@ async function define_platform_and_language() {
 		LANG = 0;	
 		return;
 	}
-	
+			
 	if (s.includes('google_play')) {
 			
 		game_platform = 'GOOGLE_PLAY';	
@@ -4474,9 +4483,9 @@ async function define_platform_and_language() {
 		return;
 	}	
 
-	if (s.includes('google_play')) {
+	if (s.includes('my_games')) {
 			
-		game_platform = 'GOOGLE_PLAY';	
+		game_platform = 'MY_GAMES';	
 		LANG = await language_dialog.show();
 		return;	
 	}	
