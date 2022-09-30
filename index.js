@@ -4208,7 +4208,29 @@ auth1 = {
 }
 
 auth2 = {
+	
+	my_games_user_profile_resolve : {},
+	my_games_login_status_resolve : {},
+	ok_resolve : {},
+	
+	get_mygames_user_data : function() {
 		
+		return new Promise(function(resolve, reject){			
+			auth2.my_games_user_profile_resolve = resolve;
+			my_games_api.userProfile();	  
+		});	
+		
+	},
+	
+	get_mygames_login_status : function() {
+		
+		return new Promise(function(resolve, reject){			
+			auth2.my_games_login_status_resolve = resolve;
+			my_games_api.getLoginStatus();	  
+		});	
+		
+	},
+	
 	load_script : function(src) {
 	  return new Promise((resolve, reject) => {
 		const script = document.createElement('script')
@@ -4334,18 +4356,16 @@ auth2 = {
 				await vkBridge.send('VKWebAppInit');
 				_player = await vkBridge.send('VKWebAppGetUserInfo');				
 			} catch (e) {alert(e)};
-
 			
 			my_data.name 	= _player.first_name + ' ' + _player.last_name;
 			my_data.uid 	= "vk"+_player.id;
 			my_data.pic_url = _player.photo_100;
 			
-			return;
-			
+			return;			
 		}
 		
 		if (game_platform === 'GOOGLE_PLAY') {	
-
+		
 			let country_code = await this.get_country_code();
 			my_data.uid = this.search_in_local_storage() || this.get_random_uid_for_local('GP_');
 			my_data.name = this.get_random_name(my_data.uid) + ' (' + country_code + ')';
@@ -4355,11 +4375,40 @@ auth2 = {
 		
 		if (game_platform === 'MY_GAMES') {	
 
-			let country_code = await this.get_country_code();
-			my_data.uid = this.search_in_local_storage() || this.get_random_uid_for_local('MG_');
-			my_data.name = this.get_random_name(my_data.uid) + ' (' + country_code + ')';
-			my_data.pic_url = 'https://avatars.dicebear.com/api/adventurer/' + my_data.uid + '.svg';	
-			return;
+			game_platform = 'MY_GAMES';
+			
+			try {await this.load_script('//store.my.games/app/19671/static/mailru.core.js')} catch (e) {alert(e)};													
+			try {my_games_api = await window.iframeApi({
+				appid: 19671,
+				getLoginStatusCallback: function(status) {auth2.my_games_login_status_resolve(status)},
+				userInfoCallback: function(info) {},
+				userProfileCallback: function(profile) {auth2.my_games_user_profile_resolve(profile)},
+				registerUserCallback: function(info) {console.log(info)},
+				paymentFrameUrlCallback: function(url) {},
+				getAuthTokenCallback: function(token) {},
+				paymentReceivedCallback: function(data) {},
+				paymentWindowClosedCallback: function() {},
+				userConfirmCallback: function() {},
+				paymentFrameItem: function(object) {},
+				adsCallback: function(context) {console.log(context)}
+			})} catch (e) {alert(e)};	
+					
+					
+			let res = await this.get_mygames_login_status();
+			console.log(res);
+			if (res.loginStatus === 0) {
+				my_games_api.authUser();				
+				return;				
+			}
+
+
+			let _player = await this.get_mygames_user_data();
+			console.log(_player);
+			
+			my_data.uid = 'MG_' + _player.uid;
+			my_data.name = _player.nick;
+			my_data.pic_url = _player.avatar;	
+			
 		}
 		
 		if (game_platform === 'DEBUG') {		
