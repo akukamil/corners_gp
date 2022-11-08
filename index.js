@@ -4396,7 +4396,7 @@ auth2 = {
 					
 			let res = await this.get_mygames_login_status();
 			console.log(res);
-			if (res.loginStatus === 0) {
+			if (res.loginStatus < 2) {
 				my_games_api.authUser();				
 				return;				
 			}
