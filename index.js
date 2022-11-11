@@ -4412,7 +4412,7 @@ auth2 = {
 			}
 			
 			let player_data;
-			if (res.loginStatus ===1) {
+			if (res.loginStatus ===1)
 				await this.register_mygames_user();	
 				
 			player_data = await this.get_mygames_user_data();			
