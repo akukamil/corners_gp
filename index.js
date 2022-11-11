@@ -4211,6 +4211,7 @@ auth2 = {
 	
 	my_games_user_profile_resolve : {},
 	my_games_login_status_resolve : {},
+	my_games_register_user_resolve : {},
 	ok_resolve : {},
 	
 	get_mygames_user_data : function() {
@@ -4227,6 +4228,15 @@ auth2 = {
 		return new Promise(function(resolve, reject){			
 			auth2.my_games_login_status_resolve = resolve;
 			my_games_api.getLoginStatus();	  
+		});	
+		
+	},
+	
+	register_mygames_user : function() {
+		
+		return new Promise(function(resolve, reject){			
+			auth2.my_games_register_user_resolve = resolve;
+			my_games_api.registerUser();	  
 		});	
 		
 	},
@@ -4383,7 +4393,7 @@ auth2 = {
 				getLoginStatusCallback: function(status) {auth2.my_games_login_status_resolve(status)},
 				userInfoCallback: function(info) {},
 				userProfileCallback: function(profile) {auth2.my_games_user_profile_resolve(profile)},
-				registerUserCallback: function(info) {console.log(info)},
+				registerUserCallback: function(info) {auth2.my_games_register_user_resolve(info)},
 				paymentFrameUrlCallback: function(url) {},
 				getAuthTokenCallback: function(token) {},
 				paymentReceivedCallback: function(data) {},
@@ -4396,18 +4406,23 @@ auth2 = {
 					
 			let res = await this.get_mygames_login_status();
 			console.log(res);
-			if (res.loginStatus < 2) {
+			if (res.loginStatus ===0) {
 				my_games_api.authUser();				
 				return;				
 			}
-
-
-			let _player = await this.get_mygames_user_data();
-			console.log(_player);
 			
-			my_data.uid = 'MG_' + _player.uid;
-			my_data.name = _player.nick;
-			my_data.pic_url = _player.avatar;	
+			let player_data;
+			if (res.loginStatus ===1) {
+				player_data = await my_games_api.register_mygames_user();			
+			} else {
+				player_data = await this.get_mygames_user_data();			
+			}
+	
+			console.log(player_data);
+			
+			my_data.uid = 'MG_' + player_data.uid;
+			my_data.name = player_data.nick;
+			my_data.pic_url = player_data.avatar;	
 			
 		}
 		
