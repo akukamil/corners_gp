@@ -4413,10 +4413,10 @@ auth2 = {
 			
 			let player_data;
 			if (res.loginStatus ===1) {
-				player_data = await this.register_mygames_user();			
-			} else {
-				player_data = await this.get_mygames_user_data();			
-			}
+				await this.register_mygames_user();	
+				
+			player_data = await this.get_mygames_user_data();			
+
 	
 			console.log(player_data);
 			
