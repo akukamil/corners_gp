@@ -1851,7 +1851,7 @@ var	ad = {
 
 		if (game_platform==="MY_GAMES") {
 					 
-			my_games_api.showAds();
+			my_games_api.showAds({interstitial:true});
 		}			
 		
 	},
@@ -2381,7 +2381,6 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 					let v=this.bad_1[cy][cx];
 					bad_val_1[0]+=v;
 				}
-
 			}
 		}
 
