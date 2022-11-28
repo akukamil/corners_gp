@@ -4581,8 +4581,13 @@ function set_state(params) {
 
 function vis_change() {
 
-		if (document.hidden === true)
-			hidden_state_start = Date.now();
+		if (document.hidden === true) {
+			hidden_state_start = Date.now();			
+			sound.on=0;
+		} else {
+			sound.on=1;	
+		}
+
 		
 		set_state({hidden : document.hidden});
 		
