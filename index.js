@@ -1854,6 +1854,13 @@ var	ad = {
 			my_games_api.showAds({interstitial:true});
 		}			
 		
+		if (game_platform==='GOOGLE_PLAY') {
+			if (typeof Android !== 'undefined') {
+				Android.showAdFromJs();
+			}			
+		}
+		
+		
 	},
 	
 	show2 : async function() {
@@ -4731,7 +4738,8 @@ async function init_game_env(lang) {
 		room_name= 'states2';					
 	if (my_data.rating > rooms_ranges[2] && my_data.rating <= rooms_ranges[3])
 		room_name= 'states3';			
-
+	//room_name= 'states4';	
+	
 	//устанавливаем рейтинг в попап
 	objects.id_rating.text=objects.my_card_rating.text=my_data.rating;
 
