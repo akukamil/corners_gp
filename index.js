@@ -239,7 +239,7 @@ class chat_record_class extends PIXI.Container {
 		
 		this.msg.text=msg;
 		
-		if (msg.length<30) {
+		if (msg.length<25) {
 			this.msg_bcg.texture = gres.msg_bcg_short.texture;			
 			this.msg_tm.x=310;
 		}
