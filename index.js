@@ -1695,7 +1695,7 @@ feedback = {
 	
 	show : function(uid) {
 		
-		this.set_keyboard_layout('EN');
+		this.set_keyboard_layout(['RU','EN'][LANG]);
 				
 		this.uid = uid;
 		objects.feedback_msg.text ='';
