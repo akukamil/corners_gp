@@ -1743,7 +1743,7 @@ feedback = {
 	response_message:function(s) {
 
 		
-		objects.feedback_msg.text = s.name.text+', ';	
+		objects.feedback_msg.text = s.name.text.split(' ')[0]+', ';	
 		objects.feedback_control.text = `${objects.feedback_msg.text.length}/${feedback.MAX_SYMBOLS}`		
 		
 	},
