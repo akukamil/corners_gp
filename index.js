@@ -3079,9 +3079,9 @@ var chat = {
 		}
 
 		if (my_data.rating<1430)
-			object.chat_enter_button.visible=false
+			objects.chat_enter_button.visible=false
 		else
-			object.chat_enter_button.visible=true
+			objects.chat_enter_button.visible=true
 		
 		objects.chat_cont.visible = true;
 		//подписываемся на чат
