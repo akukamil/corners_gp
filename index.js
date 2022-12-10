@@ -149,16 +149,21 @@ class chat_record_class extends PIXI.Container {
 		this.msg_bcg.x=90;
 		//this.msg_bcg.tint=Math.random() * 0xffffff;
 		
-		this.avatar = new PIXI.Sprite(PIXI.Texture.WHITE);
-		this.avatar.width = this.avatar.height = 40;
-		this.avatar.x=65;
-		this.avatar.y=5;
-		this.avatar.anchor.set(0.5,0)
-		
+
 		this.name = new PIXI.BitmapText('Имя Фамил', {fontName: 'mfont',fontSize: 15});
 		this.name.anchor.set(0.5,0.5);
 		this.name.x=65;
 		this.name.y=55;
+		
+		
+		this.avatar = new PIXI.Sprite(PIXI.Texture.WHITE);
+		this.avatar.width = this.avatar.height = 40;
+		this.avatar.x=65;
+		this.avatar.y=5;
+		this.avatar.interactive=true;
+		this.avatar.pointerdown=feedback.response_message.bind(this,this);
+		this.avatar.anchor.set(0.5,0)
+				
 		
 		this.msg = new PIXI.BitmapText('Имя Фамил', {fontName: 'mfont',fontSize: 20,align: 'left'}); 
 		this.msg.x=140;
@@ -167,10 +172,11 @@ class chat_record_class extends PIXI.Container {
 		this.msg.anchor.set(0,0.5);
 		this.msg.tint = 0x333333;
 		
-		this.msg_tm = new PIXI.BitmapText('28.11.22 12:31', {fontName: 'mfont',fontSize: 14,align: 'left'}); 
-		this.msg_tm.y=52;
+		this.msg_tm = new PIXI.BitmapText('28.11.22 12:31', {fontName: 'mfont',fontSize: 14}); 
+		this.msg_tm.y=57;
 		this.msg_tm.tint=0x000000;
 		this.msg_tm.alpha=0.5;
+		this.msg_tm.anchor.set(1,0.5);
 		
 		this.visible = false;
 		this.addChild(this.msg_bcg,this.avatar, this.name, this.msg,this.msg_tm);
@@ -222,7 +228,7 @@ class chat_record_class extends PIXI.Container {
 		
 	}
 	
-	async set(uid, name, msg, tm, msg_id) {
+	async set(uid, name, msg, tm, msg_id, rating) {
 						
 		//получаем pic_url из фб
 		this.avatar.texture=PIXI.Texture.WHITE;
@@ -241,15 +247,14 @@ class chat_record_class extends PIXI.Container {
 		
 		if (msg.length<25) {
 			this.msg_bcg.texture = gres.msg_bcg_short.texture;			
-			this.msg_tm.x=310;
+			this.msg_tm.x=400;
 		}
 
 		else {
 			
 			this.msg_bcg.texture = gres.msg_bcg.texture;	
-			this.msg_tm.x=535;
+			this.msg_tm.x=630;
 		}
-
 
 		
 		this.visible = true;
@@ -1693,7 +1698,12 @@ feedback = {
 	MAX_SYMBOLS : 50,
 	uid:0,
 	
-	show : function(uid) {
+	show : function(uid,max_symbols) {
+		
+		if (max_symbols)
+			this.MAX_SYMBOLS=max_symbols
+		else
+			this.MAX_SYMBOLS=50
 		
 		this.set_keyboard_layout(['RU','EN'][LANG]);
 				
@@ -1727,6 +1737,14 @@ feedback = {
 	close : function() {
 			
 		anim2.add(objects.feedback_cont,{y:[objects.feedback_cont.y,450]}, false, 0.4,'easeInBack');		
+		
+	},
+	
+	response_message:function(s) {
+
+		
+		objects.feedback_msg.text = s.name.text+', ';	
+		objects.feedback_control.text = `${objects.feedback_msg.text.length}/${feedback.MAX_SYMBOLS}`		
 		
 	},
 	
@@ -1826,6 +1844,7 @@ feedback = {
 			
 			let text_no_spaces = objects.feedback_msg.text.replace(/ /g,'');
 			if (text_no_spaces.match(mats)) {
+				sound.play('locked');
 				this.close();
 				this.p_resolve(['close','']);	
 				key ='';
@@ -3059,6 +3078,10 @@ var chat = {
 			rec.tm=0;
 		}
 
+		if (my_data.rating<1430)
+			object.chat_enter_button.visible=false
+		else
+			object.chat_enter_button.visible=true
 		
 		objects.chat_cont.visible = true;
 		//подписываемся на чат
@@ -3124,8 +3147,6 @@ var chat = {
 		
 	chat_updated : async function(data) {		
 		
-		console.log(data);
-		
 		var result = objects.chat_records.find(obj => {
 		  return obj.msg_id === data[4];
 		})
@@ -3148,7 +3169,6 @@ var chat = {
 		
 		await anim2.add(objects.chat_records_cont,{y:[objects.chat_records_cont.y,objects.chat_records_cont.y-this.MESSAGE_HEIGHT]}, true, 0.05,'linear');		
 		
-		console.log(objects.chat_records_cont.y)
 		//anim2.add(objects.chat_records_cont,{y:[objects.chat_records_cont.y, objects.chat_records_cont.y-35]}, true, 0.25,'easeInOutCubic');		
 		
 	},
@@ -3189,7 +3209,7 @@ var chat = {
 	open_keyboard : async function() {
 		
 		//пишем отзыв и отправляем его		
-		let fb = await feedback.show(opp_data.uid);		
+		let fb = await feedback.show(opp_data.uid,65);		
 		if (fb[0] === 'sent') {
 			
 			await firebase.database().ref('chat/'+irnd(1,50)).set([ my_data.uid, my_data.name, fb[1], firebase.database.ServerValue.TIMESTAMP, irnd(0,9999999),my_data.rating]);
@@ -4565,6 +4585,7 @@ function resize() {
 }
 
 function set_state(params) {
+
 
 	if (params.state!==undefined)
 		state=params.state;
