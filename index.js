@@ -3192,7 +3192,7 @@ var chat = {
 		let fb = await feedback.show(opp_data.uid);		
 		if (fb[0] === 'sent') {
 			
-			await firebase.database().ref('chat/'+irnd(1,50)).set([ my_data.uid, my_data.name, fb[1], firebase.database.ServerValue.TIMESTAMP, irnd(0,9999999)]);
+			await firebase.database().ref('chat/'+irnd(1,50)).set([ my_data.uid, my_data.name, fb[1], firebase.database.ServerValue.TIMESTAMP, irnd(0,9999999),my_data.rating]);
 		
 		}		
 		
