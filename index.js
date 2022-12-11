@@ -3215,7 +3215,7 @@ var chat = {
 		if (fb[0] === 'sent') {
 			
 			const msg_index=irnd(1,50);
-			await firebase.database().ref('chat/'+msg_id).set([ my_data.uid, my_data.name, fb[1], firebase.database.ServerValue.TIMESTAMP, irnd(0,9999999),my_data.rating,msg_index]);
+			await firebase.database().ref('chat/'+msg_index).set([ my_data.uid, my_data.name, fb[1], firebase.database.ServerValue.TIMESTAMP, irnd(0,9999999),my_data.rating,msg_index]);
 		
 		}		
 		
