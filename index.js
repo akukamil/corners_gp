@@ -141,6 +141,7 @@ class chat_record_class extends PIXI.Container {
 		
 		this.tm = 0;
 		this.msg_id = 0;
+		this.msg_index=0;
 		
 		
 		this.msg_bcg = new PIXI.Sprite(gres.msg_bcg.texture);
@@ -228,7 +229,7 @@ class chat_record_class extends PIXI.Container {
 		
 	}
 	
-	async set(uid, name, msg, tm, msg_id, rating) {
+	async set(uid, name, msg, tm, msg_id, rating, msg_index) {
 						
 		//получаем pic_url из фб
 		this.avatar.texture=PIXI.Texture.WHITE;
@@ -239,6 +240,7 @@ class chat_record_class extends PIXI.Container {
 		this.tm = tm;
 			
 		this.msg_id = msg_id;
+		this.msg_index=msg_index;
 		
 		if (name.length > 15) name = name.substring(0, 15);	
 		this.name.text=name ;		
@@ -3212,7 +3214,8 @@ var chat = {
 		let fb = await feedback.show(opp_data.uid,65);		
 		if (fb[0] === 'sent') {
 			
-			await firebase.database().ref('chat/'+irnd(1,50)).set([ my_data.uid, my_data.name, fb[1], firebase.database.ServerValue.TIMESTAMP, irnd(0,9999999),my_data.rating]);
+			const msg_index=irnd(1,50);
+			await firebase.database().ref('chat/'+msg_id).set([ my_data.uid, my_data.name, fb[1], firebase.database.ServerValue.TIMESTAMP, irnd(0,9999999),my_data.rating,msg_index]);
 		
 		}		
 		
