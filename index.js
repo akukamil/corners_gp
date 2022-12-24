@@ -139,8 +139,8 @@ class chat_record_class extends PIXI.Container {
 		
 		super();
 		
-		this.tm = 0;
-		this.msg_id = 0;
+		this.tm=0;
+		this.msg_id=0;
 		this.msg_index=0;
 		
 		
@@ -229,29 +229,28 @@ class chat_record_class extends PIXI.Container {
 		
 	}
 	
-	async set(uid, name, msg, tm, msg_id, rating, msg_index) {
+	async set(msg_data) {
 						
 		//получаем pic_url из фб
 		this.avatar.texture=PIXI.Texture.WHITE;
-		await this.update_avatar(uid, this.avatar);
+		await this.update_avatar(msg_data.uid, this.avatar);
 
 
 
-		this.tm = tm;
+		this.tm = msg_data.tm;
 			
-		this.msg_id = msg_id;
-		this.msg_index=msg_index;
+		this.msg_id = msg_data.msg_id;
+		this.msg_index=msg_data.msg_index;
 		
-		if (name.length > 15) name = name.substring(0, 15);	
-		this.name.text=name ;		
+		if (msg_data.name.length > 15) msg_data.name = msg_data.name.substring(0, 15);	
+		this.name.text=msg_data.name ;		
 		
-		this.msg.text=msg;
+		this.msg.text=msg_data.msg;
 		
-		if (msg.length<25) {
+		if (msg_data.msg.length<25) {
 			this.msg_bcg.texture = gres.msg_bcg_short.texture;			
 			this.msg_tm.x=400;
 		}
-
 		else {
 			
 			this.msg_bcg.texture = gres.msg_bcg.texture;	
@@ -261,7 +260,7 @@ class chat_record_class extends PIXI.Container {
 		
 		this.visible = true;
 		
-		this.msg_tm.text = new Date(tm).toLocaleString();
+		this.msg_tm.text = new Date(msg_data.tm).toLocaleString();
 		
 	}	
 	
@@ -2985,6 +2984,20 @@ var main_menu = {
 
 	},
 	
+	pref_change_nick_down: async function() {
+
+		sound.play('click');
+		const nick=await feedback.show('',15);
+		if (nick[0]==='sent'){
+			my_data.name=nick[1];
+			firebase.database().ref("players/"+my_data.uid+"/name").set(my_data.name);
+			make_text(objects.my_card_name,my_data.name,150);
+			set_state({});
+			message.add(['Ник изменен','nick has been changed'][LANG])
+		}
+
+	},
+		
 	chat_button_down : async function() {
 		
 		if (anim2.any_on()===true) {
@@ -3035,14 +3048,14 @@ var main_menu = {
 		}
 		
 		if (sound.on === 1) {
-			anim2.add(objects.pref_sound_switch,{x:[238, 202]}, true, 0.25,'linear');		
+			anim2.add(objects.pref_sound_switch,{x:[127, 91]}, true, 0.25,'linear');		
 			sound.on = 0;
 			return;
 		}
 
 		if (sound.on === 0){
 			
-			anim2.add(objects.pref_sound_switch,{x:[202, 238]}, true, 0.25,'linear');		
+			anim2.add(objects.pref_sound_switch,{x:[91, 127]}, true, 0.25,'linear');		
 			sound.on = 1;	
 			sound.play('close');			
 			return;			
@@ -3057,6 +3070,7 @@ var chat = {
 	MESSAGE_HEIGHT : 75,
 	last_record_end : 0,
 	drag : false,
+	data:[],
 	touch_y:0,
 	
 	activate : function() {
@@ -3087,8 +3101,8 @@ var chat = {
 		objects.chat_cont.visible = true;
 		//подписываемся на чат
 		//подписываемся на изменения состояний пользователей
-		firebase.database().ref('chat').once('value', snapshot => {chat.chat_load(snapshot.val());});		
-		firebase.database().ref('chat').on('child_changed', snapshot => {chat.chat_updated(snapshot.val());});
+		firebase.database().ref('chat2').orderByChild('tm').limitToLast(20).once('value', snapshot => {chat.chat_load(snapshot.val());});		
+		firebase.database().ref('chat2').on('child_changed', snapshot => {chat.chat_updated(snapshot.val());});
 	},
 	
 	down : function(e) {
@@ -3130,47 +3144,74 @@ var chat = {
 		return oldest;
 
 	},
+	
+	shuffle_array : function(array) {
+		for (let i = array.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[array[i], array[j]] = [array[j], array[i]];
+		}
+	},
+	
+	get_oldest_index : function () {
+		
+		let nums=Array.from(Array(50).keys());
+		this.suffle_array(nums);
+		loop1:for (let num of nums){
+			
+			for(let rec of objects.chat_records)
+				if (rec.visible===true && rec.msg_index===num)
+					continue loop1;
+			return num;
+		}
+		
+		let oldest = {tm:9671801786406 ,visible:true};		
+		for(let rec of objects.chat_records)
+			if (rec.visible===true && rec.tm < oldest.tm)
+				oldest = rec;	
+		return oldest.msg_index;		
+		
+	},
 		
 	chat_load : async function(data) {
 		
 		if (data === null) return;
 		
+		//превращаем в массив
 		data = Object.keys(data).map((key) => data[key]);
 		
 		//сортируем сообщения от старых к новым
-		data.sort(function(a, b) {	return a[3] - b[3];});
+		data.sort(function(a, b) {	return a.tm - b.tm;});
 			
 		//покаываем несколько последних сообщений
-		for (let c = data.length - 20; c<data.length;c++)
-			await this.chat_updated(data[c]);			
-		
+		for (let c of data)
+			await this.chat_updated(c);	
 	},	
 		
 	chat_updated : async function(data) {		
+	
+		if(data===undefined) return;
 		
+		//если это сообщение уже есть в чате
 		var result = objects.chat_records.find(obj => {
-		  return obj.msg_id === data[4];
+		  return obj.msg_id === data.msg_id;
 		})
 		
-		if (result !== undefined) {			
-			//result.tm = data[3];
+		if (result !== undefined)		
 			return;
-		};
 		
-		let rec = this.get_oldest_record();
+		let rec = objects.chat_records[data.msg_index];
 		
 		//сразу заносим айди чтобы проверять
-		rec.msg_id = data[4];
+		rec.msg_id = data.msg_id;
 		
 		rec.y = this.last_record_end;
 		
-		await rec.set(...data)		
+		await rec.set(data)		
 		
 		this.last_record_end += this.MESSAGE_HEIGHT;		
 		
-		await anim2.add(objects.chat_records_cont,{y:[objects.chat_records_cont.y,objects.chat_records_cont.y-this.MESSAGE_HEIGHT]}, true, 0.05,'linear');		
 		
-		//anim2.add(objects.chat_records_cont,{y:[objects.chat_records_cont.y, objects.chat_records_cont.y-35]}, true, 0.25,'easeInOutCubic');		
+		await anim2.add(objects.chat_records_cont,{y:[objects.chat_records_cont.y,objects.chat_records_cont.y-this.MESSAGE_HEIGHT]}, true, 0.05,'linear');		
 		
 	},
 	
@@ -3178,10 +3219,10 @@ var chat = {
 		
 		objects.chat_records_cont.y-=delta*this.MESSAGE_HEIGHT;	
 		const chat_bottom = this.last_record_end;
-		const chat_top = this.last_record_end - 20*this.MESSAGE_HEIGHT;
+		const chat_top = this.last_record_end - objects.chat_records.filter(obj => obj.visible === true).length*this.MESSAGE_HEIGHT;
 		
 		if (objects.chat_records_cont.y+chat_bottom<450)
-			objects.chat_records_cont.y =  450-chat_bottom;
+			objects.chat_records_cont.y = 450-chat_bottom;
 		
 		if (objects.chat_records_cont.y+chat_top>0)
 			objects.chat_records_cont.y=-chat_top;
@@ -3203,21 +3244,16 @@ var chat = {
 		this.close();
 		main_menu.activate();
 		
-
-		
 	},
 	
 	open_keyboard : async function() {
 		
 		//пишем отзыв и отправляем его		
 		let fb = await feedback.show(opp_data.uid,65);		
-		if (fb[0] === 'sent') {
-			
-			const msg_index=irnd(1,50);
-			await firebase.database().ref('chat/'+msg_index).set([ my_data.uid, my_data.name, fb[1], firebase.database.ServerValue.TIMESTAMP, irnd(0,9999999),my_data.rating,msg_index]);
-		
+		if (fb[0] === 'sent') {			
+			const msg_index=this.get_oldest_index();
+			await firebase.database().ref('chat2/'+msg_index).set({uid:my_data.uid,name:my_data.name,msg:fb[1], tm:firebase.database.ServerValue.TIMESTAMP, msg_id:irnd(0,9999999),rating:my_data.rating,msg_index:msg_index});
 		}		
-		
 	}
 
 	
@@ -4732,6 +4768,7 @@ async function init_game_env(lang) {
 	app = new PIXI.Application({width:M_WIDTH, height:M_HEIGHT,antialias:false,backgroundColor : 0x404040});
 	document.body.appendChild(app.view);
 
+
 	//события изменения окна
 	resize();
 	window.addEventListener("resize", resize);
@@ -4816,10 +4853,6 @@ async function init_game_env(lang) {
 	//устанавливаем фотки в попап и другие карточки
 	objects.id_avatar.texture=objects.my_avatar.texture=loader.resources.my_avatar.texture;
 
-	//устанавлием аватарки
-	make_text(objects.id_name,my_data.name,150);
-	make_text(objects.my_card_name,my_data.name,150);
-
 	//это разные события
 	document.addEventListener("visibilitychange", vis_change);
 	window.addEventListener("wheel", (event) => {	
@@ -4833,14 +4866,19 @@ async function init_game_env(lang) {
 	let _other_data = await firebase.database().ref("players/" + my_data.uid).once('value');
 	let other_data = _other_data.val();
 
-	other_data===null ?
-		my_data.rating=1400 :
-		my_data.rating = other_data.rating || 1400;
+	//сервисное сообщение
+	if(other_data && other_data.s_msg){
+		message.add(other_data.s_msg);
+		firebase.database().ref("players/"+my_data.uid+"/s_msg").remove();
+	}
 
-	other_data===null ?
-		my_data.games = 0 :
-		my_data.games = other_data.games || 0;
-				
+	my_data.rating = (other_data && other_data.rating) || 1400;
+	my_data.games = (other_data && other_data.games) || 0;
+	my_data.name = (other_data && other_data.name) || my_data.name;
+		
+	//устанавлием имена
+	make_text(objects.id_name,my_data.name,150);
+	make_text(objects.my_card_name,my_data.name,150);
 		
 	//номер комнаты
 	let rooms_ranges = [0,1430,1600,99999]
@@ -4850,7 +4888,9 @@ async function init_game_env(lang) {
 		room_name= 'states2';					
 	if (my_data.rating > rooms_ranges[2] && my_data.rating <= rooms_ranges[3])
 		room_name= 'states3';			
+	
 	//room_name= 'states4';	
+	//firebase.database().ref('chat2').remove();
 	
 	//устанавливаем рейтинг в попап
 	objects.id_rating.text=objects.my_card_rating.text=my_data.rating;
@@ -4867,7 +4907,7 @@ async function init_game_env(lang) {
 
 	//обновляем данные в файербейс так как могли поменяться имя или фото
 	firebase.database().ref("players/"+my_data.uid+"/name").set(my_data.name);
-	firebase.database().ref("players/"+my_data.uid+"/pic_url").set( my_data.pic_url);
+	firebase.database().ref("players/"+my_data.uid+"/pic_url").set(my_data.pic_url);
 	firebase.database().ref("players/"+my_data.uid+"/rating").set(my_data.rating);
 	firebase.database().ref("players/"+my_data.uid+"/games").set(my_data.games);
 	firebase.database().ref("players/"+my_data.uid+"/tm").set(firebase.database.ServerValue.TIMESTAMP);
