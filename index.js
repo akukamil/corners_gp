@@ -3155,7 +3155,7 @@ var chat = {
 	get_oldest_index : function () {
 		
 		let nums=Array.from(Array(50).keys());
-		this.suffle_array(nums);
+		this.shuffle_array(nums);
 		loop1:for (let num of nums){
 			
 			for(let rec of objects.chat_records)
