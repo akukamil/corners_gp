@@ -997,6 +997,7 @@ var online_game = {
 	opp_conf_play : 0,
 	move_time_left : 0,
 	timer_id : 0,
+	prv_tick_time:0,
 	
 	calc_new_rating : function (old_rating, game_result) {
 		
@@ -1021,6 +1022,7 @@ var online_game = {
 		this.opp_conf_play = 0;
 		
 		//счетчик времени
+		this.prv_tick_time=Date.now();
 		this.move_time_left = 15;
 		this.timer_id = setTimeout(function(){online_game.timer_tick()}, 1000);
 		objects.timer_text.tint=0xffffff;
@@ -1051,6 +1053,13 @@ var online_game = {
 	timer_tick : function () {
 		
 		this.move_time_left--;
+		
+		if ((Date.now()-this.prv_tick_time)>5000){
+			game.stop('timer_error');			
+			return;
+		}			
+		this.prv_tick_time=Date.now();
+		
 		
 		if (this.move_time_left < 0 && my_turn === 1)	{
 			
@@ -1089,7 +1098,6 @@ var online_game = {
 
 		//обновляем текст на экране
 		objects.timer_text.text="0:"+this.move_time_left;
-		
 		//следующая секунда
 		this.timer_id = setTimeout(function(){online_game.timer_tick()}, 1000);		
 	},
@@ -1127,6 +1135,7 @@ var online_game = {
 			['my_timeout',LOSE, ['Вы проиграли!\nУ вас закончилось время','You lose!\nOut of time!']],
 			['opp_timeout',WIN , ['Вы выиграли!\nУ соперника закончилось время','You win!\nOpponent out of time']],
 			['my_giveup' ,LOSE, ['Вы сдались!','You have given up!']],
+			['timer_error' ,LOSE, ['Ошибка таймера!','Timer error!']],
 			['opp_giveup' ,WIN , ['Вы выиграли!\nСоперник сдался','You win!\nYour opponent has given up!']],
 			['both_finished',DRAW, ['Ничья','Draw!']],
 			['my_finished_first',WIN , ['Вы выиграли!\nБыстрее соперника перевели свои шашки.','You win!\nYou finished faster than your opponent.']],
@@ -1154,8 +1163,7 @@ var online_game = {
 		
 		//обновляем даные на карточке
 		objects.my_card_rating.text=my_data.rating;
-	
-	
+		
 		//если диалоги еще открыты
 		if (objects.stickers_cont.visible===true)
 			stickers.hide_panel();	
@@ -1172,8 +1180,7 @@ var online_game = {
 			sound.play('lose');
 		else
 			sound.play('win');
-		
-		
+
 
 		//если игра результативна то записываем дополнительные данные
 		if (result_number === DRAW || result_number === LOSE || result_number === WIN) {
