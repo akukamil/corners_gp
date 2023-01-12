@@ -1191,9 +1191,8 @@ var online_game = {
 
 			//записываем результат в базу данных
 			let duration = ~~((Date.now() - this.start_time)*0.001);
-			firebase.database().ref("finishes/"+game_id).set({'player1':objects.my_card_name.text,'player2':objects.opp_card_name.text, 'res':result_number,'fin_type':result_str,'duration':duration,'rating': [old_rating,my_data.rating],'client_id':client_id, 'ts':firebase.database.ServerValue.TIMESTAMP});
+			firebase.database().ref("finishes/"+game_id).set({player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration:duration,rating: [old_rating,my_data.rating],client_id:client_id, ts:firebase.database.ServerValue.TIMESTAMP});
 			
-
 
 			
 			let check_players =[
@@ -1220,7 +1219,7 @@ var online_game = {
 			
 			//контрольные концовки
 			if (check_players.includes(my_data.uid) || check_players.includes(opp_data.uid)) {
-			firebase.database().ref("finishes2").push({'player1':objects.my_card_name.text,'player2':objects.opp_card_name.text, 'res':result_number,'fin_type':result_str,'duration':duration, 'rating': [old_rating,my_data.rating],'client_id':client_id, 'ts':firebase.database.ServerValue.TIMESTAMP});	
+			firebase.database().ref("finishes2").push({uid:my_data.uid,player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration:duration, rating: [old_rating,my_data.rating],client_id:client_id, ts:firebase.database.ServerValue.TIMESTAMP});	
 			}
 			
 		}
