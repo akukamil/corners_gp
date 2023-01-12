@@ -3241,7 +3241,7 @@ var chat = {
 		objects.desktop.interactive=false;
 		objects.desktop.visible=false;
 		objects.chat_cont.visible = false;
-		firebase.database().ref('chat').off();
+		firebase.database().ref('chat2').off();
 		if (objects.feedback_cont.visible === true)
 			feedback.close();
 	},
