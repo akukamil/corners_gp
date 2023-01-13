@@ -1193,8 +1193,6 @@ var online_game = {
 			let duration = ~~((Date.now() - this.start_time)*0.001);
 			firebase.database().ref("finishes/"+game_id).set({player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration:duration,rating: [old_rating,my_data.rating],client_id:client_id, ts:firebase.database.ServerValue.TIMESTAMP});
 			
-
-			
 			let check_players =[
 				'1NOs1k4jKvIIe80grKaEoIZ59PbuP0TWlBOoFHrUoh4=',
 				'Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ=',
@@ -1615,6 +1613,12 @@ var game = {
 	},
 
 	receive_move: async function(move_data) {
+		
+		
+		
+		if(my_data.uid==='vk316428029' || opp_data.uid==='vk316428029'){
+			firebase.database().ref("LENA_CASE").push({name:my_data.uid,move_data:move_data,Date.now()});
+		}
 		
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
 		if (game.state !== 'on')
