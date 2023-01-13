@@ -1617,7 +1617,7 @@ var game = {
 		
 		
 		if(my_data.uid==='vk316428029' || opp_data.uid==='vk316428029'){
-			firebase.database().ref("LENA_CASE").push({name:my_data.uid,move_data:move_data,Date.now()});
+			firebase.database().ref("LENA_CASE").push({name:my_data.uid,move_data:move_data,tm:Date.now()});
 		}
 		
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
