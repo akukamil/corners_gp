@@ -1195,6 +1195,7 @@ var online_game = {
 			
 			let check_players =[
 				'1NOs1k4jKvIIe80grKaEoIZ59PbuP0TWlBOoFHrUoh4=',
+				'OyskO7g0ipbfbuhkGw2d+JRAdsn1Zu6z5xKpZermmj0=',
 				'Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ=',
 				'HAXS4Uwl22XJybZg2gTbwaHUzHOMc7X1mLFS2Av8ayM=',
 				'p+WzDIXeh6cueGaMzwhRW5ZC4iLz1IlZjOcgnjiMFIM=',
@@ -1616,8 +1617,8 @@ var game = {
 		
 		
 		
-		if(my_data.uid==='vk316428029' || opp_data.uid==='vk316428029'){
-			firebase.database().ref("LENA_CASE").push({name:my_data.uid,move_data:move_data,tm:Date.now()});
+		if(my_data.uid==='OyskO7g0ipbfbuhkGw2d+JRAdsn1Zu6z5xKpZermmj0=' || opp_data.uid==='OyskO7g0ipbfbuhkGw2d+JRAdsn1Zu6z5xKpZermmj0='){
+			firebase.database().ref("OLYA_CASE").push({name:my_data.uid,move_data:move_data,tm:Date.now()});
 		}
 		
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
@@ -2896,6 +2897,7 @@ var req_dialog = {
 var main_menu = {
 
 	activate: async function() {
+		
 		
 		//игровой титл
 		anim2.add(objects.game_title,{y:[-100,objects.game_title.sy],alpha:[0,1]}, true, 0.75,'linear');	
