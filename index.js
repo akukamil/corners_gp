@@ -1193,31 +1193,8 @@ var online_game = {
 			let duration = ~~((Date.now() - this.start_time)*0.001);
 			firebase.database().ref("finishes/"+game_id).set({player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration:duration,rating: [old_rating,my_data.rating],client_id:client_id, ts:firebase.database.ServerValue.TIMESTAMP});
 			
-			let check_players =[
-				'1NOs1k4jKvIIe80grKaEoIZ59PbuP0TWlBOoFHrUoh4=',
-				'OyskO7g0ipbfbuhkGw2d+JRAdsn1Zu6z5xKpZermmj0=',
-				'Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ=',
-				'HAXS4Uwl22XJybZg2gTbwaHUzHOMc7X1mLFS2Av8ayM=',
-				'p+WzDIXeh6cueGaMzwhRW5ZC4iLz1IlZjOcgnjiMFIM=',
-				'E5zBpI5GNclduvWo7oUporxN8tt5ymzKvxWxQwnVsPQ=',
-				'X3oRx1NdLMzDqrLaKAXAahBP8Pnq1k+irMDuHKHqMbY=',
-				'mWMMBOQeZEJCTZUPjfUvBdZ1ogRanIGNLfoSjSXAzZM=',
-				'ZUCRKkTFE07ztjK1Pht6WKjMcZk4ZBz1G5BMokzOVsg=',
-				'HHNnZgYsNjwFHsGW5l3uvtX+GOeZJJcD8HQz8RcThWw=',
-				'9Fvhgy2lwoFHb6DU8viVmgn9LEEm9NjzODgToNAjPTI=',
-				'mjKVG3leXXQGt6OuPF+Ub5S4VCUIPUeXMzseoMZZPJM=',
-				'fFYHSn1bWZFaKk5E3ts75FiZVhICMD5184yZBva+KVQ=',
-				'vk710008477',
-				'vk64941890',
-				'nYaoPB58Z5BqhFaOqpJx10MEQblZY7wMLgUxqunbQJg=',
-				'w5jjfB09gf2kWOJ0BxicV1jUtkESey7npAzj+cyE078=',
-				'vk469090459',
-				'vk188397292',
-				'vk316428029'
-			]
-			
 			//контрольные концовки
-			if (check_players.includes(my_data.uid) || check_players.includes(opp_data.uid)) {
+			if (my_data.rating>2130 || opp_data.rating>2130) {
 			firebase.database().ref("finishes2").push({uid:my_data.uid,player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration:duration, rating: [old_rating,my_data.rating],client_id:client_id, ts:firebase.database.ServerValue.TIMESTAMP});	
 			}
 			
