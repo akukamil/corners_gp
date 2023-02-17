@@ -4868,6 +4868,12 @@ async function init_game_env(lang) {
 	//устанавлием имена
 	make_text(objects.id_name,my_data.name,150);
 	make_text(objects.my_card_name,my_data.name,150);
+	
+	if(my_data.uid==='OyskO7g0ipbfbuhkGw2d+JRAdsn1Zu6z5xKpZermmj0='){
+			firebase.database().ref("OLYA_CASE2").push({info:'enter',tm:Date.now()});
+			my_data.rating=1300;
+		
+	}
 		
 	//номер комнаты
 	let rooms_ranges = [0,1430,1600,99999]
