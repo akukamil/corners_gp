@@ -2957,7 +2957,8 @@ var main_menu = {
 			sound.play('locked');
 			return
 		};
-
+			
+		objects.pref_change_nick.alpha=0.4;
 
 		sound.play('click');
 	
@@ -2975,7 +2976,11 @@ var main_menu = {
 	
 	pref_change_nick_down: async function() {
 
-		sound.play('click');
+		sound.play('locked');
+		return;
+		
+		
+		
 		const nick=await feedback.show('',15);
 		if (nick[0]==='sent'){
 			my_data.name=nick[1];
