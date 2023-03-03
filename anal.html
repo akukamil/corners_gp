@@ -437,7 +437,7 @@ var my_table = {
 			row.style.fontSize = '20px';
 			row.style.height = '40px';
 			r.forEach((c, i) => {		
-
+		
 				let param_name = this.header[i];
 				
 				if (param_name === 'state')				{
@@ -445,7 +445,7 @@ var my_table = {
 				} else if (param_name ==='uid'){
 					var cell = row.insertCell();
 					cell.style.paddingLeft = '5px';
-					cell.textContent = c.substring(0, 15);	
+					cell.textContent = c?.substring(0, 15);	
 				} else {
 					var cell = row.insertCell();
 					cell.style.paddingLeft = '5px';
