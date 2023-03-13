@@ -2978,7 +2978,7 @@ var main_menu = {
 		if(objects.pref_cont.change_name_pressed) return;
 		objects.pref_cont.change_name_pressed=true;
 				
-		const res=ad.show2();
+		const res=await ad.show2();
 		if(res!=='ok'){
 			message.add(["Какая-то ошибка при показе рекламы","Error when showing ad"][LANG]);
 			return;
