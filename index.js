@@ -1925,15 +1925,16 @@ var	ad = {
 		
 		if (game_platform === "VK") {	
 
-			let res = '';
+			let data = '';
 			try {
-				res = await vkBridge.send("VKWebAppShowNativeAds", { ad_format: "reward" })
+				data = await vkBridge.send("VKWebAppShowNativeAds", { ad_format: "reward" })
 			}
 			catch(error) {
-				res ='err';
+				data ='err';
 			}
 			
-			return res;				
+			if (data.result) return 'ok'
+			
 			
 		}	
 		
@@ -2958,10 +2959,8 @@ var main_menu = {
 			return
 		};
 			
-		objects.pref_change_nick.alpha=0.4;
-
 		sound.play('click');
-	
+		objects.pref_cont.change_name_pressed=false;
 		anim2.add(objects.pref_cont,{y:[-200, objects.pref_cont.sy]}, true, 0.5,'easeOutBack');
 
 
@@ -2976,18 +2975,22 @@ var main_menu = {
 	
 	pref_change_nick_down: async function() {
 
-		sound.play('locked');
-		return;
-		
-		
-		
+		if(objects.pref_cont.change_name_pressed) return;
+		objects.pref_cont.change_name_pressed=true;
+				
+		const res=ad.show2();
+		if(res!=='ok'){
+			message.add(["Какая-то ошибка при показе рекламы","Error when showing ad"][LANG]);
+			return;
+		}
+					
 		const nick=await feedback.show('',15);
 		if (nick[0]==='sent'){
 			my_data.name=nick[1];
 			firebase.database().ref("players/"+my_data.uid+"/name").set(my_data.name);
 			make_text(objects.my_card_name,my_data.name,150);
 			set_state({});
-			message.add(['Ник изменен','nick has been changed'][LANG])
+			message.add(['Имя изменено','Name has been changed'][LANG])
 		}
 
 	},
