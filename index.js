@@ -1135,7 +1135,7 @@ var online_game = {
 			['my_timeout',LOSE, ['Вы проиграли!\nУ вас закончилось время','You lose!\nOut of time!']],
 			['opp_timeout',WIN , ['Вы выиграли!\nУ соперника закончилось время','You win!\nOpponent out of time']],
 			['my_giveup' ,LOSE, ['Вы сдались!','You have given up!']],
-			['timer_error' ,LOSE, ['Ошибка таймера!','Timer error!']],
+			['timer_error' ,NOSYNC, ['Ошибка таймера!','Timer error!']],
 			['opp_giveup' ,WIN , ['Вы выиграли!\nСоперник сдался','You win!\nYour opponent has given up!']],
 			['both_finished',DRAW, ['Ничья','Draw!']],
 			['my_finished_first',WIN , ['Вы выиграли!\nБыстрее соперника перевели свои шашки.','You win!\nYou finished faster than your opponent.']],
