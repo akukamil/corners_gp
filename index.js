@@ -3385,6 +3385,7 @@ var cards_menu = {
 	_opp_data : {},
 	state_tint :{},
 	uid_pic_url_cache : {},
+	room_name_num:'',
 	
 	cards_pos: [
 				[0,0],[0,90],[0,180],[0,270],
@@ -3420,6 +3421,9 @@ var cards_menu = {
 
 		//добавляем карточку ии
 		this.add_cart_ai();
+		
+		//нормальное название комнаты
+		this.room_name_num={'states':1,'states2':2,'states3':3,'states4':4,'states4':5}[room_name];
 
 		//включаем сколько игроков онлайн
 		anim2.add(objects.players_online,{y:[500,objects.players_online.sy],x:[0,objects.players_online.sx]}, true, 0.6,'linear');		
@@ -3506,7 +3510,7 @@ var cards_menu = {
 			if (players[uid].hidden===0)
 				num++
 			
-		objects.players_online.text=['Игроков онлайн: ' + num + '   ( комната: ' +room_name +' )','Players online: ' + num + '   ( room: ' +room_name +' )'][LANG];
+		objects.players_online.text=['Игроков онлайн: ','Players online: '][LANG] + num + ['     ( комната #','     ( room #'][LANG] + this.room_name_num +' )';
 		
 		
 		//считаем сколько одиночных игроков и сколько столов
