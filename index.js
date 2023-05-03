@@ -3259,6 +3259,7 @@ var chat = {
 var lb = {
 
 	cards_pos: [[370,10],[380,70],[390,130],[380,190],[360,250],[330,310],[290,370]],
+	last_update:0,
 
 	show: function() {
 
@@ -3270,9 +3271,7 @@ var lb = {
 		anim2.add(objects.lb_2_cont,{x:[-150, objects.lb_2_cont.sx]}, true, 0.5,'easeOutBack');
 		anim2.add(objects.lb_3_cont,{x:[-150, objects.lb_3_cont.sx]}, true, 0.5,'easeOutBack');
 		anim2.add(objects.lb_cards_cont,{x:[450, 0]}, true, 0.5,'easeOutCubic');
-		
-
-		
+				
 		objects.lb_cards_cont.visible=true;
 		objects.lb_back_button.visible=true;
 
@@ -3283,8 +3282,11 @@ var lb = {
 
 		}
 
+		if (Date.now()-this.last_update>120000){
+			this.update();			
+			this.last_update=Date.now();			
+		}
 
-		this.update();
 
 	},
 
