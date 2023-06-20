@@ -6,7 +6,6 @@ var players="", pending_player="",tm={}, some_process = {};
 var my_data={opp_id : ''},opp_data={}, my_games_api = {};
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 
-
 irnd = function(min,max) {	
     min = Math.ceil(min);
     max = Math.floor(max);
@@ -1053,8 +1052,8 @@ var online_game = {
 	timer_tick : function () {
 		
 		this.move_time_left--;
-		
-		if ((Date.now()-this.prv_tick_time)>5000){
+		const cur_time=Date.now();
+		if ((cur_time-this.prv_tick_time)>5000||cur_time<this.prv_tick_time){
 			game.stop('timer_error');			
 			return;
 		}			
@@ -3072,8 +3071,6 @@ var chat = {
 	
 	activate : function() {
 		
-		//firebase.database().ref('chat').remove();
-		//return;
 		
 		objects.desktop.visible=true;
 		objects.desktop.pointerdown=this.down.bind(this);
