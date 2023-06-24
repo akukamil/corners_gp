@@ -88,7 +88,7 @@ class player_mini_card_class extends PIXI.Container {
 		this.name1="";
 		this.name2="";
 
-		this.addChild(this.bcg,this.table_rating_hl,this.avatar, this.avatar1, this.avatar2,this.rating_text,this.rating_text1,this.rating_text2, this.name_text);
+		this.addChild(this.bcg,this.avatar, this.avatar1, this.avatar2,this.rating_text,this.table_rating_hl,this.rating_text1,this.rating_text2, this.name_text);
 	}
 
 }
