@@ -1557,7 +1557,7 @@ game = {
 	
 	chat(data) {		
 		
-		message.add(data, 10000);
+		message.add(data, 10000,'online_message');
 	},
 
 	process_my_move : async function (move_data, moves) {
@@ -5114,7 +5114,8 @@ async function load_resources() {
 	game_res.add('locked',git_src+'sounds/locked.mp3');
 	game_res.add('clock',git_src+'sounds/clock.mp3');
 	game_res.add('keypress',git_src+'sounds/keypress.mp3');
-	
+	game_res.add('online_message',git_src+'sounds/online_message.mp3');
+	game_res.add('inst_msg',git_src+'sounds/inst_msg.mp3');
 
     //добавляем из листа загрузки
     for (var i = 0; i < load_list.length; i++)
