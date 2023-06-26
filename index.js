@@ -4180,6 +4180,7 @@ lobby={
 			return
 		};
 		
+		sound.play('click');
 		//закрываем диалог стола если он открыт
 		if(objects.invite_cont.visible) this.close_invite_dialog();
 		
