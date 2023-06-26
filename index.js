@@ -3718,7 +3718,7 @@ lobby={
 			break;
 
 			case "b":
-				return gres.mini_player_card.texture;
+				return gres.mini_player_card_bot.texture;
 			break;
 
 			case "p":
