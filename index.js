@@ -929,6 +929,60 @@ board_func={
 		this.target_point++;
 	},
 
+	brd_to_str(boardv,move){
+		
+		let b_str=''
+		for (var y=0;y<8;y++){
+			for (var x=0;x<8;x++){
+				if (boardv[y][x]===1){
+					b_str+=y;
+					b_str+=x;					
+				}			
+			}
+		}
+		
+		for (var y=0;y<8;y++){
+			for (var x=0;x<8;x++){
+				if (boardv[y][x]===2){
+					b_str+=y;
+					b_str+=x;					
+				}				
+			}
+		}
+		
+		b_str+=move
+		return b_str;	
+		
+	},
+	
+	str_to_brd(str){
+		
+		t_board =[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]];
+
+		for (i=0;i<48;i+=2){
+			const y=str[i];
+			const x=str[i+1];
+			t_board[y][x]=1+(i>=24)*1;			
+		}		
+
+		return t_board;	
+		
+	},
+	
+	rotate_board(brd){	
+		if (!brd) return;
+		const new_board=JSON.parse(JSON.stringify(brd));
+		for (x=0;x<8;x++){
+			for(y=0;y<8;y++){				
+				let figure=new_board[7-y][7-x];
+				if(figure!==0){
+					figure=3-figure;
+				}				
+				brd[y][x]=figure;						
+			}
+		}
+	},
+
 	count_finished1: function (boardv) {
 		let cnt=0;
 		for (var y=0;y<3;y++)
@@ -1209,7 +1263,9 @@ online_game = {
 		else
 			sound.play('win');
 
-
+		//также фиксируем данные стола
+		firebase.database().ref("tables/"+game_id+'/board').set('fin');
+		
 		//если игра результативна то записываем дополнительные данные
 		if (result_number === DRAW || result_number === LOSE || result_number === WIN) {
 			
@@ -1388,14 +1444,14 @@ game = {
 
 		if (role==="master") {
 			my_turn=1;			
-			board_func.tex_2=game_res.resources['chk_'+board_func.chk_type+'_2'].texture;
-			board_func.tex_1=game_res.resources['chk_'+board_func.chk_type+'_1'].texture;
+			board_func.tex_2=gres['chk_'+board_func.chk_type+'_2'].texture;
+			board_func.tex_1=gres['chk_'+board_func.chk_type+'_1'].texture;
 			message.add(['Вы играете красными шашками. Последний ход за соперником','You play with red checkers. The last move for the opponent'][LANG])
 			
 		} else {
 			my_turn=0;
-			board_func.tex_2=game_res.resources['chk_'+board_func.chk_type+'_1'].texture;
-			board_func.tex_1=game_res.resources['chk_'+board_func.chk_type+'_2'].texture;
+			board_func.tex_2=gres['chk_'+board_func.chk_type+'_1'].texture;
+			board_func.tex_1=gres['chk_'+board_func.chk_type+'_2'].texture;
 			message.add(['Вы играете белыми шашками. Последний ход за вами','You play with white checkers. The last move is yours'][LANG])
 		}
 		
@@ -1580,8 +1636,11 @@ game = {
 			move_data.y2=7-move_data.y2;
 
 			//отправляем ход сопернику
-			firebase.database().ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"MOVE",tm:Date.now(),data:{...move_data, board_state:0}},
-			function(error){if(error){message.add("Ошибка при отправке хода. Сообщите админу.")}});
+			firebase.database().ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"MOVE",tm:Date.now(),data:{...move_data, board_state:0}})
+		
+			//также фиксируем данные стола
+			firebase.database().ref('tables/'+game_id+'/board').set({uid:my_data.uid,f_str:board_func.brd_to_str(g_board,made_moves),tm:Date.now()});
+		
 		}
 		
 		if (my_role === 'slave') {
@@ -1619,13 +1678,7 @@ game = {
 	},
 
 	receive_move: async function(move_data) {
-		
-		
-		
-		if(my_data.uid==='OyskO7g0ipbfbuhkGw2d+JRAdsn1Zu6z5xKpZermmj0=' || opp_data.uid==='OyskO7g0ipbfbuhkGw2d+JRAdsn1Zu6z5xKpZermmj0='){
-			firebase.database().ref("OLYA_CASE").push({name:my_data.uid,move_data:move_data,tm:Date.now()});
-		}
-		
+				
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
 		if (game.state !== 'on')
 			return;		
@@ -1702,6 +1755,169 @@ game = {
 		set_state ({state : 'o'});
 	}
 
+}
+
+game_watching={
+	
+	game_id:0,
+	on:false,
+	master_uid:'',
+	slave_uid:'',
+	
+	async activate(card_data){
+		
+		this.on=true;
+		
+		this.game_id=card_data.game_id;		
+		
+		objects.gw_back_button.visible=true;
+		objects.my_card_cont.visible = true;	
+		objects.opp_card_cont.visible = true;	
+		objects.cur_move_text.visible=true;
+		objects.board.visible=true;
+		objects.board.interactive=false;
+		
+		//аватарки		
+		objects.my_avatar.texture=card_data.avatar2.texture;
+		objects.opp_avatar.texture=card_data.avatar1.texture;
+		
+		//имена
+		make_text(objects.my_card_name,card_data.name2,150);
+		make_text(objects.opp_card_name,card_data.name1,150);
+		
+		//рейтинги
+		objects.my_card_rating.text=card_data.rating_text2.text;
+		objects.opp_card_rating.text=card_data.rating_text1.text;
+		
+		let main_data=await firebase.database().ref("tables/"+this.game_id).once('value');
+		main_data=main_data.val();
+		
+
+		board_func.tex_2=gres['chk_quad_2'].texture;
+		board_func.tex_1=gres['chk_quad_1'].texture;		
+		
+		this.master_uid=main_data.master;
+		this.slave_uid=main_data.slave;
+		/*
+		if (main_data.board){
+			
+			//проверяем если это законченая игра
+			if(main_data.board==='fin'){			
+				this.new_move('fin');
+				return;
+			} 			
+			g_board = board_func.str_to_brd(main_data.board.f_str);
+			if (this.master_uid!==main_data.board.uid)
+				board_func.rotate_board(g_board);
+		}
+		else
+			g_board = [[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
+
+		//обновляем доску
+		board_func.update_board();
+		*/		
+		
+		g_board=null;
+		firebase.database().ref('tables/'+this.game_id+'/board').on('value',(snapshot) => {
+			game_watching.new_move(snapshot.val());
+		})
+		
+	},
+	
+	stop_and_return(){
+		this.close();
+		lobby.activate();		
+	},
+	
+	async new_move(board_data){
+		
+		if(!board_data) return;
+		
+		if(board_data==='fin'){			
+			await big_message.show(['Эта игра завершена','This game is over'][LANG],')))');
+			this.close();
+			lobby.activate();
+			return;
+		} 
+		
+
+		
+		const old_board=JSON.parse(JSON.stringify(g_board));
+		const b_str = board_data.f_str.slice(0, 48);
+		const move = +board_data.f_str.slice(48);
+		const uid=board_data.uid;
+		const new_board=board_func.str_to_brd(b_str);
+		
+		if (uid===this.slave_uid)
+			board_func.rotate_board(new_board)		
+		
+		//если старой доски еще нет
+		if (!g_board){			
+			g_board=new_board;
+			board_func.update_board();
+			return;
+		}		
+		
+		
+
+		
+		//опредеяем кто ушел	
+		let fig_to_move,tx,ty;
+		let move_data={x1:0,y1:0,x2:0,y2:0};
+		for (var x = 0; x < 8; x++) {
+			for (var y = 0; y < 8; y++) {				
+				const fig0 = old_board[y][x];
+				const fig1 = new_board[y][x];
+				
+				if (fig0!==0 && fig1===0){
+					move_data.x1=x;
+					move_data.y1=y;					
+				}
+	
+				if (fig0===0 && fig1!==0){
+					move_data.x2=x;
+					move_data.y2=y;					
+				}					
+			}
+		}
+		
+		const moves=board_func.get_moves_path(move_data);		
+		await board_func.start_gentle_move(move_data,moves);
+		objects.cur_move_text.text=['Ход: ','Move: '][LANG]+move;
+		
+	},
+	
+	back_button_down(){
+		
+		if (anim2.any_on()) {
+			sound.play('locked');
+			return
+		};
+		
+		sound.play('click');
+		this.close();
+		lobby.activate();
+		
+	},
+	
+	close(){
+		
+		//восстанавливаем мое имя так как оно могло меняться
+		make_text(objects.my_card_name,my_data.name,150);
+		objects.my_card_rating.text = my_data.rating;
+				
+		objects.my_avatar.texture=objects.id_avatar.texture;
+		objects.gw_back_button.visible=false;
+		objects.board.visible=false;
+		objects.cur_move_text.visible=false;
+		objects.my_card_cont.visible = false;	
+		objects.opp_card_cont.visible = false;	
+		objects.checkers.forEach((c)=> {c.visible=false});
+		firebase.database().ref('tables/'+this.game_id+'/board').off();
+		this.on=false;
+
+	}
+	
 }
 
 feedback = {
@@ -2874,7 +3090,7 @@ req_dialog = {
 
 
 		//отправляем информацию о согласии играть с идентификатором игры
-		game_id=~~(Math.random()*999);
+		game_id=~~(Math.random()*99999);
 		firebase.database().ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"ACCEPT",tm:Date.now(),game_id:game_id});
 
 		//заполняем карточку оппонента
@@ -3173,7 +3389,7 @@ chat = {
 				
 	async chat_updated(data, first_load) {		
 	
-		console.log('receive message',data)
+		//console.log('receive message',data)
 		if(data===undefined) return;
 		
 		//если это сообщение уже есть в чате
@@ -3704,7 +3920,9 @@ lobby={
 			
 			let r1= players[uid].rating
 			let r2= players[tables[uid]].rating
-			this.place_table({uid1:uid,uid2:tables[uid],name1: n1, name2: n2, rating1: r1, rating2: r2});
+			
+			const game_id=players[uid].game_id;
+			this.place_table({uid1:uid,uid2:tables[uid],name1: n1, name2: n2, rating1: r1, rating2: r2,game_id});
 		}
 		
 	},
@@ -3732,7 +3950,7 @@ lobby={
 		}
 	},
 	
-	place_table(params={uid1:0,uid2:0,name1: "XXX",name2: "XXX", rating1: 1400, rating2: 1400}) {
+	place_table(params={uid1:0,uid2:0,name1: "XXX",name2: "XXX", rating1: 1400, rating2: 1400,game_id:0}) {
 				
 		for(let i=1;i<objects.mini_cards.length;i++) {
 
@@ -3781,7 +3999,7 @@ lobby={
 
 
 				objects.mini_cards[i].visible=true;
-
+				objects.mini_cards[i].game_id=params.game_id;
 
 				break;
 			}
@@ -3967,6 +4185,8 @@ lobby={
 		
 		anim2.add(objects.td_cont,{x:[800, objects.td_cont.sx]}, true, 0.1,'linear');
 		
+		objects.td_cont.card=objects.mini_cards[card_id];
+		
 		objects.td_avatar1.texture = objects.mini_cards[card_id].avatar1.texture;
 		objects.td_avatar2.texture = objects.mini_cards[card_id].avatar2.texture;
 		
@@ -4149,6 +4369,19 @@ lobby={
 
 	},
 	
+	peek_down(){
+		
+		if (anim2.any_on()) {
+			sound.play('locked');
+			return
+		};
+		sound.play('click');
+		this.close();	
+		
+		//активируем просмотр игры
+		game_watching.activate(objects.td_cont.card);
+	},
+	
 	async switch_header(){
 		
 		await anim2.add(objects.lobby_header,{y:[objects.lobby_header.sy, -60],alpha:[1,0]},false,1,'linear',false);	
@@ -4262,6 +4495,10 @@ lobby={
 		//закрываем меню и начинаем игру
 		await lobby.close();
 		game.activate(online_game, "master");
+		
+		//обновляем стол
+		firebase.database().ref('tables/'+game_id+'/master').set(my_data.uid);
+		firebase.database().ref('tables/'+game_id+'/slave').set(opp_data.uid);
 	},
 
 	goto_chat_down(){
@@ -4772,7 +5009,7 @@ function set_state(params) {
 	if (opp_data.uid!==undefined)
 		small_opp_id=opp_data.uid.substring(0,10);
 
-	firebase.database().ref(room_name+"/"+my_data.uid).set({state:state, name:my_data.name, rating : my_data.rating, hidden:h_state, opp_id : small_opp_id});
+	firebase.database().ref(room_name+"/"+my_data.uid).set({state:state, name:my_data.name, rating : my_data.rating, hidden:h_state, opp_id : small_opp_id, game_id});
 
 }
 
