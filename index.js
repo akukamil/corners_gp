@@ -2,7 +2,7 @@ var M_WIDTH=800, M_HEIGHT=450;
 var app, game_res, gdata={},  game, client_id, objects={}, state="",chat_path,my_role="", game_tick=0, my_checkers=1, made_moves=0, game_id=0, my_turn=0, connected = 1, LANG = 0;
 var min_move_amount=0, h_state=0, game_platform="", hidden_state_start = 0, room_name = 'states2';
 g_board=[];
-var players="", pending_player="",tm={}, some_process = {};
+var players="",moving_chip=null, pending_player="",tm={}, some_process = {};
 var my_data={opp_id : ''},opp_data={}, my_games_api = {};
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 
@@ -315,8 +315,12 @@ anim2 = {
 		
 		for (var i=0;i<this.slot.length;i++)
 			if (this.slot[i]!==null)
-				if (this.slot[i].obj===obj)
-					this.slot[i]=null;		
+				if (this.slot[i].obj===obj){
+					this.slot[i].p_resolve('finished');		
+					this.slot[i].obj.ready=true;					
+					this.slot[i]=null;	
+				}
+	
 	},
 	
 	easeOutBack: function(x) {
@@ -448,10 +452,7 @@ anim2 = {
 		
 
 	},	
-	
-	
-	
-	
+		
 	process: function () {
 		
 		for (var i = 0; i < this.slot.length; i++)
@@ -612,6 +613,7 @@ board_func={
 	tex_1:0,
 	chk_type: 'quad',
 	moves: [],
+	
 	move_end_callback: function(){},
 
 	update_board: function() {
@@ -871,17 +873,14 @@ board_func={
 
 	start_gentle_move: async function(move_data, moves) {
 
-		
-		let chk_spr = this.get_checker_by_pos(move_data.x1, move_data.y1);		
-				
-		for (let i = 1 ; i < moves.length; i++) {
-			
+		moving_chip = this.get_checker_by_pos(move_data.x1, move_data.y1);		
+							
+		for (let i = 1 ; i < moves.length; i++) {			
 			let tar_x = moves[i][0] * 50 + objects.board.x+10;
 			let tar_y = moves[i][1] * 50 + objects.board.y+10;
-			await anim2.add(chk_spr,{x:[chk_spr.x, tar_x], y: [chk_spr.y, tar_y]}, true, 0.16,'linear');
+			await anim2.add(moving_chip,{x:[moving_chip.x, tar_x], y: [moving_chip.y, tar_y]}, true, 0.16,'linear');
 			sound.play('move');
-		}
-		
+		}		
 		
 		var [sx,sy]=moves[0];
 		var [tx,ty]=moves[moves.length-1];
@@ -1455,13 +1454,10 @@ game = {
 			message.add(['Вы играете белыми шашками. Последний ход за вами','You play with white checkers. The last move is yours'][LANG])
 		}
 		
-				
+							
 		if (this.opponent !== "")
 			this.opponent.clear();
 		
-		this.opponent = opponent;
-		this.opponent.activate();
-
 		//если открыт лидерборд то закрываем его
 		if (objects.lb_1_cont.visible===true)
 			lb.close();
@@ -1469,6 +1465,13 @@ game = {
 		//если открыт чат то закрываем его
 		if (objects.chat_cont.visible)
 			chat.close();
+		
+		//если открыт просмтотр игры то закрываем его
+		if (game_watching.on)
+			game_watching.close();		
+		
+		this.opponent = opponent;
+		this.opponent.activate();
 			
 		sound.play('note');
 
@@ -1776,6 +1779,8 @@ game_watching={
 		objects.cur_move_text.visible=true;
 		objects.board.visible=true;
 		objects.board.interactive=false;
+		objects.gw_master_chip.visible=true;
+		objects.gw_slave_chip.visible=true;
 		
 		//аватарки		
 		objects.my_avatar.texture=card_data.avatar2.texture;
@@ -1823,15 +1828,18 @@ game_watching={
 		})
 		
 	},
-	
-	stop_and_return(){
-		this.close();
-		lobby.activate();		
-	},
-	
+		
 	async new_move(board_data){
 		
-		if(!board_data) return;
+		if(!this.on) return;
+		
+		if(!board_data){
+			g_board = [[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
+			board_func.update_board();
+			return;
+		}
+		
+		
 		
 		if(board_data==='fin'){			
 			await big_message.show(['Эта игра завершена','This game is over'][LANG],')))');
@@ -1839,9 +1847,14 @@ game_watching={
 			lobby.activate();
 			return;
 		} 
-		
-
-		
+			
+		//если предыдущее движение не завершено то завершаем его и ждем
+		while (moving_chip&&!moving_chip.ready) {
+			anim2.kill_anim(moving_chip);
+			await new Promise(resolve => setTimeout(resolve, 100)); // wait for 1 second
+		}
+			
+			
 		const old_board=JSON.parse(JSON.stringify(g_board));
 		const b_str = board_data.f_str.slice(0, 48);
 		const move = +board_data.f_str.slice(48);
@@ -1857,10 +1870,7 @@ game_watching={
 			board_func.update_board();
 			return;
 		}		
-		
-		
-
-		
+						
 		//опредеяем кто ушел	
 		let fig_to_move,tx,ty;
 		let move_data={x1:0,y1:0,x2:0,y2:0};
@@ -1880,7 +1890,6 @@ game_watching={
 				}					
 			}
 		}
-		
 		const moves=board_func.get_moves_path(move_data);		
 		await board_func.start_gentle_move(move_data,moves);
 		objects.cur_move_text.text=['Ход: ','Move: '][LANG]+move;
@@ -1909,9 +1918,12 @@ game_watching={
 		objects.my_avatar.texture=objects.id_avatar.texture;
 		objects.gw_back_button.visible=false;
 		objects.board.visible=false;
+		objects.board.interactive=true;
 		objects.cur_move_text.visible=false;
 		objects.my_card_cont.visible = false;	
 		objects.opp_card_cont.visible = false;	
+		objects.gw_master_chip.visible=false;
+		objects.gw_slave_chip.visible=false;
 		objects.checkers.forEach((c)=> {c.visible=false});
 		firebase.database().ref('tables/'+this.game_id+'/board').off();
 		this.on=false;
@@ -3075,7 +3087,7 @@ req_dialog = {
 
 	accept: function() {
 
-		if (anim2.any_on()===true || objects.req_cont.visible===false || objects.big_message_cont.visible === true || game.state === 'pending') {
+		if (anim2.any_on()||objects.req_cont.visible===false || objects.big_message_cont.visible === true || game.state === 'pending') {
 			sound.play('locked');
 			return;			
 		}
@@ -5264,7 +5276,7 @@ async function init_game_env(lang) {
 	if (my_data.rating > rooms_ranges[2] && my_data.rating <= rooms_ranges[3])
 		room_name= 'states3';			
 	
-	//room_name= 'states4';	
+	//room_name= 'states';	
 	//это путь к чату
 	chat_path='states_chat';
 	
