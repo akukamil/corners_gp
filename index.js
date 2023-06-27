@@ -3745,6 +3745,8 @@ lobby={
 		
 		anim2.add(objects.lobby_cont,{alpha:[0, 1]}, true, 0.1,'linear');
 		
+		objects.cards_cont.x=0;
+		
 		//отключаем все карточки
 		this.card_i=1;
 		for(let i=1;i<objects.mini_cards.length;i++)
