@@ -267,7 +267,7 @@ class feedback_record_class extends PIXI.Container {
 	constructor() {
 		
 		super();		
-		this.text=new PIXI.BitmapText('Николай: хорошая игра', {fontName: 'mfont',fontSize: 20,align: 'left'}); 
+		this.text=new PIXI.BitmapText('Николай: хорошая игра', {lineSpacing:50,fontName: 'mfont',fontSize: 20,align: 'left'}); 
 		this.text.maxWidth=290;
 		this.text.tint=0xFFFF00;
 		
@@ -890,7 +890,7 @@ board_func={
 
 		//обновляем доску
 		this.update_board();
-		
+
 	},
 
 	set_next_cell() {
@@ -1830,7 +1830,7 @@ game_watching={
 	},
 		
 	async new_move(board_data){
-		
+
 		if(!this.on) return;
 		
 		if(!board_data){
@@ -1838,8 +1838,6 @@ game_watching={
 			board_func.update_board();
 			return;
 		}
-		
-		
 		
 		if(board_data==='fin'){			
 			await big_message.show(['Эта игра завершена','This game is over'][LANG],')))');
@@ -1853,8 +1851,7 @@ game_watching={
 			anim2.kill_anim(moving_chip);
 			await new Promise(resolve => setTimeout(resolve, 100)); // wait for 1 second
 		}
-			
-			
+						
 		const old_board=JSON.parse(JSON.stringify(g_board));
 		const b_str = board_data.f_str.slice(0, 48);
 		const move = +board_data.f_str.slice(48);
@@ -5035,9 +5032,7 @@ function vis_change() {
 			sound.on=0;
 		} else {
 			sound.on=1;	
-		}
-
-		
+		}		
 		set_state({hidden : document.hidden});
 		
 		
@@ -5278,7 +5273,7 @@ async function init_game_env(lang) {
 	if (my_data.rating > rooms_ranges[2] && my_data.rating <= rooms_ranges[3])
 		room_name= 'states3';			
 	
-	//room_name= 'states';	
+	//room_name= 'states4';	
 	//это путь к чату
 	chat_path='states_chat';
 	
