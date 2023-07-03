@@ -551,8 +551,7 @@ message =  {
 big_message = {
 	
 	p_resolve : 0,
-	feedback_on : 0,
-	
+	feedback_on : 0,	
 		
 	show: function(t1,t2, feedback_on) {
 		
@@ -563,7 +562,7 @@ big_message = {
 		else
 			objects.big_message_text2.text='**********';
 
-		objects.feedback_button.visible = feedback_on;
+		objects.feedback_button.visible = feedback_on&&!my_data.blocked;
 		objects.big_message_text.text=t1;
 		anim2.add(objects.big_message_cont,{y:[-180,objects.big_message_cont.sy]}, true, 0.6,'easeOutBack');		
 				
@@ -1184,6 +1183,11 @@ online_game = {
 	},
 	
 	send_message : async function() {
+		
+		if (my_data.blocked){			
+			message.add('Закрыто');
+			return;
+		}
 		
 		let msg_data = await feedback.show();
 		
@@ -3534,6 +3538,12 @@ chat = {
 			return
 		};
 		
+		if (my_data.blocked){			
+			message.add('Закрыто');
+			return;
+		}
+		
+		
 		sound.play('click');
 		//убираем метки старых сообщений
 		const cur_dt=Date.now();
@@ -5106,6 +5116,19 @@ async function define_platform_and_language() {
 
 }
 
+async function check_blocked(){
+	
+	//загружаем остальные данные из файербейса
+	let _block_data = await firebase.database().ref("blocked/" + my_data.uid).once('value');
+	let block_data = _block_data.val();
+	
+	if (block_data) my_data.blocked=1;
+		
+	
+	
+	
+}
+
 async function init_game_env(lang) {
 				
 	
@@ -5259,6 +5282,9 @@ async function init_game_env(lang) {
 	my_data.rating = (other_data && other_data.rating) || 1400;
 	my_data.games = (other_data && other_data.games) || 0;
 	my_data.name = (other_data && other_data.name) || my_data.name;
+	
+	//проверяем блокировку
+	check_blocked();
 		
 	//устанавлием имена
 	make_text(objects.id_name,my_data.name,150);
