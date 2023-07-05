@@ -3821,7 +3821,6 @@ lobby={
 			if (!this.players_cache[uid]) this.players_cache[uid]={};
 			this.players_cache[uid].name=players[uid].name;	
 			this.players_cache[uid].rating=players[uid].rating;	
-			this.players_cache[uid].pic_url=players[uid].pic_url;	
 			
 			if (players[uid].state !== 'p' && players[uid].hidden === 0)
 				single[uid] = players[uid].name;						
