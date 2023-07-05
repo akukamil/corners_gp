@@ -3345,6 +3345,7 @@ chat = {
 	activate() {		
 
 		anim2.add(objects.chat_cont,{alpha:[0, 1]}, true, 0.1,'linear');
+		objects.chat_enter_button.visible=my_data.rating>1430;
 
 	},
 	
