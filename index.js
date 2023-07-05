@@ -4287,6 +4287,9 @@ lobby={
 		invite_available=invite_available || lobby._opp_data.uid==="BOT";
 		invite_available=invite_available && lobby._opp_data.rating >= 50 && my_data.rating >= 50;
 		
+		//кнопка удаления комментариев
+		objects.fb_delete_button.visible=my_data.uid===lobby._opp_data.uid;
+		
 		//если мы в списке игроков которые нас недавно отврегли
 		if (this.rejected_invites[lobby._opp_data.uid] && Date.now()-this.rejected_invites[lobby._opp_data.uid]<60000) invite_available=false;
 
@@ -4297,6 +4300,18 @@ lobby={
 		objects.invite_avatar.texture=objects.mini_cards[card_id].avatar.texture;
 		make_text(objects.invite_name,lobby._opp_data.name,230);
 		objects.invite_rating.text=objects.mini_cards[card_id].rating_text.text;
+	},
+	
+	fb_delete_down(){
+		
+		objects.fb_delete_button.visible=false;
+		firebase.database().ref('fb/' + my_data.uid).remove();
+		this.fb_cache[my_data.uid].fb_obj={0:[['***нет отзывов***','***no feedback***'][LANG],999,' ']};
+		this.fb_cache[my_data.uid].tm=Date.now();
+		objects.feedback_records.forEach(fb=>fb.visible=false);
+		
+		message.add(['Отзывы удалены','Feedbacks are removed'][LANG])
+		
 	},
 	
 	async show_invite_dialog_from_chat(uid,name) {
@@ -4348,6 +4363,9 @@ lobby={
 
 		let invite_available = 	lobby._opp_data.uid !== my_data.uid;
 		invite_available=invite_available && lobby._opp_data.rating >= 50 && my_data.rating >= 50;
+		
+		//кнопка удаления комментариев
+		objects.fb_delete_button.visible=false;
 		
 		//если мы в списке игроков которые нас недавно отврегли
 		if (this.rejected_invites[lobby._opp_data.uid] && Date.now()-this.rejected_invites[lobby._opp_data.uid]<60000) invite_available=false;
