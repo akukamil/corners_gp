@@ -3341,6 +3341,7 @@ chat = {
 	drag_sx:0,
 	drag_sy:-999,	
 	recent_msg:[],
+	moderation_mode:0,
 	
 	activate() {		
 
@@ -3442,14 +3443,15 @@ chat = {
 			
 	avatar_down(player_data){
 		
-		if (objects.feedback_cont.visible){
-			
-			feedback.response_message(player_data.uid,player_data.name.text);
-			
-		}else{
-			
-			lobby.show_invite_dialog_from_chat(player_data.uid,player_data.name.text)
-			
+		if (this.moderation_mode){
+			console.log(player_data.index,player_data.uid,player_data.name.text,player_data.msg.text);
+			return
+		}
+		
+		if (objects.feedback_cont.visible){			
+			feedback.response_message(player_data.uid,player_data.name.text);			
+		}else{			
+			lobby.show_invite_dialog_from_chat(player_data.uid,player_data.name.text);			
 		}
 		
 		
