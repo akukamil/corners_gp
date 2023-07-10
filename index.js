@@ -187,53 +187,19 @@ class chat_record_class extends PIXI.Container {
 		
 	}
 	
-	async update_avatar(uid, tar_sprite) {
-		
-		
-		let pic_url = '';
-		//если есть в кэше то =берем оттуда если нет то загружаем
-		if (lobby.players_cache[uid]) {			
-			pic_url = lobby.players_cache[uid].pic_url;			
-		} else {			
-			pic_url = await firebase.database().ref("players/" + uid + "/pic_url").once('value');		
-			pic_url = pic_url.val();
-			//lobby.players_cache[uid]={};
-			//lobby.players_cache[uid].pic_url = pic_url;
-		}
-		
-		
-		//сначала смотрим на загруженные аватарки в кэше
-		if (PIXI.utils.TextureCache[pic_url]===undefined || PIXI.utils.TextureCache[pic_url].width===1) {
-
-			//загружаем аватарку игрока
-			let loader=new PIXI.Loader();
-			loader.add("pic", pic_url,{loadType: PIXI.LoaderResource.LOAD_TYPE.IMAGE, timeout: 3000});
-			
-			let texture = await new Promise((resolve, reject) => {				
-				loader.load(function(l,r) {	resolve(l.resources.pic.texture)});
-			})
-			
-			if (texture === undefined || texture.width === 1) {
-				texture = PIXI.Texture.WHITE;
-				texture.tint = this.msg.tint;
-			}
-			
-			tar_sprite.texture = texture;
-			
-		}
-		else
-		{
-			//загружаем текустуру из кэша
-			//console.log(`Текстура взята из кэша ${pic_url}`)	
-			tar_sprite.texture =  PIXI.utils.TextureCache[pic_url];
-		}
-		
+	async update_avatar(uid, tar_sprite) {		
+		//определяем pic_url
+		await lobby.update_players_cache_data(uid);
+		const pic_url=lobby.players_cache[uid].pic_url;
+		const t=await lobby.get_texture(pic_url);
+		tar_sprite.texture = t;	
 	}
 	
 	async set(msg_data) {
 						
 		//получаем pic_url из фб
 		this.avatar.texture=PIXI.Texture.WHITE;
+				
 		await this.update_avatar(msg_data.uid, this.avatar);
 
 		this.uid=msg_data.uid;
@@ -3016,17 +2982,7 @@ req_dialog = {
 	async show(uid) {
 		
 		//если нет в кэше то загружаем из фб
-		if (!lobby.players_cache[uid]){				
-			let player_data=await firebase.database().ref("players/"+uid).once('value');
-			player_data=player_data.val();
-			
-			if (!player_data) return;
-			
-			lobby.players_cache[uid]={};
-			lobby.players_cache[uid].name=player_data.name
-			lobby.players_cache[uid].rating=player_data.rating
-			lobby.players_cache[uid].pic_url=player_data.pic_url
-		}
+		await lobby.update_players_cache_data(uid);
 		
 		sound.play('receive_sticker');			
 		anim2.add(objects.req_cont,{y:[-260, objects.req_cont.sy]}, true, 0.75,'easeOutElastic');
@@ -3039,31 +2995,8 @@ req_dialog = {
 
 		//throw "cut_string erroor";
 		req_dialog._opp_data.uid=uid;
+		objects.req_avatar.texture=await lobby.get_texture(lobby.players_cache[uid].pic_url);
 
-		//загружаем фото
-		this.load_photo(lobby.players_cache[uid].pic_url);
-
-	},
-
-	load_photo: function(pic_url) {
-
-
-		//сначала смотрим на загруженные аватарки в кэше
-		if (PIXI.utils.TextureCache[pic_url]===undefined || PIXI.utils.TextureCache[pic_url].width===1) {
-
-			//console.log("Загружаем текстуру "+objects.mini_cards[id].name)
-			var loader = new PIXI.Loader();
-			loader.add("inv_avatar", pic_url,{loadType: PIXI.LoaderResource.LOAD_TYPE.IMAGE});
-			loader.load((loader, resources) => {
-				objects.req_avatar.texture=loader.resources.inv_avatar.texture;
-			});
-		}
-		else
-		{
-			//загружаем текустуру из кэша
-			//console.log("Ставим из кэша "+objects.mini_cards[id].name)
-			objects.req_avatar.texture=PIXI.utils.TextureCache[pic_url];
-		}
 
 	},
 
@@ -3578,13 +3511,11 @@ chat = {
 		//убираем метки старых сообщений
 		const cur_dt=Date.now();
 		this.recent_msg = this.recent_msg.filter(d =>cur_dt-d<60000);
-		
-		
+				
 		if (this.recent_msg.length>3){
 			message.add(['Подождите 1 минуту','Wait 1 minute'][LANG])
 			return;
-		}
-		
+		}		
 		
 		//добавляем отметку о сообщении
 		this.recent_msg.push(Date.now());
@@ -3738,7 +3669,6 @@ lobby={
 	
 	state_tint :{},
 	_opp_data : {},
-	pover : 0,
 	players_cache : {},
 	activated:false,
 	rejected_invites:{},
@@ -4118,78 +4048,60 @@ lobby={
 
 	},
 
-	get_texture (pic_url) {
+	async get_texture(pic_url) {
 		
-		if (!pic_url) return;
+		if (!pic_url) PIXI.Texture.WHITE;
 		
-		return new Promise((resolve,reject)=>{
+		//меняем адрес который невозможно загрузить
+		if (pic_url==="https://vk.com/images/camera_100.png")
+			pic_url = "https://i.ibb.co/fpZ8tg2/vk.jpg";	
+				
+		if (PIXI.utils.TextureCache[pic_url]===undefined || PIXI.utils.TextureCache[pic_url].width===1) {
+					
+			let loader=new PIXI.Loader();
+			loader.add('pic', pic_url,{loadType: PIXI.LoaderResource.LOAD_TYPE.IMAGE, timeout: 5000});			
+			await new Promise((resolve, reject)=> loader.load(resolve))	
+			return loader.resources.pic.texture||PIXI.Texture.WHITE;
+
+		}		
+		
+		return PIXI.utils.TextureCache[pic_url];		
+	},
+	
+	async update_players_cache_data(uid){
+		if (this.players_cache[uid]){
+			if (!this.players_cache[uid].name){
+				let t=await firebase.database().ref('players/' + uid + '/name').once('value');
+				this.players_cache[uid].name=t.val()||'***';
+			}
 			
-			//меняем адрес который невозможно загрузить
-			if (pic_url==="https://vk.com/images/camera_100.png")
-				pic_url = "https://i.ibb.co/fpZ8tg2/vk.jpg";
-
-			//сначала смотрим на загруженные аватарки в кэше
-			if (PIXI.utils.TextureCache[pic_url]===undefined || PIXI.utils.TextureCache[pic_url].width===1) {
-
-				//загружаем аватарку игрока
-				//console.log(`Загружаем url из интернети или кэша браузера ${pic_url}`)	
-				let loader=new PIXI.Loader();
-				loader.add("pic", pic_url,{loadType: PIXI.LoaderResource.LOAD_TYPE.IMAGE, timeout: 5000});
-				loader.load(function(l,r) {	resolve(l.resources.pic.texture)});
+			if (!this.players_cache[uid].rating){
+				let t=await firebase.database().ref('players/' + uid + '/rating').once('value');
+				this.players_cache[uid].rating=t.val()||'***';
 			}
-			else
-			{
-				//загружаем текустуру из кэша
-				//console.log(`Текстура взята из кэша ${pic_url}`)	
-				resolve (PIXI.utils.TextureCache[pic_url]);
-			}
-		})
-		
-	},
-	
-	get_uid_pic_url (uid) {
-		
-		return new Promise((resolve,reject)=>{
-						
-			//проверяем есть ли у этого id назначенная pic_url
-			if (this.players_cache?.[uid]?.pic_url) {
-				//console.log(`Взяли pic_url из кэша ${this.players_cache[uid]}`);
-				resolve(this.players_cache[uid].pic_url);		
-				return;
-			}
-
-							
-			//получаем pic_url из фб
-			firebase.database().ref("players/" + uid + "/pic_url").once('value').then((res) => {
-
-				pic_url=res.val();
 				
-				if (pic_url === null) {
-					
-					//загрузить не получилось поэтому возвращаем случайную картинку
-					resolve('https://avatars.dicebear.com/v2/male/'+irnd(10,10000)+'.svg');
-				}
-				else {
-					
-					//добавляем полученный pic_url в кэш
-					//console.log(`Получили pic_url из ФБ ${pic_url}`)	
-					this.players_cache[uid].pic_url = pic_url;
-					resolve (pic_url);
-				}
-				
-			});		
-		})
-		
+			if (!this.players_cache[uid].pic_url){
+				let t=await firebase.database().ref('players/' + uid + '/pic_url').once('value');
+				this.players_cache[uid].pic_url=t.val()||null;
+			}
+			
+		}else{
+			
+			this.players_cache[uid]={};
+			let t=await firebase.database().ref('players/' + uid).once('value');
+			t=t.val();
+			this.players_cache[uid].name=t.name||'***';
+			this.players_cache[uid].rating=t.rating||'***';
+			this.players_cache[uid].pic_url=t.pic_url||'';
+		}		
 	},
-	
-	load_avatar2 (params = {uid : 0, tar_obj : 0, card_id : 0}) {
 		
-		//получаем pic_url
-		this.get_uid_pic_url(params.uid).then(pic_url => {
-			return this.get_texture(pic_url);
-		}).then(t=>{			
-			params.tar_obj.texture=t;			
-		})	
+	async load_avatar2 (params = {uid : 0, tar_obj : 0, card_id : 0}) {		
+
+		await this.update_players_cache_data(params.uid);
+		const pic_url=this.players_cache[params.uid].pic_url;
+		const t=await this.get_texture(pic_url);
+		params.tar_obj.texture=t;			
 	},
 
 	add_card_ai() {
@@ -4339,22 +4251,11 @@ lobby={
 		anim2.add(objects.invite_cont,{x:[800, objects.invite_cont.sx]}, true, 0.15,'linear');
 		
 		let player_data={uid};
-		
-		if (this.players_cache[uid]){			
-			player_data.name=this.players_cache[uid].name;
-			player_data.rating=this.players_cache[uid].rating;
-			player_data.pic_url=this.players_cache[uid].pic_url;
-		}else{
+		await this.update_players_cache_data(uid);
 			
-			//загружаем и обновляем кэш
-			let d=await firebase.database().ref("players/"+uid).once('value');
-			d=d.val();				
-			
-			this.players_cache[uid]={};
-			this.players_cache[uid].name=player_data.name=d.name;
-			this.players_cache[uid].rating=player_data.rating=d.rating;
-			this.players_cache[uid].pic_url=player_data.pic_url=d.pic_url;
-		}		
+		player_data.name=this.players_cache[uid].name;
+		player_data.rating=this.players_cache[uid].rating;
+		player_data.pic_url=this.players_cache[uid].pic_url;
 		
 		//копируем предварительные данные
 		lobby._opp_data = {uid:player_data.uid,name:player_data.name,rating:player_data.rating};
@@ -4519,13 +4420,6 @@ lobby={
 	},
 	
 	wheel_event(dir) {
-		
-		if (this.pover === 0) return;
-		
-		if (dir === 1)
-			this.fb_down_down();
-		else
-			this.fb_up_down();
 		
 	},
 	
