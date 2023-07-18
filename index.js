@@ -42,8 +42,8 @@ class player_mini_card_class extends PIXI.Container {
 		
 		this.avatar=new PIXI.Sprite();
 		this.avatar.x=18;
-		this.avatar.y=18;
-		this.avatar.width=this.avatar.height=64;
+		this.avatar.y=17;
+		this.avatar.width=this.avatar.height=62;
 				
 		this.name="";
 		this.name_text=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 22,align: 'center'});
@@ -62,15 +62,15 @@ class player_mini_card_class extends PIXI.Container {
 
 		//аватар первого игрока
 		this.avatar1=new PIXI.Sprite();
-		this.avatar1.x=22;
-		this.avatar1.y=18;
-		this.avatar1.width=this.avatar1.height=64;
+		this.avatar1.x=26;
+		this.avatar1.y=17;
+		this.avatar1.width=this.avatar1.height=61;
 
 		//аватар второго игрока
 		this.avatar2=new PIXI.Sprite();
-		this.avatar2.x=122;
-		this.avatar2.y=18;
-		this.avatar2.width=this.avatar2.height=64;
+		this.avatar2.x=125;
+		this.avatar2.y=17;
+		this.avatar2.width=this.avatar2.height=61;
 		
 		this.rating_text1=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 25,align: 'center'});
 		this.rating_text1.tint=0xffff00;
@@ -1043,8 +1043,10 @@ online_game = {
 	move_time_left : 0,
 	timer_id : 0,
 	prv_tick_time:0,
+	chat_incoming:1,
+	chat_active:1,
 	
-	calc_new_rating : function (old_rating, game_result) {
+	calc_new_rating(old_rating, game_result) {
 		
 		
 		if (game_result === NOSYNC)
@@ -1060,7 +1062,7 @@ online_game = {
 		
 	},
 	
-	activate : function () {
+	activate() {
 		
 		//пока еще никто не подтвердил игру
 		this.me_conf_play = 0;
@@ -1085,6 +1087,12 @@ online_game = {
 		if (lose_rating >100 && lose_rating<9999)
 			firebase.database().ref("players/"+my_data.uid+"/rating").set(lose_rating);
 		
+		//возможность чата
+		this.chat_out=1;
+		this.chat_in=1;
+		objects.no_chat_button.alpha=1;
+		objects.send_message_button.alpha=my_data.blocked?0.3:1;
+		
 		//устанавливаем локальный и удаленный статус
 		set_state({state : 'p'});		
 		
@@ -1095,7 +1103,7 @@ online_game = {
 		
 	},
 	
-	timer_tick : function () {
+	timer_tick() {
 		
 		this.move_time_left--;
 		const cur_time=Date.now();
@@ -1147,10 +1155,9 @@ online_game = {
 		this.timer_id = setTimeout(function(){online_game.timer_tick()}, 1000);		
 	},
 	
-	send_message : async function() {
+	async send_message() {
 		
-		if (my_data.blocked){			
-			message.add('Закрыто');
+		if (my_data.blocked || !this.chat_out){			
 			return;
 		}
 		
@@ -1165,7 +1172,7 @@ online_game = {
 		
 	},
 	
-	reset_timer : function() {
+	reset_timer() {
 		
 		//обовляем время разъединения
 		this.disconnect_time = 0;
@@ -1178,8 +1185,28 @@ online_game = {
 		objects.timer_cont.x = my_turn === 1 ? 30 : 630;
 		
 	},
+	
+	disable_chat(){		
+		if (!this.chat_in) return;		
+		this.chat_in=0;
+		objects.no_chat_button.alpha=0.3;
+		firebase.database().ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:'NOCHAT',tm:Date.now()});
+		message.add(['Вы отключили чат','Chat disabled'][LANG]);
+	},
+	
+	chat(data) {		
+		if (!this.chat_in) return;
+		message.add(data, 10000,'online_message');
+	},
+	
+	nochat(){
 		
-	stop : async function (result) {
+		this.chat_out=0;
+		objects.send_message_button.alpha=0.3;
+		message.add(['Соперник отключил чат','Chat disabled'][LANG]);
+	},
+		
+	async stop (result) {
 		
 		let res_array = [
 			['my_timeout',LOSE, ['Вы проиграли!\nУ вас закончилось время','You lose!\nOut of time!']],
@@ -1257,7 +1284,7 @@ online_game = {
 		
 	},
 	
-	clear : function() {
+	clear() {
 		
 		
 	}
@@ -1582,11 +1609,6 @@ game = {
 		}
 
 	},
-	
-	chat(data) {		
-		
-		message.add(data, 10000,'online_message');
-	},
 
 	process_my_move : async function (move_data, moves) {
 
@@ -1750,6 +1772,8 @@ game_watching={
 		objects.board.interactive=false;
 		objects.gw_master_chip.visible=true;
 		objects.gw_slave_chip.visible=true;
+		
+		objects.desktop.texture=gres.desktop.texture;
 		
 		//аватарки		
 		objects.my_avatar.texture=card_data.avatar2.texture;
@@ -2935,28 +2959,33 @@ var process_new_message = function(msg) {
 		if (msg.sender===opp_data.uid) {
 
 			//получение отказа от игры
-			if (msg.message==="REFUSE")
+			if (msg.message==='REFUSE')
 				confirm_dialog.opponent_confirm_play(0);
 
 			//получение согласия на игру
-			if (msg.message==="CONF")
+			if (msg.message==='CONF')
 				confirm_dialog.opponent_confirm_play(1);
 
 			//получение стикера
-			if (msg.message==="MSG")
+			if (msg.message==='MSG')
 				stickers.receive(msg.data);
 
 			//получение сообщение с сдаче
-			if (msg.message==="END" )
+			if (msg.message==='END')
 				game.stop('opp_giveup');
 
 			//получение сообщение с ходом игорка
-			if (msg.message==="MOVE")
+			if (msg.message==='MOVE')
 				game.receive_move(msg.data);
 			
 			//получение сообщение с ходом игорка
-			if (msg.message==="CHAT")
-				game.chat(msg.data);
+			if (msg.message==='CHAT')
+				online_game.chat(msg.data);
+			
+			//соперник отключил чат
+			if (msg.message==='NOCHAT')
+				online_game.nochat();
+			
 			
 		}
 	}
@@ -3071,9 +3100,6 @@ main_menu = {
 		//some_process.main_menu=this.process;
 		//кнопки
 		await anim2.add(objects.main_buttons_cont,{y:[450,objects.main_buttons_cont.sy],alpha:[0,1]}, true, 0.75,'linear');	
-
-
-		
 
 	},
 
@@ -3279,6 +3305,7 @@ chat = {
 	activate() {		
 
 		anim2.add(objects.chat_cont,{alpha:[0, 1]}, true, 0.1,'linear');
+		objects.desktop.texture=gres.desktop.texture;
 		objects.chat_enter_button.visible=my_data.rating>1430;
 
 	},
@@ -3684,9 +3711,8 @@ lobby={
 			for(let i=0;i<objects.mini_cards.length;i++) {
 
 				const iy=i%4;
-				objects.mini_cards[i].y=27+iy*85;		
-
-				
+				objects.mini_cards[i].y=40+iy*83;
+			
 				let ix;
 				if (i>15) {
 					ix=~~((i-16)/4)
@@ -3695,8 +3721,6 @@ lobby={
 					ix=~~((i)/4)
 					objects.mini_cards[i].x=ix*196;
 				}
-				
-
 			}		
 
 			//запускаем чат
@@ -3710,6 +3734,7 @@ lobby={
 			this.activated=true;
 		}
 		
+		objects.desktop.texture=gres.lobby_bcg.texture;
 		anim2.add(objects.lobby_cont,{alpha:[0, 1]}, true, 0.1,'linear');
 		
 		objects.cards_cont.x=0;
@@ -5171,7 +5196,7 @@ async function init_game_env(lang) {
 		});
 	}
 
-	app = new PIXI.Application({width:M_WIDTH, height:M_HEIGHT,antialias:false,backgroundColor : 0x404040});
+	app = new PIXI.Application({width:M_WIDTH, height:M_HEIGHT,antialias:false,backgroundColor : 0x202020});
 	document.body.appendChild(app.view);
 
 
