@@ -1,5 +1,5 @@
 var M_WIDTH=800, M_HEIGHT=450;
-var app, game_res, gdata={},  game, client_id, objects={}, state="",chat_path,my_role="", game_tick=0, my_checkers=1, made_moves=0, game_id=0, my_turn=0, connected = 1, LANG = 0;
+var app, game_res,fbs, gdata={},  game, client_id, objects={}, state="",chat_path,my_role="", game_tick=0, my_checkers=1, made_moves=0, game_id=0, my_turn=0, connected = 1, LANG = 0;
 var min_move_amount=0, h_state=0, game_platform="", hidden_state_start = 0, room_name = 'states2';
 g_board=[];
 var players="",moving_chip=null, pending_player="",tm={}, some_process = {};
@@ -265,18 +265,18 @@ anim2 = {
 	
 	
 	
-	any_on : function() {		
+	any_on() {		
 		for (let s of this.slot)
 			if (s !== null&&s.block)
 				return true
 		return false;			
 	},
 	
-	linear: function(x) {
+	linear(x) {
 		return x
 	},
 	
-	kill_anim: function(obj) {
+	kill_anim(obj) {
 		
 		for (var i=0;i<this.slot.length;i++)
 			if (this.slot[i]!==null)
@@ -288,11 +288,11 @@ anim2 = {
 	
 	},
 	
-	easeOutBack: function(x) {
+	easeOutBack(x) {
 		return 1 + this.c3 * Math.pow(x - 1, 3) + this.c1 * Math.pow(x - 1, 2);
 	},
 	
-	easeOutElastic: function(x) {
+	easeOutElastic(x) {
 		return x === 0
 			? 0
 			: x === 1
@@ -300,23 +300,23 @@ anim2 = {
 			: Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * this.c4) + 1;
 	},
 	
-	easeOutSine: function(x) {
+	easeOutSine(x) {
 		return Math.sin( x * Math.PI * 0.5);
 	},
 	
-	easeOutCubic: function(x) {
+	easeOutCubic(x) {
 		return 1 - Math.pow(1 - x, 3);
 	},
 	
-	easeInBack: function(x) {
+	easeInBack(x) {
 		return this.c3 * x * x * x - this.c1 * x * x;
 	},
 	
-	easeInQuad: function(x) {
+	easeInQuad(x) {
 		return x * x;
 	},
 	
-	easeOutBounce: function(x) {
+	easeOutBounce(x) {
 		const n1 = 7.5625;
 		const d1 = 2.75;
 
@@ -331,27 +331,27 @@ anim2 = {
 		}
 	},
 	
-	easeInCubic: function(x) {
+	easeInCubic(x) {
 		return x * x * x;
 	},
 	
-	ease2back : function(x) {
+	ease2back(x) {
 		return Math.sin(x*Math.PI*2);
 	},
 	
-	easeInOutCubic: function(x) {
+	easeInOutCubic(x) {
 		
 		return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 	},
 	
-	shake : function(x) {
+	shake(x) {
 		
 		return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 		
 		
 	},	
 	
-	add : function(obj, params, vis_on_end, time, func, block=true) {
+	add (obj, params, vis_on_end, time, func, block=true) {
 				
 		//если уже идет анимация данного спрайта то отменяем ее
 		anim2.kill_anim(obj);
@@ -418,7 +418,7 @@ anim2 = {
 
 	},	
 		
-	process: function () {
+	process() {
 		
 		for (var i = 0; i < this.slot.length; i++)
 		{
@@ -449,7 +449,7 @@ anim2 = {
 		
 	},
 	
-	wait : async function(time) {
+	async wait(time) {
 		
 		await this.add(this.empty_spr,{x:[0, 1]}, false, time,'linear');	
 		
@@ -460,7 +460,7 @@ sound = {
 	
 	on : 1,
 	
-	play : function(snd_res) {
+	play (snd_res) {
 		
 		if (this.on === 0)
 			return;
@@ -479,7 +479,7 @@ message =  {
 	
 	promise_resolve :0,
 	
-	add : async function(text, timeout=3000,sound_name='message') {
+	async add(text, timeout=3000,sound_name='message') {
 		
 		if (this.promise_resolve!==0)
 			this.promise_resolve("forced");
@@ -504,7 +504,7 @@ message =  {
 		anim2.add(objects.message_cont,{x:[objects.message_cont.sx, -200]}, false, 0.25,'easeInBack',false);			
 	},
 	
-	clicked : function() {
+	clicked() {
 		
 		
 		message.promise_resolve();
@@ -518,7 +518,7 @@ big_message = {
 	p_resolve : 0,
 	feedback_on : 0,	
 		
-	show: function(t1,t2, feedback_on) {
+	show(t1,t2, feedback_on) {
 		
 		this.feedback_on = feedback_on;
 				
@@ -536,7 +536,7 @@ big_message = {
 		});
 	},
 
-	feedback_down : async function () {
+	async feedback_down() {
 		
 		if (objects.big_message_cont.ready===false) {
 			sound.play('locked');
@@ -550,7 +550,7 @@ big_message = {
 		let fb = await feedback.show(opp_data.uid);		
 		if (fb[0] === 'sent') {
 			let fb_id = irnd(0,50);			
-			await firebase.database().ref("fb/"+opp_data.uid+"/"+fb_id).set([fb[1], firebase.database.ServerValue.TIMESTAMP, my_data.name]);
+			await fbs.ref("fb/"+opp_data.uid+"/"+fb_id).set([fb[1], firebase.database.ServerValue.TIMESTAMP, my_data.name]);
 		
 		}
 		
@@ -558,7 +558,7 @@ big_message = {
 				
 	},
 
-	close : function() {
+	close() {
 		
 		if (objects.big_message_cont.ready===false)
 			return;
@@ -578,9 +578,9 @@ board_func={
 	chk_type: 'quad',
 	moves: [],
 	
-	move_end_callback: function(){},
+	move_end_callback(){},
 
-	update_board: function() {
+	update_board() {
 
 		this.target_point=0;
 
@@ -624,7 +624,7 @@ board_func={
 		return 0;
 	},
 
-	get_moves_path: function(move_data){
+	get_moves_path(move_data){
 
 		var g_archive=[0,0,0,0,0,0,0,0,0,0,0];
 		var move_archive=[[move_data.x1,move_data.y1]];
@@ -835,7 +835,7 @@ board_func={
 		return g_archive;
 	},
 
-	start_gentle_move: async function(move_data, moves) {
+	async start_gentle_move(move_data, moves) {
 
 		moving_chip = this.get_checker_by_pos(move_data.x1, move_data.y1);		
 							
@@ -946,7 +946,7 @@ board_func={
 		}
 	},
 
-	count_finished1: function (boardv) {
+	count_finished1(boardv) {
 		let cnt=0;
 		for (var y=0;y<3;y++)
 			for (var x=0;x<4;x++)
@@ -955,7 +955,7 @@ board_func={
 		return cnt;
 	},
 
-	count_finished2: function (boardv) {
+	count_finished2(boardv) {
 		let cnt=0;
 		for (var y=5;y<8;y++)
 			for (var x=4;x<8;x++)
@@ -964,7 +964,7 @@ board_func={
 		return cnt;
 	},
 
-	finished1: function (boardv) {
+	finished1(boardv) {
 		for (var y=0;y<3;y++)
 			for (var x=0;x<4;x++)
 				if (boardv[y][x]!==1)
@@ -972,7 +972,7 @@ board_func={
 		return 1;
 	},
 
-	finished2: function (boardv) {
+	finished2(boardv) {
 		for (var y=5;y<8;y++)
 			for (var x=4;x<8;x++)
 				if (boardv[y][x]!==2)
@@ -980,7 +980,7 @@ board_func={
 		return 1;
 	},
 
-	any1home: function(boardv) {
+	any1home(boardv) {
 		for (var y=5;y<8;y++)
 			for (var x=4;x<8;x++)
 				if (boardv[y][x]===1)
@@ -988,7 +988,7 @@ board_func={
 		return 0;
 	},
 
-	any2home: function(boardv) {
+	any2home(boardv) {
 		for (var y=0;y<3;y++)
 			for (var x=0;x<4;x++)
 				if (boardv[y][x]===2)
@@ -996,7 +996,7 @@ board_func={
 		return 0;
 	},
 
-	get_board_state: function(board, made_moves) {
+	get_board_state(board, made_moves) {
 
 		let w1=this.finished1(board);
 		let w2=this.finished2(board);
@@ -1085,7 +1085,7 @@ online_game = {
 		//вычиcляем рейтинг при проигрыше и устанавливаем его в базу он потом изменится
 		let lose_rating = this.calc_new_rating(my_data.rating, LOSE);
 		if (lose_rating >100 && lose_rating<9999)
-			firebase.database().ref("players/"+my_data.uid+"/rating").set(lose_rating);
+			fbs.ref("players/"+my_data.uid+"/rating").set(lose_rating);
 		
 		//возможность чата
 		this.chat_out=1;
@@ -1130,8 +1130,6 @@ online_game = {
 				game.stop('opp_timeout');
 			else
 				game.stop('opp_no_sync');
-			
-			
 			return;
 		}
 
@@ -1150,7 +1148,7 @@ online_game = {
 		}
 
 		//обновляем текст на экране
-		objects.timer_text.text="0:"+this.move_time_left;
+		objects.timer_text.text='0:'+this.move_time_left;
 		//следующая секунда
 		this.timer_id = setTimeout(function(){online_game.timer_tick()}, 1000);		
 	},
@@ -1164,7 +1162,7 @@ online_game = {
 		let msg_data = await feedback.show();
 		
 		if (msg_data[0] === 'sent') {			
-			firebase.database().ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"CHAT",tm:Date.now(),data:msg_data[1]});	
+			fbs.ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"CHAT",tm:Date.now(),data:msg_data[1]});	
 
 		} else {			
 			message.add(['Сообщение не отправлено','Message was not sent'][LANG]);
@@ -1190,7 +1188,7 @@ online_game = {
 		if (!this.chat_in) return;		
 		this.chat_in=0;
 		objects.no_chat_button.alpha=0.3;
-		firebase.database().ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:'NOCHAT',tm:Date.now()});
+		fbs.ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:'NOCHAT',tm:Date.now()});
 		message.add(['Вы отключили чат','Chat disabled'][LANG]);
 	},
 	
@@ -1236,7 +1234,7 @@ online_game = {
 		let result_info = result_row[2][LANG];				
 		let old_rating = my_data.rating;
 		my_data.rating = this.calc_new_rating (my_data.rating, result_number);
-		firebase.database().ref("players/"+my_data.uid+"/rating").set(my_data.rating);
+		fbs.ref("players/"+my_data.uid+"/rating").set(my_data.rating);
 		
 		//обновляем даные на карточке
 		objects.my_card_rating.text=my_data.rating;
@@ -1259,22 +1257,22 @@ online_game = {
 			sound.play('win');
 
 		//также фиксируем данные стола
-		firebase.database().ref("tables/"+game_id+'/board').set('fin');
+		fbs.ref("tables/"+game_id+'/board').set('fin');
 		
 		//если игра результативна то записываем дополнительные данные
 		if (result_number === DRAW || result_number === LOSE || result_number === WIN) {
 			
 			//увеличиваем количество игр
 			my_data.games++;
-			firebase.database().ref("players/"+[my_data.uid]+"/games").set(my_data.games);		
+			fbs.ref("players/"+[my_data.uid]+"/games").set(my_data.games);		
 
 			//записываем результат в базу данных
 			let duration = ~~((Date.now() - this.start_time)*0.001);
-			firebase.database().ref("finishes/"+game_id).set({player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration:duration,rating: [old_rating,my_data.rating],client_id:client_id, ts:firebase.database.ServerValue.TIMESTAMP});
+			fbs.ref("finishes/"+game_id).set({player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration:duration,rating: [old_rating,my_data.rating],client_id:client_id, ts:firebase.database.ServerValue.TIMESTAMP});
 			
 			//контрольные концовки
 			if (my_data.rating>2130 || opp_data.rating>2130) {
-			firebase.database().ref("finishes2").push({uid:my_data.uid,player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration:duration, rating: [old_rating,my_data.rating],client_id:client_id, ts:firebase.database.ServerValue.TIMESTAMP});	
+			fbs.ref("finishes2").push({uid:my_data.uid,player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration:duration, rating: [old_rating,my_data.rating],client_id:client_id, ts:firebase.database.ServerValue.TIMESTAMP});	
 			}
 			
 		}
@@ -1297,7 +1295,7 @@ bot_game = {
 	me_conf_play : 0,
 	opp_conf_play : 0,
 
-	activate: function() {
+	activate() {
 
 
 		//устанавливаем локальный и удаленный статус
@@ -1335,7 +1333,7 @@ bot_game = {
 
 	},
 
-	stop : async function(result) {
+	async stop(result) {
 
 
 		let res_array = [
@@ -1369,7 +1367,7 @@ bot_game = {
 		
 	},
 
-	make_move: async function() {
+	async make_move() {
 
 		await new Promise((resolve, reject) => setTimeout(resolve, 300));
 
@@ -1383,12 +1381,12 @@ bot_game = {
 
 	},
 	
-	reset_timer : function() {
+	reset_timer() {
 		
 		
 	},
 	
-	clear : function() {
+	clear() {
 		
 		//выключаем элементы
 		objects.stop_bot_button.visible = false;
@@ -1428,7 +1426,7 @@ game = {
 	checker_is_moving : 0,
 	state : 0,
 
-	activate: function(opponent, role) {
+	activate(opponent, role) {
 
 		my_role = role;
 		
@@ -1493,13 +1491,13 @@ game = {
 
 	},
 
-	timer_tick: function() {
+	timer_tick() {
 
 
 
 	},
 
-	give_up_down : async function() {
+	async give_up_down() {
 		
 		if (anim2.any_on()===true) {
 			sound.play('locked');
@@ -1517,7 +1515,7 @@ game = {
 		if (res === 'yes') {
 			
 			//отправляем сообщени о сдаче и завершаем игру
-			firebase.database().ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"END",tm:Date.now(),data:{x1:0,y1:0,x2:0,y2:0,board_state:0}});
+			fbs.ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"END",tm:Date.now(),data:{x1:0,y1:0,x2:0,y2:0,board_state:0}});
 
 			game.stop('my_giveup');
 			
@@ -1526,7 +1524,7 @@ game = {
 		
 	},
 	
-	mouse_down_on_board : function(e) {
+	mouse_down_on_board(e) {
 
 		if (anim2.any_on()===true) {
 			sound.play('locked');
@@ -1610,7 +1608,11 @@ game = {
 
 	},
 
-	process_my_move : async function (move_data, moves) {
+	async process_my_move(move_data, moves) {
+
+		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
+			fbs.ref('GENA_CASE').push({name:my_data.name,move_data,tm:Date.now(),info:'process_my_move1'})
+
 
 		//делаем перемещение шашки
 		this.checker_is_moving = 1;
@@ -1618,7 +1620,7 @@ game = {
 		this.checker_is_moving = 0;
 		
 		//начинаем процесс плавного перемещения шашки
-		if (state === "b") {					
+		if (state === 'b') {					
 			bot_game.make_move();
 		}
 		else
@@ -1630,10 +1632,10 @@ game = {
 			move_data.y2=7-move_data.y2;
 
 			//отправляем ход сопернику
-			firebase.database().ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"MOVE",tm:Date.now(),data:{...move_data, board_state:0}})
+			fbs.ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"MOVE",tm:Date.now(),data:{...move_data, board_state:0}})
 		
 			//также фиксируем данные стола
-			firebase.database().ref('tables/'+game_id+'/board').set({uid:my_data.uid,f_str:board_func.brd_to_str(g_board,made_moves),tm:Date.now()});
+			fbs.ref('tables/'+game_id+'/board').set({uid:my_data.uid,f_str:board_func.brd_to_str(g_board,made_moves),tm:Date.now()});
 		
 		}
 		
@@ -1668,10 +1670,17 @@ game = {
 
 		//обозначаем что я сделал ход и следовательно подтвердил согласие на игру
 		this.opponent.me_conf_play=1;
+		
+		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
+			fbs.ref('GENA_CASE').push({name:my_data.name,tm:Date.now(),info:'process_my_move2'})
 
 	},
 
-	receive_move: async function(move_data) {
+	async receive_move(move_data) {				
+				
+		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
+			fbs.ref('GENA_CASE').push({name:my_data.name,move_data,tm:Date.now(),info:'rec_move1'})
+
 				
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
 		if (game.state !== 'on')
@@ -1698,8 +1707,7 @@ game = {
 		//плавно перемещаем шашку
 		this.checker_is_moving = 1;
 		await board_func.start_gentle_move(move_data, moves);
-		this.checker_is_moving = 0;
-		
+		this.checker_is_moving = 0;		
 		
 		if (my_role === 'master') {
 			made_moves++;
@@ -1715,10 +1723,13 @@ game = {
 			}			
 		}
 		
+		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
+			fbs.ref('GENA_CASE').push({name:my_data.name,tm:Date.now(),info:'rec_move2'})
+
 
 	},
 	
-	stop : async function (result) {
+	async stop(result) {
 				
 		this.state = 'pending';
 				
@@ -1787,7 +1798,7 @@ game_watching={
 		objects.my_card_rating.text=card_data.rating_text2.text;
 		objects.opp_card_rating.text=card_data.rating_text1.text;
 		
-		let main_data=await firebase.database().ref("tables/"+this.game_id).once('value');
+		let main_data=await fbs.ref("tables/"+this.game_id).once('value');
 		main_data=main_data.val();
 		
 
@@ -1816,7 +1827,7 @@ game_watching={
 		*/		
 		
 		g_board=null;
-		firebase.database().ref('tables/'+this.game_id+'/board').on('value',(snapshot) => {
+		fbs.ref('tables/'+this.game_id+'/board').on('value',(snapshot) => {
 			game_watching.new_move(snapshot.val());
 		})
 		
@@ -1915,7 +1926,7 @@ game_watching={
 		objects.gw_master_chip.visible=false;
 		objects.gw_slave_chip.visible=false;
 		objects.checkers.forEach((c)=> {c.visible=false});
-		firebase.database().ref('tables/'+this.game_id+'/board').off();
+		fbs.ref('tables/'+this.game_id+'/board').off();
 		this.on=false;
 
 	}
@@ -1932,7 +1943,7 @@ feedback = {
 	MAX_SYMBOLS : 50,
 	uid:0,
 	
-	show : function(uid,max_symbols) {
+	show(uid,max_symbols) {
 		
 		if (max_symbols)
 			this.MAX_SYMBOLS=max_symbols
@@ -1968,13 +1979,13 @@ feedback = {
 		
 	},
 	
-	close : function() {
+	close() {
 			
 		anim2.add(objects.feedback_cont,{y:[objects.feedback_cont.y,450]}, false, 0.4,'easeInBack');		
 		
 	},
 	
-	response_message:function(uid, name) {
+	response_message(uid, name) {
 
 		
 		objects.feedback_msg.text = name.split(' ')[0]+', ';	
@@ -1990,7 +2001,7 @@ feedback = {
 		return gres.hl_key0.texture;
 	},
 	
-	key_down : function(key) {
+	key_down(key) {
 		
 		
 		if (objects.feedback_cont.visible === false || objects.feedback_cont.ready === false) return;
@@ -2011,7 +2022,7 @@ feedback = {
 		
 	},
 	
-	pointerdown : function(e, inp_key) {
+	pointerdown (e, inp_key) {
 		
 		let key = -1;
 		let key_x = 0;
@@ -2117,7 +2128,7 @@ feedback = {
 ad = {
 		
 		
-	show : function() {
+	show() {
 		
 		if (game_platform==="YANDEX") {			
 			//показываем рекламу
@@ -2150,7 +2161,7 @@ ad = {
 		
 	},
 	
-	show2 : async function() {
+	async show2() {
 		
 		
 		if (game_platform ==="YANDEX") {
@@ -2193,7 +2204,7 @@ confirm_dialog = {
 	
 	p_resolve : 0,
 		
-	show: function(msg) {
+	show(msg) {
 								
 		if (objects.confirm_cont.visible === true) {
 			sound.play('locked')
@@ -2211,7 +2222,7 @@ confirm_dialog = {
 		});
 	},
 	
-	button_down : function(res) {
+	button_down(res) {
 		
 		if (anim2.any_on()===true) {
 			sound.play('locked');
@@ -2225,7 +2236,7 @@ confirm_dialog = {
 		
 	},
 	
-	close : function() {
+	close () {
 		
 		anim2.add(objects.confirm_cont,{y:[objects.confirm_cont.sy,450]}, false, 0.4,'easeInBack');		
 		
@@ -2240,14 +2251,14 @@ keep_alive = function() {
 		//убираем из списка если прошло время с момента перехода в скрытое состояние		
 		let cur_ts = Date.now();	
 		let sec_passed = (cur_ts - hidden_state_start)/1000;		
-		if ( sec_passed > 100 )	firebase.database().ref(room_name+"/"+my_data.uid).remove();
+		if ( sec_passed > 100 )	fbs.ref(room_name+"/"+my_data.uid).remove();
 		return;		
 	}
 
 
-	firebase.database().ref("players/"+my_data.uid+"/tm").set(firebase.database.ServerValue.TIMESTAMP);
-	firebase.database().ref("inbox/"+my_data.uid).onDisconnect().remove();
-	firebase.database().ref(room_name+"/"+my_data.uid).onDisconnect().remove();
+	fbs.ref("players/"+my_data.uid+"/tm").set(firebase.database.ServerValue.TIMESTAMP);
+	fbs.ref("inbox/"+my_data.uid).onDisconnect().remove();
+	fbs.ref(room_name+"/"+my_data.uid).onDisconnect().remove();
 
 	set_state({});
 }
@@ -2262,7 +2273,7 @@ patterns:[[[0,1,1],[0,2,1],[1,0,1],[2,0,1]],[[0,1,2],[0,2,1],[0,3,1],[1,0,2],[2,
 fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,2,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,2,5,3,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,3,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[5,2,5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,5,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,4,4,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,4,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[3,4,4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,4,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,2,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,2,5,3,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,3,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,4,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,4,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,3,5,4,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,3,5,4,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,4,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,4,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[4,6,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,4,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[3,5,4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[4,7,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,4,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,4,5,5,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,7],[3,6,4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,4,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,4,5,5,5,6,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,5,5,6,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,6,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6],[3,7,4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6],[5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,2,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,3,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,2,6,3,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,3,6,5,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,3,6,5,6,6,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,3,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,4,4,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,3,5,4,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,4,5,5,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,4,5,5,5,6,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,5,5,6,5,7,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,4,4,5,4,5,5,5,6,5,7,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,4,5,5,5,6,5,7,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,4,5,5,5,6,5,7,6,5,6,6,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,3,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,2,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,2,6,3,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,3,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,3,6,4,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,3,6,4,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,3,6,4,6,6,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,3,7,4,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[3,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,4,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[3,5,4,5,5,4,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,5,5,6,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,3,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,5,5,6,5,7,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,6,5,7,6,4,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,5,5,6,5,7,6,4,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,3,6,4,6,6,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,5,5,6,5,7,6,4,6,6,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,4,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[3,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,4,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,6,4,6,5,4,5,5,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,6,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,3,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,4,5,5,5,6,5,7,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,3,6,4,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,6,5,7,6,4,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,6,5,7,6,4,6,5,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,6,5,7,6,4,6,5,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,3,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,3,7,4,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[3,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,3,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,4,4,7,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,3,5,4,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,7,4,7,5,4,5,5,5,6,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,3,6,5,6,6,7,4,7,5,7,6,7,7],[4,4,4,7,5,4,5,5,5,6,5,7,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,3,6,4,6,6,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,5,5,6,5,7,6,4,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,6,5,7,6,4,6,5,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,3,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,3,7,4,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,3,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,3,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,2,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,5,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,2,7,3,7,5,7,7],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,3,7,4,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,4,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,3,7,4,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,3,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,2,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,2,7,3,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,5,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,5,7,6]],
 
 
-	clone_board : function (board) {
+	clone_board (board) {
 
 		r_board=[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]];
 		for (let y=0;y<8;y++)
@@ -2271,7 +2282,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 		return r_board;
 	},
 
-	get_childs: function(board_data, checkers, forward){
+	get_childs(board_data, checkers, forward){
 
 		function check_in_hist(x,y, hist) {
 			for (let i=0;i<hist.length;i++)
@@ -2517,7 +2528,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 
 	},
 
-	make_weights_board: function(made_moves) {
+	make_weights_board(made_moves) {
 
 		let p=made_moves/60+0.5;
 		for (let y=0;y<8;y++) {
@@ -2527,7 +2538,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 		}
 	},
 
-	make_weights_board2: function(made_moves) {
+	make_weights_board2(made_moves) {
 		
 		let r_num = Math.random()*0.8 + 0.2;
 		let p=made_moves/60+0.5;
@@ -2549,7 +2560,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 
 	},
 
-	board_val: function(board, made_moves) {
+	board_val(board, made_moves) {
 
 		var val_1=0;
 		var val_2=0;
@@ -2627,7 +2638,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 		return val_1-val_2;
 	},
 
-	invert_board: function(board) {
+	invert_board(board) {
 
 		inv_brd=minimax_solver.clone_board(board);
 		for (let y = 0; y < 8; y++) {
@@ -2642,7 +2653,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 
 	},
 
-	check_fin_moves: function(board) {
+	check_fin_moves(board) {
 
 		for (let i=0;i<this.fin_moves.length;i++) {
 
@@ -2663,7 +2674,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 		return 0;
 	},
 
-	how_bad_board_2: function(board) {
+	how_bad_board_2(board) {
 
 		var bad_val_1=[0,999];
 
@@ -2689,7 +2700,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 		return bad_val_1;
 	},
 
-	minimax_3: function(board,made_moves) {
+	minimax_3(board,made_moves) {
 
 		this.make_weights_board(made_moves);
 		let inv_brd=this.invert_board(board);
@@ -2746,7 +2757,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 
 	},
 
-	download : function(content, fileName, contentType) {
+	download(content, fileName, contentType) {
 		var a = document.createElement("a");
 		var file = new Blob([content], {type: contentType});
 		a.href = URL.createObjectURL(file);
@@ -2754,7 +2765,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 		a.click();
 	},
 
-	generate_fin_moves: function() {
+	generate_fin_moves() {
 
 		let tb=[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
 
@@ -2789,7 +2800,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 
 	},
 
-	minimax_3_single: function(board, made_moves) {
+	minimax_3_single(board, made_moves) {
 
 		this.make_weights_board2(made_moves);
 		min_move_amount=-3;
@@ -2848,7 +2859,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 		return m_data;
 	},
 
-	minimax_4_single: function(board) {
+	minimax_4_single(board) {
 
 		//this.update_weights_board(15);
 		min_move_amount=-3;
@@ -3029,7 +3040,7 @@ req_dialog = {
 
 	},
 
-	reject: function() {
+	reject() {
 
 		if (objects.req_cont.ready===false || objects.req_cont.visible===false)
 			return;
@@ -3039,10 +3050,10 @@ req_dialog = {
 
 		anim2.add(objects.req_cont,{y:[objects.req_cont.sy, -260]}, false, 0.5,'easeInBack');
 
-		firebase.database().ref("inbox/"+req_dialog._opp_data.uid).set({sender:my_data.uid,message:"REJECT",tm:Date.now()});
+		fbs.ref("inbox/"+req_dialog._opp_data.uid).set({sender:my_data.uid,message:"REJECT",tm:Date.now()});
 	},
 
-	accept: function() {
+	accept() {
 
 		if (anim2.any_on()||objects.req_cont.visible===false || objects.big_message_cont.visible === true || game.state === 'pending') {
 			sound.play('locked');
@@ -3060,7 +3071,7 @@ req_dialog = {
 
 		//отправляем информацию о согласии играть с идентификатором игры
 		game_id=~~(Math.random()*99999);
-		firebase.database().ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"ACCEPT",tm:Date.now(),game_id:game_id});
+		fbs.ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"ACCEPT",tm:Date.now(),game_id:game_id});
 
 		//заполняем карточку оппонента
 		make_text(objects.opp_card_name,opp_data.name,150);
@@ -3073,7 +3084,7 @@ req_dialog = {
 
 	},
 
-	hide: function() {
+	hide() {
 
 		//если диалог не открыт то ничего не делаем
 		if (objects.req_cont.ready === false || objects.req_cont.visible === false)
@@ -3184,8 +3195,7 @@ main_menu = {
 		anim2.add(objects.pref_cont,{y:[objects.pref_cont.sy, -200]}, false, 0.5,'easeInBack');
 
 	},
-	
-	
+		
 	async pref_change_nick_down() {
 
 		if(objects.pref_cont.change_name_pressed) return;
@@ -3213,11 +3223,11 @@ main_menu = {
 		const nick=await feedback.show('',15);
 		if (nick[0]==='sent'){
 			my_data.name=nick[1];
-			firebase.database().ref("players/"+my_data.uid+"/name").set(my_data.name);
+			fbs.ref("players/"+my_data.uid+"/name").set(my_data.name);
 			make_text(objects.my_card_name,my_data.name,150);
 			set_state({});
 			message.add(['Имя изменено','Name has been changed'][LANG]);
-			firebase.database().ref('players/'+my_data.uid+'/nick_tm').set(tm);
+			fbs.ref('players/'+my_data.uid+'/nick_tm').set(tm);
 			my_data.nick_tm=tm;
 		}
 
@@ -3326,7 +3336,7 @@ chat = {
 		}			
 		
 		//загружаем чат
-		firebase.database().ref(chat_path).orderByChild('tm').limitToLast(20).once('value', snapshot => {chat.chat_load(snapshot.val());});		
+		fbs.ref(chat_path).orderByChild('tm').limitToLast(20).once('value', snapshot => {chat.chat_load(snapshot.val());});		
 		
 	},			
 
@@ -3371,7 +3381,7 @@ chat = {
 			await this.chat_updated(c,true);	
 		
 		//подписываемся на новые сообщения
-		firebase.database().ref(chat_path).on('child_changed', snapshot => {chat.chat_updated(snapshot.val());});
+		fbs.ref(chat_path).on('child_changed', snapshot => {chat.chat_updated(snapshot.val());});
 	},	
 				
 	async chat_updated(data, first_load) {		
@@ -3552,7 +3562,7 @@ chat = {
 		if (fb[0] === 'sent') {			
 			const hash=this.make_hash();
 			const index=chat.get_oldest_index();
-			firebase.database().ref(chat_path+'/'+index).set({uid:my_data.uid,name:my_data.name,msg:fb[1], tm:firebase.database.ServerValue.TIMESTAMP,index, hash});
+			fbs.ref(chat_path+'/'+index).set({uid:my_data.uid,name:my_data.name,msg:fb[1], tm:firebase.database.ServerValue.TIMESTAMP,index, hash});
 		}	
 		
 	},
@@ -3571,7 +3581,7 @@ lb = {
 	cards_pos: [[370,10],[380,70],[390,130],[380,190],[360,250],[330,310],[290,370]],
 	last_update:0,
 
-	show: function() {
+	show() {
 
 		objects.desktop.texture=game_res.resources.lb_bcg.texture;
 		anim2.add(objects.desktop,{alpha:[0,1]}, true, 0.5,'linear');	
@@ -3600,7 +3610,7 @@ lb = {
 
 	},
 
-	close: function() {
+	close() {
 
 
 		objects.lb_1_cont.visible=false;
@@ -3611,7 +3621,7 @@ lb = {
 
 	},
 
-	back_button_down: function() {
+	back_button_down() {
 
 		if (anim2.any_on()===true) {
 			sound.play('locked');
@@ -3625,9 +3635,9 @@ lb = {
 
 	},
 
-	update: function () {
+	update() {
 
-		firebase.database().ref("players").orderByChild('rating').limitToLast(20).once('value').then((snapshot) => {
+		fbs.ref("players").orderByChild('rating').limitToLast(20).once('value').then((snapshot) => {
 
 
 			raw_leaders_data = snapshot.val();
@@ -3753,7 +3763,7 @@ lobby={
 
 		
 		//подписываемся на изменения состояний пользователей
-		firebase.database().ref(room_name) .on('value', (snapshot) => {lobby.players_list_updated(snapshot.val());});
+		fbs.ref(room_name) .on('value', (snapshot) => {lobby.players_list_updated(snapshot.val());});
 
 	},
 
@@ -4096,24 +4106,24 @@ lobby={
 	async update_players_cache_data(uid){
 		if (this.players_cache[uid]){
 			if (!this.players_cache[uid].name){
-				let t=await firebase.database().ref('players/' + uid + '/name').once('value');
+				let t=await fbs.ref('players/' + uid + '/name').once('value');
 				this.players_cache[uid].name=t.val()||'***';
 			}
 			
 			if (!this.players_cache[uid].rating){
-				let t=await firebase.database().ref('players/' + uid + '/rating').once('value');
+				let t=await fbs.ref('players/' + uid + '/rating').once('value');
 				this.players_cache[uid].rating=t.val()||'***';
 			}
 				
 			if (!this.players_cache[uid].pic_url){
-				let t=await firebase.database().ref('players/' + uid + '/pic_url').once('value');
+				let t=await fbs.ref('players/' + uid + '/pic_url').once('value');
 				this.players_cache[uid].pic_url=t.val()||null;
 			}
 			
 		}else{
 			
 			this.players_cache[uid]={};
-			let t=await firebase.database().ref('players/' + uid).once('value');
+			let t=await fbs.ref('players/' + uid).once('value');
 			t=t.val();
 			this.players_cache[uid].name=t.name||'***';
 			this.players_cache[uid].rating=t.rating||'***';
@@ -4244,7 +4254,7 @@ lobby={
 	fb_delete_down(){
 		
 		objects.fb_delete_button.visible=false;
-		firebase.database().ref('fb/' + my_data.uid).remove();
+		fbs.ref('fb/' + my_data.uid).remove();
 		this.fb_cache[my_data.uid].fb_obj={0:[['***нет отзывов***','***no feedback***'][LANG],999,' ']};
 		this.fb_cache[my_data.uid].tm=Date.now();
 		objects.feedback_records.forEach(fb=>fb.visible=false);
@@ -4314,7 +4324,7 @@ lobby={
 		//получаем фидбэки сначала из кэша, если их там нет или они слишком старые то загружаем из фб
 		let fb_obj;		
 		if (!this.fb_cache[uid] || (Date.now()-this.fb_cache[uid].tm)>120000) {
-			let _fb = await firebase.database().ref("fb/" + uid).once('value');
+			let _fb = await fbs.ref("fb/" + uid).once('value');
 			fb_obj =_fb.val();	
 			
 			//сохраняем в кэше отзывов
@@ -4388,7 +4398,7 @@ lobby={
 		pending_player="";
 		
 		//отписываемся от изменений состояний пользователей
-		firebase.database().ref(room_name).off();
+		fbs.ref(room_name).off();
 
 	},
 	
@@ -4459,7 +4469,7 @@ lobby={
 		//перезагружаем отзывы если добавили один
 		if (fb[0] === 'sent') {
 			let fb_id = irnd(0,50);			
-			await firebase.database().ref("fb/"+this._opp_data.uid+"/"+fb_id).set([fb[1], firebase.database.ServerValue.TIMESTAMP, my_data.name]);
+			await fbs.ref("fb/"+this._opp_data.uid+"/"+fb_id).set([fb[1], firebase.database.ServerValue.TIMESTAMP, my_data.name]);
 			this.show_feedbacks(this._opp_data.uid);			
 		}
 		
@@ -4474,7 +4484,7 @@ lobby={
 
 		//отправляем сообщение что мы уже не заинтересованы в игре
 		if (pending_player!=='') {
-			firebase.database().ref("inbox/"+pending_player).set({sender:my_data.uid,message:"INV_REM",tm:Date.now()});
+			fbs.ref("inbox/"+pending_player).set({sender:my_data.uid,message:"INV_REM",tm:Date.now()});
 			pending_player='';
 		}
 
@@ -4507,14 +4517,14 @@ lobby={
 		{
 			sound.play('click');
 			objects.invite_button_title.text=['Ждите ответ..','Waiting...'][LANG];
-			firebase.database().ref("inbox/"+lobby._opp_data.uid).set({sender:my_data.uid,message:"INV",tm:Date.now()});
+			fbs.ref("inbox/"+lobby._opp_data.uid).set({sender:my_data.uid,message:"INV",tm:Date.now()});
 			pending_player=lobby._opp_data.uid;
 
 		}
 
 	},
 
-	rejected_invite: function() {
+	rejected_invite() {
 
 		this.rejected_invites[pending_player]=Date.now();
 		pending_player="";
@@ -4543,8 +4553,8 @@ lobby={
 		game.activate(online_game, "master");
 		
 		//обновляем стол
-		firebase.database().ref('tables/'+game_id+'/master').set(my_data.uid);
-		firebase.database().ref('tables/'+game_id+'/slave').set(opp_data.uid);
+		fbs.ref('tables/'+game_id+'/master').set(my_data.uid);
+		fbs.ref('tables/'+game_id+'/slave').set(opp_data.uid);
 	},
 
 	goto_chat_down(){
@@ -4577,7 +4587,7 @@ lobby={
 		anim2.add(objects.cards_cont,{x:[cur_x, new_x]},true,0.2,'easeInOutCubic');
 	},
 
-	exit_lobby_down: async function() {
+	async exit_lobby_down() {
 
 		if (anim2.any_on()===true) {
 			sound.play('locked');
@@ -4598,7 +4608,7 @@ stickers = {
 	promise_resolve_send :0,
 	promise_resolve_recive :0,
 
-	show_panel: function() {
+	show_panel() {
 
 
 		if (anim2.any_on()===true) {
@@ -4621,7 +4631,7 @@ stickers = {
 
 	},
 
-	hide_panel: function() {
+	hide_panel() {
 
 		sound.play('close');
 
@@ -4633,7 +4643,7 @@ stickers = {
 
 	},
 
-	send : async function(id) {
+	async send(id) {
 
 		if (objects.stickers_cont.ready===false)
 			return;
@@ -4643,7 +4653,7 @@ stickers = {
 
 		this.hide_panel();
 
-		firebase.database().ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"MSG",tm:Date.now(),data:id});
+		fbs.ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"MSG",tm:Date.now(),data:id});
 		message.add(["Стикер отправлен сопернику","Sticker was sent"][LANG]);
 
 		//показываем какой стикер мы отправили
@@ -4663,7 +4673,7 @@ stickers = {
 		await anim2.add(objects.sent_sticker_area,{alpha:[0.5, 0]}, false, 0.5,'linear');
 	},
 
-	receive: async function(id) {
+	async receive(id) {
 
 		
 		if (this.promise_resolve_recive!==0)
@@ -4782,7 +4792,7 @@ auth2 = {
 	my_games_register_user_resolve : {},
 	ok_resolve : {},
 	
-	get_mygames_user_data : function() {
+	get_mygames_user_data () {
 		
 		return new Promise(function(resolve, reject){			
 			auth2.my_games_user_profile_resolve = resolve;
@@ -4791,7 +4801,7 @@ auth2 = {
 		
 	},
 	
-	get_mygames_login_status : function() {
+	get_mygames_login_status() {
 		
 		return new Promise(function(resolve, reject){			
 			auth2.my_games_login_status_resolve = resolve;
@@ -4800,7 +4810,7 @@ auth2 = {
 		
 	},
 	
-	register_mygames_user : function() {
+	register_mygames_user () {
 		
 		return new Promise(function(resolve, reject){			
 			auth2.my_games_register_user_resolve = resolve;
@@ -4809,7 +4819,7 @@ auth2 = {
 		
 	},
 	
-	load_script : function(src) {
+	load_script(src) {
 	  return new Promise((resolve, reject) => {
 		const script = document.createElement('script')
 		script.type = 'text/javascript'
@@ -4820,14 +4830,14 @@ auth2 = {
 	  })
 	},
 			
-	get_random_char : function() {		
+	get_random_char() {		
 		
 		const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 		return chars[irnd(0,chars.length-1)];
 		
 	},
 	
-	get_random_uid_for_local : function(prefix) {
+	get_random_uid_for_local(prefix) {
 		
 		let uid = prefix;
 		for ( let c = 0 ; c < 12 ; c++ )
@@ -4842,7 +4852,7 @@ auth2 = {
 		
 	},
 	
-	get_random_name : function(uid) {
+	get_random_name(uid) {
 		
 		const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 		const rnd_names = ['Gamma','Chime','Dron','Perl','Onyx','Asti','Wolf','Roll','Lime','Cosy','Hot','Kent','Pony','Baker','Super','ZigZag','Magik','Alpha','Beta','Foxy','Fazer','King','Kid','Rock'];
@@ -4864,7 +4874,7 @@ auth2 = {
 		}	
 	},	
 	
-	get_country_code : async function() {
+	async get_country_code () {
 		
 		let country_code = ''
 		try {
@@ -4877,7 +4887,7 @@ auth2 = {
 		
 	},
 	
-	search_in_local_storage : function() {
+	search_in_local_storage() {
 		
 		//ищем в локальном хранилище
 		let local_uid = null;
@@ -4892,7 +4902,7 @@ auth2 = {
 		
 	},
 	
-	init : async function() {	
+	async init() {	
 				
 		if (game_platform === 'YANDEX') {			
 		
@@ -5055,7 +5065,7 @@ function set_state(params) {
 	if (opp_data.uid!==undefined)
 		small_opp_id=opp_data.uid.substring(0,10);
 
-	firebase.database().ref(room_name+"/"+my_data.uid).set({state:state, name:my_data.name, rating : my_data.rating, hidden:h_state, opp_id : small_opp_id, game_id});
+	fbs.ref(room_name+"/"+my_data.uid).set({state:state, name:my_data.name, rating : my_data.rating, hidden:h_state, opp_id : small_opp_id, game_id});
 
 }
 
@@ -5076,7 +5086,7 @@ language_dialog = {
 	
 	p_resolve : {},
 	
-	show : function() {
+	show () {
 				
 		return new Promise(function(resolve, reject){
 
@@ -5143,7 +5153,7 @@ async function define_platform_and_language() {
 async function check_blocked(){
 	
 	//загружаем остальные данные из файербейса
-	let _block_data = await firebase.database().ref("blocked/" + my_data.uid).once('value');
+	let _block_data = await fbs.ref("blocked/" + my_data.uid).once('value');
 	let block_data = _block_data.val();
 	
 	if (block_data) my_data.blocked=1;
@@ -5173,16 +5183,6 @@ async function init_game_env(lang) {
 	//инициируем файербейс
 	if (firebase.apps.length===0) {
 		firebase.initializeApp({
-			
-		/*		
-			apiKey: "AIzaSyDwyhzpCq06nXWtzTfPZ86I0jI_iUedJDg",
-			authDomain: "quoridor-e5c40.firebaseapp.com",
-			databaseURL: "https://quoridor-e5c40-default-rtdb.europe-west1.firebasedatabase.app",
-			projectId: "quoridor-e5c40",
-			storageBucket: "quoridor-e5c40.appspot.com",
-			messagingSenderId: "114845860106",
-			appId: "1:114845860106:web:fa020d476b1f1c28853af3"*/	
-			
 
 			apiKey: "AIzaSyBZnSsCdbCve-tYjiH9f5JbGUDaGKWy074",
 			authDomain: "m-game-27669.firebaseapp.com",
@@ -5195,6 +5195,9 @@ async function init_game_env(lang) {
 			
 		});
 	}
+	
+	//короткое образ
+	fbs=firebase.database();
 
 	app = new PIXI.Application({width:M_WIDTH, height:M_HEIGHT,antialias:false,backgroundColor : 0x202020});
 	document.body.appendChild(app.view);
@@ -5294,13 +5297,13 @@ async function init_game_env(lang) {
 
 	
 	//загружаем остальные данные из файербейса
-	let _other_data = await firebase.database().ref("players/" + my_data.uid).once('value');
+	let _other_data = await fbs.ref("players/" + my_data.uid).once('value');
 	let other_data = _other_data.val();
 
 	//сервисное сообщение
 	if(other_data && other_data.s_msg){
 		message.add(other_data.s_msg);
-		firebase.database().ref("players/"+my_data.uid+"/s_msg").remove();
+		fbs.ref("players/"+my_data.uid+"/s_msg").remove();
 	}
 
 	my_data.rating = (other_data && other_data.rating) || 1400;
@@ -5337,28 +5340,28 @@ async function init_game_env(lang) {
 	objects.id_loup.visible=false;
 
 	//обновляем почтовый ящик
-	firebase.database().ref("inbox/"+my_data.uid).set({sender:"-",message:"-",tm:"-",data:{x1:0,y1:0,x2:0,y2:0,board_state:0}});
+	fbs.ref("inbox/"+my_data.uid).set({sender:"-",message:"-",tm:"-",data:{x1:0,y1:0,x2:0,y2:0,board_state:0}});
 
 	//подписываемся на новые сообщения
-	firebase.database().ref("inbox/"+my_data.uid).on('value', (snapshot) => { process_new_message(snapshot.val());});
+	fbs.ref("inbox/"+my_data.uid).on('value', (snapshot) => { process_new_message(snapshot.val());});
 
 	//обновляем данные в файербейс так как могли поменяться имя или фото
-	firebase.database().ref("players/"+my_data.uid+"/name").set(my_data.name);
-	firebase.database().ref("players/"+my_data.uid+"/pic_url").set(my_data.pic_url);
-	firebase.database().ref("players/"+my_data.uid+"/rating").set(my_data.rating);
-	firebase.database().ref("players/"+my_data.uid+"/games").set(my_data.games);
-	firebase.database().ref("players/"+my_data.uid+"/tm").set(firebase.database.ServerValue.TIMESTAMP);
+	fbs.ref("players/"+my_data.uid+"/name").set(my_data.name);
+	fbs.ref("players/"+my_data.uid+"/pic_url").set(my_data.pic_url);
+	fbs.ref("players/"+my_data.uid+"/rating").set(my_data.rating);
+	fbs.ref("players/"+my_data.uid+"/games").set(my_data.games);
+	fbs.ref("players/"+my_data.uid+"/tm").set(firebase.database.ServerValue.TIMESTAMP);
 		
 		
 	//устанавливаем мой статус в онлайн
 	set_state({state : 'o'});
 	
 	//сообщение для дубликатов
-	firebase.database().ref("inbox/"+my_data.uid).set({message:"CLIEND_ID",tm:Date.now(),client_id:client_id});
+	fbs.ref("inbox/"+my_data.uid).set({message:"CLIEND_ID",tm:Date.now(),client_id:client_id});
 
 	//отключение от игры и удаление не нужного
-	firebase.database().ref("inbox/"+my_data.uid).onDisconnect().remove();
-	firebase.database().ref(room_name+"/"+my_data.uid).onDisconnect().remove();
+	fbs.ref("inbox/"+my_data.uid).onDisconnect().remove();
+	fbs.ref(room_name+"/"+my_data.uid).onDisconnect().remove();
 
 
 	//keep-alive сервис
@@ -5368,7 +5371,7 @@ async function init_game_env(lang) {
 	
 
 	//контроль за присутсвием
-	var connected_control = firebase.database().ref(".info/connected");
+	var connected_control = fbs.ref(".info/connected");
 	connected_control.on("value", (snap) => {
 	  if (snap.val() === true) {
 		connected = 1;
