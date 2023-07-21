@@ -1226,6 +1226,9 @@ online_game = {
 			['my_no_connection',LOSE , ['Потеряна связь!\nИспользуйте надежное интернет соединение.','Lost connection!\nUse a reliable internet connection']]
 		];
 		
+		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
+			fbs.ref('GENA_CASE').push({name:my_data.name,tm:Date.now(),result:result})
+		
 		clearTimeout(this.timer_id);		
 		
 		let result_row = res_array.find( p => p[0] === result);
