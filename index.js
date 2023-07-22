@@ -1227,7 +1227,7 @@ online_game = {
 		];
 		
 		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
-			fbs.ref('GENA_CASE').push({name:my_data.name,tm:Date.now(),result:result})
+			fbs.ref('GENA_CASE').push({name:my_data.name,opp_name:opp_data.name,game_id,tm:Date.now(),result:result,info:'game_stop'})
 		
 		clearTimeout(this.timer_id);		
 		
@@ -1614,7 +1614,7 @@ game = {
 	async process_my_move(move_data, moves) {
 
 		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
-			fbs.ref('GENA_CASE').push({name:my_data.name,move_data,tm:Date.now(),info:'process_my_move1'})
+			fbs.ref('GENA_CASE').push({name:my_data.name,move_data,opp_name:opp_data.name,game_id,tm:Date.now(),info:'process_my_move1'})
 
 
 		//делаем перемещение шашки
@@ -1675,14 +1675,14 @@ game = {
 		this.opponent.me_conf_play=1;
 		
 		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
-			fbs.ref('GENA_CASE').push({name:my_data.name,tm:Date.now(),info:'process_my_move2'})
+			fbs.ref('GENA_CASE').push({name:my_data.name,opp_name:opp_data.name,game_id,tm:Date.now(),info:'process_my_move2'})
 
 	},
 
 	async receive_move(move_data) {				
 				
 		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
-			fbs.ref('GENA_CASE').push({name:my_data.name,move_data,tm:Date.now(),info:'rec_move1'})
+			fbs.ref('GENA_CASE').push({name:my_data.name,move_data,opp_name:opp_data.name,game_id,tm:Date.now(),info:'rec_move1'})
 
 				
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
@@ -1727,7 +1727,7 @@ game = {
 		}
 		
 		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
-			fbs.ref('GENA_CASE').push({name:my_data.name,tm:Date.now(),info:'rec_move2'})
+			fbs.ref('GENA_CASE').push({name:my_data.name,opp_name:opp_data.name,game_id,tm:Date.now(),info:'rec_move2'})
 
 
 	},
