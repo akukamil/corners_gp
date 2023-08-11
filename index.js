@@ -4173,7 +4173,7 @@ lobby={
 	
 	show_table_dialog(card_id) {
 					
-		
+		objects.watch_button.visible=false;
 		//если какая-то анимация или открыт диалог
 		if (anim2.any_on() || pending_player!=='') {
 			sound.play('locked');
