@@ -1227,7 +1227,7 @@ online_game = {
 		];
 		
 		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
-			fbs.ref('GENA_CASE').push({name:my_data.name,opp_name:opp_data.name,game_id,tm:Date.now(),result:result,info:'game_stop'})
+			fbs.ref('GENA_CASE').push({name:my_data.name,opp_name:opp_data.name,game_id,tm:Date.now(),result:result,info:'game_stop',tm2:firebase.database.ServerValue.TIMESTAMP})
 		
 		clearTimeout(this.timer_id);		
 		
@@ -1613,8 +1613,8 @@ game = {
 
 	async process_my_move(move_data, moves) {
 
-		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
-			fbs.ref('GENA_CASE').push({name:my_data.name,move_data,opp_name:opp_data.name,game_id,tm:Date.now(),info:'process_my_move1'})
+		//if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
+		//	fbs.ref('GENA_CASE').push({name:my_data.name,move_data,opp_name:opp_data.name,game_id,tm:Date.now(),info:'process_my_move1'})
 
 
 		//делаем перемещение шашки
@@ -1633,6 +1633,9 @@ game = {
 			move_data.y1=7-move_data.y1;
 			move_data.x2=7-move_data.x2;
 			move_data.y2=7-move_data.y2;
+
+			if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
+				fbs.ref('GENA_CASE').push({name:my_data.name,opp_name:opp_data.name,move_data,game_id,tm:Date.now(),info:'process_my_move',tm2:firebase.database.ServerValue.TIMESTAMP})
 
 			//отправляем ход сопернику
 			fbs.ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"MOVE",tm:Date.now(),data:{...move_data, board_state:0}})
@@ -1674,17 +1677,13 @@ game = {
 		//обозначаем что я сделал ход и следовательно подтвердил согласие на игру
 		this.opponent.me_conf_play=1;
 		
-		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
-			fbs.ref('GENA_CASE').push({name:my_data.name,opp_name:opp_data.name,game_id,tm:Date.now(),info:'process_my_move2'})
+
 
 	},
 
 	async receive_move(move_data) {				
 				
-		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
-			fbs.ref('GENA_CASE').push({name:my_data.name,move_data,opp_name:opp_data.name,game_id,tm:Date.now(),info:'rec_move1'})
-
-				
+			
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
 		if (game.state !== 'on')
 			return;		
@@ -1727,7 +1726,7 @@ game = {
 		}
 		
 		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
-			fbs.ref('GENA_CASE').push({name:my_data.name,opp_name:opp_data.name,game_id,tm:Date.now(),info:'rec_move2'})
+			fbs.ref('GENA_CASE').push({name:my_data.name,move_data,opp_name:opp_data.name,game_id,tm:Date.now(),info:'rec_move',tm2:firebase.database.ServerValue.TIMESTAMP})
 
 
 	},
