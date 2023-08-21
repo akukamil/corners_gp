@@ -1040,7 +1040,7 @@ online_game = {
 	disconnect_time : 0,
 	me_conf_play : 0,
 	opp_conf_play : 0,
-	move_time_left : 0,
+	time_for_move:0,
 	timer_id : 0,
 	prv_tick_time:0,
 	chat_incoming:1,
@@ -1070,7 +1070,8 @@ online_game = {
 		
 		//счетчик времени
 		this.prv_tick_time=Date.now();
-		this.move_time_left = 15;
+		this.timer_start_time=Date.now();
+		this.time_for_move = 15;
 		this.timer_id = setTimeout(function(){online_game.timer_tick()}, 1000);
 		objects.timer_text.tint=0xffffff;
 		
@@ -1081,6 +1082,7 @@ online_game = {
 		
 		//фиксируем врему начала игры
 		this.start_time = Date.now();
+
 		
 		//вычиcляем рейтинг при проигрыше и устанавливаем его в базу он потом изменится
 		let lose_rating = this.calc_new_rating(my_data.rating, LOSE);
@@ -1105,7 +1107,6 @@ online_game = {
 	
 	timer_tick() {
 		
-		this.move_time_left--;
 		const cur_time=Date.now();
 		if ((cur_time-this.prv_tick_time)>5000||cur_time<this.prv_tick_time){
 			game.stop('timer_error');			
@@ -1113,8 +1114,11 @@ online_game = {
 		}			
 		this.prv_tick_time=Date.now();
 		
+		const time_passed=~~((Date.now()-this.timer_start_time)*0.001);
+		const move_time_left=this.time_for_move-time_passed;		
 		
-		if (this.move_time_left < 0 && my_turn === 1)	{
+		
+		if (move_time_left < 0 && my_turn === 1)	{
 			
 			if (this.me_conf_play === 1)
 				game.stop('my_timeout');
@@ -1124,7 +1128,7 @@ online_game = {
 			return;
 		}
 
-		if (this.move_time_left < -5 && my_turn === 0) {
+		if (move_time_left < -5 && my_turn === 0) {
 			
 			if (this.opp_conf_play === 1)
 				game.stop('opp_timeout');
@@ -1142,13 +1146,13 @@ online_game = {
 		}		
 		
 		//подсвечиваем красным если осталость мало времени
-		if (this.move_time_left === 5) {
+		if (move_time_left === 5) {
 			objects.timer_text.tint=0xff0000;
 			sound.play('clock');
 		}
 
 		//обновляем текст на экране
-		objects.timer_text.text='0:'+this.move_time_left;
+		objects.timer_text.text='0:'+move_time_left;
 		//следующая секунда
 		this.timer_id = setTimeout(function(){online_game.timer_tick()}, 1000);		
 	},
@@ -1176,8 +1180,10 @@ online_game = {
 		this.disconnect_time = 0;
 		
 		//перезапускаем таймер хода
-		this.move_time_left = 37;
-		objects.timer_text.text="0:"+this.move_time_left;
+		this.timer_start_time=Date.now();
+		this.time_for_move = 37;
+		
+		objects.timer_text.text='0:'+this.time_for_move;
 		objects.timer_text.tint=0xffffff;
 		
 		objects.timer_cont.x = my_turn === 1 ? 30 : 630;
@@ -1210,7 +1216,7 @@ online_game = {
 			['my_timeout',LOSE, ['Вы проиграли!\nУ вас закончилось время','You lose!\nOut of time!']],
 			['opp_timeout',WIN , ['Вы выиграли!\nУ соперника закончилось время','You win!\nOpponent out of time']],
 			['my_giveup' ,LOSE, ['Вы сдались!','You have given up!']],
-			['timer_error' ,NOSYNC, ['Ошибка таймера!','Timer error!']],
+			['timer_error' ,LOSE, ['Ошибка таймера!','Timer error!']],
 			['opp_giveup' ,WIN , ['Вы выиграли!\nСоперник сдался','You win!\nYour opponent has given up!']],
 			['both_finished',DRAW, ['Ничья','Draw!']],
 			['my_finished_first',WIN , ['Вы выиграли!\nБыстрее соперника перевели свои шашки.','You win!\nYou finished faster than your opponent.']],
