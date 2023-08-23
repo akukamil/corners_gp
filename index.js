@@ -6,6 +6,16 @@ var players="",moving_chip=null, pending_player="",tm={}, some_process = {};
 var my_data={opp_id : ''},opp_data={}, my_games_api = {};
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 
+my_log={
+	log_arr:[],
+	add(data){		
+		this.log_arr.push(data);
+		if (this.log_arr.length>200)
+			this.log_arr.shift();
+	}
+	
+};
+
 irnd = function(min,max) {	
     min = Math.ceil(min);
     max = Math.floor(max);
@@ -1064,6 +1074,8 @@ online_game = {
 	
 	activate() {
 		
+		my_log.log_arr=[];
+		
 		//пока еще никто не подтвердил игру
 		this.me_conf_play = 0;
 		this.opp_conf_play = 0;
@@ -1107,6 +1119,10 @@ online_game = {
 	
 	timer_tick() {
 		
+		
+		if ([opp_data.uid,my_data.uid].includes('vk24083979'))
+			my_log.add({name:my_data.name,opp_name:opp_data.name,game_id,connected,tm:Date.now(),info:'timer_tick'})
+	
 		const cur_time=Date.now();
 		if ((cur_time-this.prv_tick_time)>5000||cur_time<this.prv_tick_time){
 			game.stop('timer_error');			
@@ -1159,6 +1175,8 @@ online_game = {
 	
 	async send_message() {
 		
+		
+		
 		if (my_data.blocked || !this.chat_out){			
 			return;
 		}
@@ -1168,6 +1186,9 @@ online_game = {
 		if (msg_data[0] === 'sent') {			
 			fbs.ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"CHAT",tm:Date.now(),data:msg_data[1]});	
 
+			if ([opp_data.uid,my_data.uid].includes('vk24083979'))
+				my_log.add({name:my_data.name,opp_name:opp_data.name,game_id,connected,tm:Date.now(),info:'chat',chat:msg_data[1]})
+
 		} else {			
 			message.add(['Сообщение не отправлено','Message was not sent'][LANG]);
 		}
@@ -1175,6 +1196,9 @@ online_game = {
 	},
 	
 	reset_timer() {
+		
+		if ([opp_data.uid,my_data.uid].includes('vk24083979'))
+			my_log.add({name:my_data.name,opp_name:opp_data.name,game_id,connected,tm:Date.now(),info:'reset_timer'})
 		
 		//обовляем время разъединения
 		this.disconnect_time = 0;
@@ -1232,8 +1256,16 @@ online_game = {
 			['my_no_connection',LOSE , ['Потеряна связь!\nИспользуйте надежное интернет соединение.','Lost connection!\nUse a reliable internet connection']]
 		];
 		
-		if ([opp_data.uid,my_data.uid].includes('vk24083979'))
-			fbs.ref('GENA_CASE').push({name:my_data.name,opp_name:opp_data.name,game_id,tm:Date.now(),result:result,info:'game_stop',tm2:firebase.database.ServerValue.TIMESTAMP})
+		
+		if ([opp_data.uid,my_data.uid].includes('vk24083979')){
+			my_log.add({name:my_data.name,opp_name:opp_data.name,game_id,connected,tm:Date.now(),result:result,info:'game_stop'})	
+			
+			if (result==='opp_timeout')
+				fbs.ref('GENA_CASE').push(my_log.log_arr);			
+		}
+		
+		
+		
 		
 		clearTimeout(this.timer_id);		
 		
@@ -1641,8 +1673,8 @@ game = {
 			move_data.y2=7-move_data.y2;
 
 			if ([opp_data.uid,my_data.uid].includes('vk24083979'))
-				fbs.ref('GENA_CASE').push({name:my_data.name,opp_name:opp_data.name,move_data,game_id,tm:Date.now(),info:'process_my_move',tm2:firebase.database.ServerValue.TIMESTAMP})
-
+				my_log.add({name:my_data.name,opp_name:opp_data.name,move_data,game_id,made_moves,connected,tm:Date.now(),info:'process_my_move'})
+			
 			//отправляем ход сопернику
 			fbs.ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"MOVE",tm:Date.now(),data:{...move_data, board_state:0}})
 		
@@ -1732,7 +1764,7 @@ game = {
 		}
 		
 		if ([opp_data.uid,my_data.uid].includes('vk24083979'))
-			fbs.ref('GENA_CASE').push({name:my_data.name,move_data,opp_name:opp_data.name,game_id,tm:Date.now(),info:'rec_move',tm2:firebase.database.ServerValue.TIMESTAMP})
+			my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,game_id,connected,tm:Date.now(),info:'rec_move'})
 
 
 	},
