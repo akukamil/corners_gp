@@ -1232,7 +1232,7 @@ online_game = {
 			['my_no_connection',LOSE , ['Потеряна связь!\nИспользуйте надежное интернет соединение.','Lost connection!\nUse a reliable internet connection']]
 		];
 		
-		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
+		if ([opp_data.uid,my_data.uid].includes('vk24083979'))
 			fbs.ref('GENA_CASE').push({name:my_data.name,opp_name:opp_data.name,game_id,tm:Date.now(),result:result,info:'game_stop',tm2:firebase.database.ServerValue.TIMESTAMP})
 		
 		clearTimeout(this.timer_id);		
@@ -1640,7 +1640,7 @@ game = {
 			move_data.x2=7-move_data.x2;
 			move_data.y2=7-move_data.y2;
 
-			if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
+			if ([opp_data.uid,my_data.uid].includes('vk24083979'))
 				fbs.ref('GENA_CASE').push({name:my_data.name,opp_name:opp_data.name,move_data,game_id,tm:Date.now(),info:'process_my_move',tm2:firebase.database.ServerValue.TIMESTAMP})
 
 			//отправляем ход сопернику
@@ -1731,7 +1731,7 @@ game = {
 			}			
 		}
 		
-		if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
+		if ([opp_data.uid,my_data.uid].includes('vk24083979'))
 			fbs.ref('GENA_CASE').push({name:my_data.name,move_data,opp_name:opp_data.name,game_id,tm:Date.now(),info:'rec_move',tm2:firebase.database.ServerValue.TIMESTAMP})
 
 
