@@ -10,7 +10,7 @@ my_log={
 	log_arr:[],
 	add(data){		
 		this.log_arr.push(data);
-		if (this.log_arr.length>200)
+		if (this.log_arr.length>300)
 			this.log_arr.shift();
 	}
 	
