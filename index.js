@@ -3777,7 +3777,7 @@ lobby={
 			chat.init();
 			
 			//создаем заголовки
-			const room_desc=['КОМНАТА #','ROOM #'][LANG]+{'states':1,'states2':2,'states3':3,'states4':4,'states4':5}[room_name];
+			const room_desc=['КОМНАТА #','ROOM #'][LANG]+{'states':1,'states2':2,'states3':3,'states4':4,'states5':5}[room_name];
 			this.sw_header.header_list=[['ДОБРО ПОЖАЛОВАТЬ В ИГРУ УГОЛКИ ОНЛАЙН!','WELCOME!!!'][LANG],room_desc]
 			objects.lobby_header.text=this.sw_header.header_list[0];
 			this.sw_header.time=Date.now()+12000;
@@ -5360,13 +5360,16 @@ async function init_game_env(lang) {
 	make_text(objects.my_card_name,my_data.name,150);
 			
 	//номер комнаты
-	let rooms_ranges = [0,1430,1600,99999]
+	let rooms_ranges = [0,1399,1400,1542,9999]
 	if (my_data.rating > rooms_ranges[0] && my_data.rating <= rooms_ranges[1])
 		room_name= 'states';			
 	if (my_data.rating > rooms_ranges[1] && my_data.rating <= rooms_ranges[2])
 		room_name= 'states2';					
 	if (my_data.rating > rooms_ranges[2] && my_data.rating <= rooms_ranges[3])
-		room_name= 'states3';			
+		room_name= 'states3';	
+	if (my_data.rating > rooms_ranges[3] && my_data.rating <= rooms_ranges[4])
+		room_name= 'states4';	
+	
 	
 	//room_name= 'states4';	
 	//это путь к чату
