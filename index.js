@@ -5360,7 +5360,7 @@ async function init_game_env(lang) {
 	make_text(objects.my_card_name,my_data.name,150);
 			
 	//номер комнаты
-	let rooms_ranges = [0,1399,1430,1562,9999]
+	let rooms_ranges = [0,1399,1500,1650,9999]
 	if (my_data.rating > rooms_ranges[0] && my_data.rating <= rooms_ranges[1])
 		room_name= 'states';			
 	if (my_data.rating > rooms_ranges[1] && my_data.rating <= rooms_ranges[2])
