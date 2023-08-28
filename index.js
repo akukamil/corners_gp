@@ -10,7 +10,7 @@ my_log={
 	log_arr:[],
 	add(data){		
 		this.log_arr.push(data);
-		if (this.log_arr.length>300)
+		if (this.log_arr.length>200)
 			this.log_arr.shift();
 	}
 	
@@ -1651,10 +1651,6 @@ game = {
 
 	async process_my_move(move_data, moves) {
 
-		//if ([opp_data.uid,my_data.uid].includes('Q7XisDGPW4V1RxPvavG8S22HqZVXGTDSvMgWgvFWtPQ='))
-		//	fbs.ref('GENA_CASE').push({name:my_data.name,move_data,opp_name:opp_data.name,game_id,tm:Date.now(),info:'process_my_move1'})
-
-
 		//делаем перемещение шашки
 		this.checker_is_moving = 1;
 		await board_func.start_gentle_move(move_data, moves);	
@@ -1672,12 +1668,21 @@ game = {
 			move_data.x2=7-move_data.x2;
 			move_data.y2=7-move_data.y2;
 
-			if ([opp_data.uid,my_data.uid].includes('vk24083979'))
-				my_log.add({name:my_data.name,opp_name:opp_data.name,move_data,game_id,made_moves,connected,tm:Date.now(),info:'process_my_move'})
+
 			
 			//отправляем ход сопернику
-			fbs.ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"MOVE",tm:Date.now(),data:{...move_data, board_state:0}})
-		
+			if ([opp_data.uid,my_data.uid].includes('vk24083979')){
+				
+				fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'MOVE',tm:Date.now(),data:{...move_data, board_state:0}}).then(()=>{
+					my_log.add({name:my_data.name,opp_name:opp_data.name,move_data,game_id,made_moves,connected,tm:Date.now(),info:'process_my_move'})
+				}).catch((error) => {
+					my_log.add({name:my_data.name,opp_name:opp_data.name,move_data,game_id,made_moves,connected,tm:Date.now(),info:'process_my_move_error'})
+				});
+
+			}else{
+				fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'MOVE',tm:Date.now(),data:{...move_data, board_state:0}})
+			}
+
 			//также фиксируем данные стола
 			fbs.ref('tables/'+game_id+'/board').set({uid:my_data.uid,f_str:board_func.brd_to_str(g_board,made_moves),tm:Date.now()});
 		
@@ -1720,7 +1725,9 @@ game = {
 	},
 
 	async receive_move(move_data) {				
-				
+			
+		if ([opp_data.uid,my_data.uid].includes('vk24083979'))
+			my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move'})			
 			
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
 		if (game.state !== 'on')
@@ -1764,7 +1771,8 @@ game = {
 		}
 		
 		if ([opp_data.uid,my_data.uid].includes('vk24083979'))
-			my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,game_id,connected,tm:Date.now(),info:'rec_move'})
+			my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move_ok'})			
+
 
 
 	},
@@ -5371,7 +5379,7 @@ async function init_game_env(lang) {
 		room_name= 'states4';	
 	
 	
-	//room_name= 'states4';	
+	//room_name= 'states5';	
 	//это путь к чату
 	chat_path='states_chat';
 	
