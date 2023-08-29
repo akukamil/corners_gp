@@ -1120,8 +1120,8 @@ online_game = {
 	timer_tick() {
 		
 		
-		if ([opp_data.uid,my_data.uid].includes('vk24083979'))
-			my_log.add({name:my_data.name,opp_name:opp_data.name,game_id,connected,tm:Date.now(),info:'timer_tick'})
+		//if ([opp_data.uid,my_data.uid].includes('vk24083979'))
+		//	my_log.add({name:my_data.name,opp_name:opp_data.name,game_id,connected,tm:Date.now(),info:'timer_tick'})
 	
 		const cur_time=Date.now();
 		if ((cur_time-this.prv_tick_time)>5000||cur_time<this.prv_tick_time){
@@ -1174,9 +1174,7 @@ online_game = {
 	},
 	
 	async send_message() {
-		
-		
-		
+				
 		if (my_data.blocked || !this.chat_out){			
 			return;
 		}
@@ -1187,7 +1185,7 @@ online_game = {
 			fbs.ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"CHAT",tm:Date.now(),data:msg_data[1]});	
 
 			if ([opp_data.uid,my_data.uid].includes('vk24083979'))
-				my_log.add({name:my_data.name,opp_name:opp_data.name,game_id,connected,tm:Date.now(),info:'chat',chat:msg_data[1]})
+				my_log.add({name:my_data.name,opp_name:opp_data.name,game_id,connected,tm:Date.now(),info:'out_chat',chat:msg_data[1]})
 
 		} else {			
 			message.add(['Сообщение не отправлено','Message was not sent'][LANG]);
@@ -1225,6 +1223,9 @@ online_game = {
 	chat(data) {		
 		if (!this.chat_in) return;
 		message.add(data, 10000,'online_message');
+		
+		if ([opp_data.uid,my_data.uid].includes('vk24083979'))
+			my_log.add({name:my_data.name,opp_name:opp_data.name,game_id,connected,tm:Date.now(),info:'in_chat',chat:data})
 	},
 	
 	nochat(){
@@ -1672,13 +1673,12 @@ game = {
 			
 			//отправляем ход сопернику
 			if ([opp_data.uid,my_data.uid].includes('vk24083979')){
+				my_log.add({name:my_data.name,opp_name:opp_data.name,move_data,game_id,made_moves,connected,tm:Date.now(),info:'process_my_move'})
 				
 				fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'MOVE',tm:Date.now(),data:{...move_data, board_state:0}}).then(()=>{
-					my_log.add({name:my_data.name,opp_name:opp_data.name,move_data,game_id,made_moves,connected,tm:Date.now(),info:'process_my_move'})
-				}).catch((error) => {
-					my_log.add({name:my_data.name,opp_name:opp_data.name,move_data,game_id,made_moves,connected,tm:Date.now(),info:'process_my_move_error'})
-				});
-
+					my_log.add({name:my_data.name,opp_name:opp_data.name,move_data,game_id,made_moves,connected,tm:Date.now(),info:'process_my_move_ok'})
+				})
+				
 			}else{
 				fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'MOVE',tm:Date.now(),data:{...move_data, board_state:0}})
 			}
