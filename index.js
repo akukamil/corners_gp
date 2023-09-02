@@ -1225,6 +1225,14 @@ online_game = {
 		message.add(['Соперник отключил чат','Chat disabled'][LANG]);
 	},
 		
+	async forced_inbox_check(game_id,opp_name){
+				
+		let c_data=await fbs.ref('inbox/'+my_data.uid).once('value');
+		c_data=c_data.val();
+		fbs.ref('BAD_CASE2').push({name:my_data.name,opp_name,game_id,info:'forced_inbox_check',tm:Date.now(),inbox:c_data});
+		
+	},
+		
 	async stop (result) {
 		
 		let res_array = [
@@ -1249,8 +1257,13 @@ online_game = {
 		
 		
 		my_log.add({name:my_data.name,opp_name:opp_data.name,game_id,connected,tm:Date.now(),result:result,info:'game_stop'})	
-		if (result==='opp_timeout')
-			fbs.ref('BAD_CASE').push(my_log.log_arr);			
+		if (result==='opp_timeout'&&my_data.rating>1900){
+			
+			fbs.ref('BAD_CASE2').push(my_log.log_arr);		
+			this.forced_inbox_check(game_id,opp_data.name);
+			
+		}
+		
 		
 		
 		clearTimeout(this.timer_id);		
@@ -1261,7 +1274,7 @@ online_game = {
 		let result_info = result_row[2][LANG];				
 		let old_rating = my_data.rating;
 		my_data.rating = this.calc_new_rating (my_data.rating, result_number);
-		fbs.ref("players/"+my_data.uid+"/rating").set(my_data.rating);
+		fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating);
 		
 		//обновляем даные на карточке
 		objects.my_card_rating.text=my_data.rating;
@@ -1705,6 +1718,7 @@ game = {
 
 	},
 
+	
 	async receive_move(move_data) {				
 			
 		my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move'})			
