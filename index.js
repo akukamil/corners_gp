@@ -1666,8 +1666,6 @@ game = {
 			move_data.y1=7-move_data.y1;
 			move_data.x2=7-move_data.x2;
 			move_data.y2=7-move_data.y2;
-
-
 			
 			//отправляем ход сопернику
 			my_log.add({name:my_data.name,opp_name:opp_data.name,move_data,game_id,made_moves,connected,tm:Date.now(),info:'process_my_move'})
@@ -1717,7 +1715,6 @@ game = {
 
 
 	},
-
 	
 	async receive_move(move_data) {				
 			
@@ -1826,46 +1823,32 @@ game_watching={
 		objects.gw_slave_chip.visible=true;
 		
 		objects.desktop.texture=gres.desktop.texture;
+			
 		
-		//аватарки		
-		objects.my_avatar.texture=card_data.avatar2.texture;
-		objects.opp_avatar.texture=card_data.avatar1.texture;
-		
-		//имена
-		make_text(objects.my_card_name,card_data.name2,150);
-		make_text(objects.opp_card_name,card_data.name1,150);
-		
-		//рейтинги
-		objects.my_card_rating.text=card_data.rating_text2.text;
-		objects.opp_card_rating.text=card_data.rating_text1.text;
-		
-		let main_data=await fbs.ref("tables/"+this.game_id).once('value');
+		let main_data=await fbs.ref('tables/'+this.game_id).once('value');
 		main_data=main_data.val();
 		
-
-		board_func.tex_2=gres['chk_quad_2'].texture;
-		board_func.tex_1=gres['chk_quad_1'].texture;		
+		//определяем индексы карточек
+		const master_ind=+(card_data.uid2===main_data.master)+1
+		const slave_ind=3-master_ind;
+				
+		//аватарки		
+		objects.my_avatar.texture=card_data['avatar'+master_ind].texture;
+		objects.opp_avatar.texture=card_data['avatar'+slave_ind].texture;
 		
+		//имена
+		make_text(objects.my_card_name,card_data['name'+master_ind],150);
+		make_text(objects.opp_card_name,card_data['name'+slave_ind],150);
+		
+		//рейтинги
+		objects.my_card_rating.text=card_data['rating_text'+master_ind].text;
+		objects.opp_card_rating.text=card_data['rating_text'+slave_ind].text;		
+		
+		board_func.tex_2=gres['chk_quad_2'].texture;
+		board_func.tex_1=gres['chk_quad_1'].texture;	
+				
 		this.master_uid=main_data.master;
 		this.slave_uid=main_data.slave;
-		/*
-		if (main_data.board){
-			
-			//проверяем если это законченая игра
-			if(main_data.board==='fin'){			
-				this.new_move('fin');
-				return;
-			} 			
-			g_board = board_func.str_to_brd(main_data.board.f_str);
-			if (this.master_uid!==main_data.board.uid)
-				board_func.rotate_board(g_board);
-		}
-		else
-			g_board = [[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
-
-		//обновляем доску
-		board_func.update_board();
-		*/		
 		
 		g_board=null;
 		fbs.ref('tables/'+this.game_id+'/board').on('value',(snapshot) => {
