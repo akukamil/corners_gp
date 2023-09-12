@@ -1259,8 +1259,8 @@ online_game = {
 		my_log.add({name:my_data.name,opp_name:opp_data.name,game_id,connected,tm:Date.now(),result:result,info:'game_stop'})	
 		if (result==='opp_timeout'&&my_data.rating>1900){
 			
-			fbs.ref('BAD_CASE2').push(my_log.log_arr);		
-			this.forced_inbox_check(game_id,opp_data.name);
+			//fbs.ref('BAD_CASE2').push(my_log.log_arr);		
+			//this.forced_inbox_check(game_id,opp_data.name);
 			
 		}
 		
