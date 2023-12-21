@@ -1633,7 +1633,7 @@ pref={
 		
 		sound.switch();
 		sound.play('click');
-		const tar_x=sound.on?103:68;
+		const tar_x=sound.on?113:78;
 		anim2.add(objects.sound_slider,{x:[objects.sound_slider.x,tar_x]}, true, 0.1,'linear');	
 		
 	},
