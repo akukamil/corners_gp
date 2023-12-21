@@ -1567,7 +1567,7 @@ pref={
 		for (let i in DESIGN_DATA){			
 			const rating_req=DESIGN_DATA[i].rating;
 			const games_req=DESIGN_DATA[i].games;	
-			const av=my_data.rating>=rating_req&&my_data.games>=games_req;
+			const av=my_data.rating>=rating_req||my_data.games>=games_req;
 			objects.designs[i].lock.visible=!av;
 		}
 		
