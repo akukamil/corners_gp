@@ -2092,8 +2092,10 @@ game_watching={
 		objects.my_card_rating.text=card_data['rating_text'+master_ind].text;
 		objects.opp_card_rating.text=card_data['rating_text'+slave_ind].text;		
 		
-		board_func.tex_2=gres['chk_quad_2'].texture;
-		board_func.tex_1=gres['chk_quad_1'].texture;	
+		board_func.chips_tex[1]=pref.chips[1].texture;
+		board_func.chips_tex[2]=pref.chips[2].texture;	
+		//устанаваем текстуру
+		objects.board.texture=pref.board_texture;
 				
 		this.master_uid=main_data.master;
 		this.slave_uid=main_data.slave;
