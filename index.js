@@ -1,10 +1,17 @@
 var M_WIDTH=800, M_HEIGHT=450;
-var app, game_res,fbs, gdata={},  game, client_id, objects={}, state="",chat_path,my_role="", game_tick=0, my_checkers=1, made_moves=0, game_id=0, my_turn=0, connected = 1, LANG = 0;
-var min_move_amount=0, h_state=0, game_platform="", hidden_state_start = 0, room_name = 'states2';
+var app, game_res,fbs, gdata={},  game, client_id, objects={}, state="",chat_path,my_role="", game_tick=0, made_moves=0, game_id=0, my_turn=0, connected = 1, LANG = 0;
+var min_move_amount=0, h_state=0, game_platform="",git_src='', hidden_state_start = 0, room_name = 'states2';
 g_board=[];
 var players="",moving_chip=null, pending_player="",tm={}, some_process = {};
 var my_data={opp_id : ''},opp_data={}, my_games_api = {};
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
+
+DESIGN_DATA={
+	0:{name:'def',rating:0,games:0},
+	1:{name:'ice',rating:1500,games:1000},
+	2:{name:'grass',rating:1700,games:5000},
+	3:{name:'wood',rating:1900,games:15000},
+}
 
 my_log={
 	log_arr:[],
@@ -262,6 +269,45 @@ class feedback_record_class extends PIXI.Container {
 	
 }
 
+class design_class extends PIXI.Container{
+	
+	constructor(){
+		
+		super();
+		this.shadow=new PIXI.Sprite(gres.bcg_icon_shadow.texture);
+		this.shadow.width=170;
+		this.shadow.height=100;	
+		
+		this.bcg=new PIXI.Sprite(gres.design_0.texture);
+		this.bcg.width=170;
+		this.bcg.height=100;
+		
+		this.lock=new PIXI.Sprite(gres.lock.texture);
+		this.lock.width=70;
+		this.lock.height=70;
+		this.lock.anchor.set(0.5,0.5);
+		this.lock.x=140;
+		this.lock.y=65;
+		this.lock.angle=30;
+		this.lock.visible=false;
+		
+		this.id=0;
+		
+		this.interactive=true;
+		this.buttonMode=true;
+		this.pointerdown=function(){pref.design_down(this)};
+		
+		this.addChild(this.bcg,this.lock)
+		
+	}	
+	
+	set_design(id){
+		this.id=id;
+		this.bcg.texture=gres['design_'+id].texture;
+	}
+	
+}
+
 anim2 = {
 		
 	c1: 1.70158,
@@ -271,9 +317,8 @@ anim2 = {
 	c5: (2 * Math.PI) / 4.5,
 	empty_spr : {x:0, visible:false, ready:true, alpha:0},
 		
-	slot: [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
-	
-	
+	slot: Array(30).fill(null),
+		
 	
 	any_on() {		
 		for (let s of this.slot)
@@ -298,8 +343,44 @@ anim2 = {
 	
 	},
 	
+	flick(x){
+		
+		return Math.abs(Math.sin(x*6.5*3.141593));
+		
+	},
+	
+	easeBridge(x){
+		
+		if(x<0.1)
+			return x*10;
+		if(x>0.9)
+			return (1-x)*10;
+		return 1		
+	},
+	
+	ease3peaks(x){
+
+		if (x < 0.16666) {
+			return x / 0.16666;
+		} else if (x < 0.33326) {
+			return 1-(x - 0.16666) / 0.16666;
+		} else if (x < 0.49986) {
+			return (x - 0.3326) / 0.16666;
+		} else if (x < 0.66646) {
+			return 1-(x - 0.49986) / 0.16666;
+		} else if (x < 0.83306) {
+			return (x - 0.6649) / 0.16666;
+		} else if (x >= 0.83306) {
+			return 1-(x - 0.83306) / 0.16666;
+		}		
+	},
+	
 	easeOutBack(x) {
 		return 1 + this.c3 * Math.pow(x - 1, 3) + this.c1 * Math.pow(x - 1, 2);
+	},
+	
+	easeOutBack2(x) {
+		return -5.875*Math.pow(x, 2)+6.875*x;
 	},
 	
 	easeOutElastic(x) {
@@ -346,7 +427,7 @@ anim2 = {
 	},
 	
 	ease2back(x) {
-		return Math.sin(x*Math.PI*2);
+		return Math.sin(x*Math.PI);
 	},
 	
 	easeInOutCubic(x) {
@@ -356,8 +437,7 @@ anim2 = {
 	
 	shake(x) {
 		
-		return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-		
+		return Math.sin(x*2 * Math.PI);	
 		
 	},	
 	
@@ -382,9 +462,9 @@ anim2 = {
 				}
 				
 				//для возвратных функцие конечное значение равно начальному
-				if (func === 'ease2back')
+				if (func === 'ease2back' || func === 'shake' || func === 'ease3peaks')
 					for (let key in params)
-						params[key][1]=params[key][0];					
+						params[key][1]=params[key][0];				
 					
 				this.slot[i] = {
 					obj,
@@ -480,8 +560,21 @@ sound = {
 		
 		game_res.resources[snd_res].sound.play();	
 		
-	}
+	},
 	
+	switch(){
+		
+		if (this.on){
+			this.on=0;
+			objects.pref_req.text=['Звуки отключены','Sounds is off'][LANG];
+			
+		} else{
+			this.on=1;
+			objects.pref_req.text=['Звуки включены','Sounds is on'][LANG];
+		}
+		anim2.add(objects.pref_req,{alpha:[0,1]}, false, 3,'easeBridge',false);		
+		
+	}
 	
 }
 
@@ -581,12 +674,10 @@ big_message = {
 
 board_func={
 
-	checker_to_move: "",
-	target_point: 0,
-	tex_2:0,
-	tex_1:0,
-	chk_type: 'quad',
-	moves: [],
+	checker_to_move:'',
+	target_point:0,
+	chips_tex:[0,0,0],
+	moves:[],
 	
 	move_end_callback(){},
 
@@ -600,30 +691,24 @@ board_func={
 		var ind=0;
 		for (var x=0;x<8;x++) {
 			for (var y=0;y<8;y++) {
+				
+				const chip_id=g_board[y][x];
+				if (chip_id){
 
-				if (g_board[y][x]!==0)
-				{
-					if (g_board[y][x]===2)
-						objects.checkers[ind].texture=this.tex_2;
-
-					if (g_board[y][x]===1)
-						objects.checkers[ind].texture=this.tex_1;
-
-					objects.checkers[ind].x=x*50+objects.board.x+10;
-					objects.checkers[ind].y=y*50+objects.board.y+10;
+					objects.checkers[ind].x=x*50+objects.board.x+20;
+					objects.checkers[ind].y=y*50+objects.board.y+20;
 
 					objects.checkers[ind].ix=x;
 					objects.checkers[ind].iy=y;
-					objects.checkers[ind].m_id=g_board[y][x];
+					objects.checkers[ind].m_id=chip_id;
+					objects.checkers[ind].texture=this.chips_tex[chip_id];
 					objects.checkers[ind].alpha=1;
-
 
 					objects.checkers[ind].visible=true;
 					ind++;
 				}
 			}
 		}
-
 	},
 
 	get_checker_by_pos(x,y) {
@@ -850,8 +935,8 @@ board_func={
 		moving_chip = this.get_checker_by_pos(move_data.x1, move_data.y1);		
 							
 		for (let i = 1 ; i < moves.length; i++) {			
-			let tar_x = moves[i][0] * 50 + objects.board.x+10;
-			let tar_y = moves[i][1] * 50 + objects.board.y+10;
+			let tar_x = moves[i][0] * 50 + objects.board.x+20;
+			let tar_y = moves[i][1] * 50 + objects.board.y+20;
 			await anim2.add(moving_chip,{x:[moving_chip.x, tar_x], y: [moving_chip.y, tar_y]}, true, 0.16,'linear');
 			sound.play('move');
 		}		
@@ -893,8 +978,8 @@ board_func={
 
 		var [next_ix,next_iy]=this.moves[this.target_point];
 
-		this.checker_to_move.tx=next_ix*50+objects.board.x+10;
-		this.checker_to_move.ty=next_iy*50+objects.board.y+10;
+		this.checker_to_move.tx=next_ix*50+objects.board.x+20;
+		this.checker_to_move.ty=next_iy*50+objects.board.y+20;
 
 		this.checker_to_move.dx=(this.checker_to_move.tx-this.checker_to_move.x)/10;
 		this.checker_to_move.dy=(this.checker_to_move.ty-this.checker_to_move.y)/10;
@@ -1337,7 +1422,6 @@ bot_game = {
 
 	activate() {
 
-
 		//устанавливаем локальный и удаленный статус
 		set_state ({state : 'b'});
 
@@ -1367,9 +1451,8 @@ bot_game = {
 		if (my_data.rating>=2000)
 			g_board = [[0,0,0,0,0,0,0,0],[0,0,0,0,2,2,0,0],[0,0,2,2,2,2,0,0],[0,0,2,2,0,0,0,0],[0,2,2,0,0,0,0,0],[0,2,2,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
 
-
-
 		board_func.update_board();
+		
 
 	},
 
@@ -1459,9 +1542,173 @@ var make_text = function (obj, text, max_width) {
 	obj.text =  text;
 }
 
+pref={
+	
+	board_texture:null,
+	chips:[0,{texture:null},{texture:null}],	
+	selected_design:0,
+	design_loader:new PIXI.Loader(),
+		
+	activate(){
+		
+		if(anim2.any_on()||objects.pref_cont.visible){
+			sound.play('locked');
+			return;			
+		}
+		
+		sound.play('click');
+		
+		anim2.add(objects.pref_cont,{scale_x:[0,1]}, true, 0.2,'linear');
+				
+		//устанавливаем текущий фон
+		this.select_design(objects.designs[my_data.design_id]);
+		
+		//определяем доступные скиниы
+		for (let i in DESIGN_DATA){			
+			const rating_req=DESIGN_DATA[i].rating;
+			const games_req=DESIGN_DATA[i].games;	
+			const av=my_data.rating>=rating_req&&my_data.games>=games_req;
+			objects.designs[i].lock.visible=!av;
+		}
+		
+	},	
+		
+	async load_design(design_id){
+		
+		const design_name=DESIGN_DATA[design_id].name;
+		
+		const board_res_name=design_name+'_board';
+		const chip1_res_name=design_name+'_chip1';
+		const chip2_res_name=design_name+'_chip2';
+		const d_res=this.design_loader.resources;
+		
+		if (!d_res[board_res_name]) this.design_loader.add(board_res_name,git_src+'/res/design/'+board_res_name+'.png');		
+		if (!d_res[chip1_res_name]) this.design_loader.add(chip1_res_name,git_src+'/res/design/'+chip1_res_name+'.png');	
+		if (!d_res[chip2_res_name]) this.design_loader.add(chip2_res_name,git_src+'/res/design/'+chip2_res_name+'.png');
+
+		console.time('load design');
+		await new Promise(resolve=> this.design_loader.load(resolve))
+		console.timeEnd('load design');
+		this.board_texture=d_res[board_res_name].texture;
+		this.chips[1].texture=d_res[chip1_res_name].texture;
+		this.chips[2].texture=d_res[chip2_res_name].texture;
+	},
+	
+	message(msg){
+		
+		objects.pref_req.text=msg;
+		anim2.add(objects.pref_req,{alpha:[0,1]}, false, 3,'easeBridge',false);	
+	
+	},
+	
+	design_down(bcg){
+		
+		const rating_req=DESIGN_DATA[bcg.id].rating;
+		const games_req=DESIGN_DATA[bcg.id].games;
+		
+		if (!(my_data.rating>=rating_req||my_data.games>=games_req)){
+			anim2.add(bcg.lock,{angle:[bcg.lock.angle,bcg.lock.angle+10]}, true, 0.15,'shake');
+			const msg=[`НУЖНО: Рейтинг >${rating_req} или Игры >${games_req}`,`NEED: Rating >${rating_req} or Games >${games_req}`][LANG];
+			this.message(msg);
+			sound.play('locked');
+			return;
+		}
+		
+		sound.play('click');
+		this.select_design(bcg);	
+	},
+	
+	select_design(design){
+		this.selected_design=design;
+		objects.selected_design.x=design.x;
+		objects.selected_design.y=design.y;	
+	},
+	
+	sound_switch_down(){
+		
+		if(anim2.any_on()){
+			sound.play('locked');
+			return;			
+		}
+		
+		sound.switch();
+		sound.play('click');
+		const tar_x=sound.on?103:68;
+		anim2.add(objects.sound_slider,{x:[objects.sound_slider.x,tar_x]}, true, 0.1,'linear');	
+		
+	},
+	
+	ok_button_down(){
+		
+		if(anim2.any_on()){
+			sound.play('locked');
+			return;			
+		}
+		
+		sound.play('close');
+		this.close();
+		if(my_data.design_id!==this.selected_design.id){
+			my_data.design_id=this.selected_design.id;
+			fbs.ref('players/'+my_data.uid+'/design_id').set(my_data.design_id);
+			this.load_design(my_data.design_id);
+		}
+		
+
+				
+	},
+	
+	async change_nick_down() {
+
+		if(anim2.any_on()){
+			sound.play('locked');
+			return;			
+		}
+		
+		//провряем можно ли менять ник
+		const tm=Date.now();
+		const days_since_nick_change=~~((tm-my_data.nick_tm)/86400000);
+		const days_befor_change=30-days_since_nick_change;
+		const ln=days_befor_change%10;
+		const opt=[0,5,6,7,8,9].includes(ln)*0+[2,3,4].includes(ln)*1+(ln===1)*2;
+		const day_str=['дней','дня','день'][opt];
+
+		if (days_befor_change>0){
+			const msg=[`Поменять имя можно через ${days_befor_change} ${day_str}`,`Wait ${days_befor_change} days`][LANG];
+			this.message(msg);
+			sound.play('locked');
+			return;
+		}
+				
+		const res=await ad.show2();
+		if(res!=='ok'){
+			this.message(["Какая-то ошибка при показе рекламы","Error when showing ad"][LANG]);
+			//return;
+		}
+					
+		const nick=await feedback.show('',15);
+		if (nick[0]==='sent'){
+			my_data.name=nick[1];
+			fbs.ref("players/"+my_data.uid+"/name").set(my_data.name);
+			make_text(objects.my_card_name,my_data.name,150);
+			set_state({});
+			this.message(['Имя изменено','Name has been changed'][LANG]);
+			fbs.ref('players/'+my_data.uid+'/nick_tm').set(tm);
+			my_data.nick_tm=tm;
+		}
+
+	},
+	
+	close(){
+		
+		anim2.add(objects.pref_cont,{scale_x:[1,0]}, false, 0.2,'linear');	
+		
+	}
+		
+}
+
 game = {
 
-	opponent : "",
+	opponent : '',
 	selected_checker : 0,
 	checker_is_moving : 0,
 	state : 0,
@@ -1475,38 +1722,39 @@ game = {
 		
 		this.state = 'on';
 
-		if (role==="master") {
-			my_turn=1;			
-			board_func.tex_2=gres['chk_'+board_func.chk_type+'_2'].texture;
-			board_func.tex_1=gres['chk_'+board_func.chk_type+'_1'].texture;
-			message.add(['Вы играете красными шашками. Последний ход за соперником','You play with red checkers. The last move for the opponent'][LANG])
+		if (role==='master') {
+			my_turn=1;		
+			message.add(['Ваши шашки в нижнем правом углу. Последний ход за соперником','Ready to play. The last move for the opponent'][LANG])
 			
 		} else {
 			my_turn=0;
-			board_func.tex_2=gres['chk_'+board_func.chk_type+'_1'].texture;
-			board_func.tex_1=gres['chk_'+board_func.chk_type+'_2'].texture;
-			message.add(['Вы играете белыми шашками. Последний ход за вами','You play with white checkers. The last move is yours'][LANG])
+			message.add(['Ваши шашки в нижнем правом углу. Последний ход за вами','Ready to play. The last move is yours'][LANG])
 		}
 		
-							
-		if (this.opponent !== "")
-			this.opponent.clear();
+		//устанаваем вид моих и чужих фишек в зависимости у кого первый ход и текущего дизайна
+		board_func.chips_tex[1]=pref.chips[2-my_turn].texture;
+		board_func.chips_tex[2]=pref.chips[1+my_turn].texture;		
+		
+		//устанаваем текстуру
+		objects.board.texture=pref.board_texture;
+
+		if (this.opponent!=='') this.opponent.clear();
 		
 		//если открыт лидерборд то закрываем его
-		if (objects.lb_1_cont.visible===true)
-			lb.close();
+		if (objects.lb_1_cont.visible===true) lb.close();
 		
 		//если открыт чат то закрываем его
-		if (objects.chat_cont.visible)
-			chat.close();
+		if (objects.chat_cont.visible) chat.close();
 		
 		//если открыт просмтотр игры то закрываем его
-		if (game_watching.on)
-			game_watching.close();		
+		if (game_watching.on) game_watching.close();		
 		
 		this.opponent = opponent;
 		this.opponent.activate();
-			
+		
+		//настраиваем дизайн
+		
+					
 		sound.play('note');
 
 		//это если перешли из бот игры
@@ -1516,8 +1764,7 @@ game = {
 		//основные элементы игры
 		objects.board.visible=true;
 		objects.my_card_cont.visible=true;
-		objects.opp_card_cont.visible=true;
-		
+		objects.opp_card_cont.visible=true;		
 		
 		objects.cur_move_text.visible=true;
 
@@ -1566,13 +1813,13 @@ game = {
 	
 	mouse_down_on_board(e) {
 
-		if (anim2.any_on()===true) {
+		if (anim2.any_on()) {
 			sound.play('locked');
 			return
 		};
 
 		//проверяем что моя очередь
-		if (my_turn === 0) {
+		if (!my_turn) {
 			message.add(["Не твоя очередь","Not your turn"][LANG]);
 			return;
 		}
@@ -1582,16 +1829,17 @@ game = {
 		var my = e.data.global.y/app.stage.scale.y;
 
 		//координаты указателя на игровой доске
-		var new_x=Math.floor(8*(mx-objects.board.x-10)/400);
-		var new_y=Math.floor(8*(my-objects.board.y-10)/400);
+		var new_x=Math.floor(8*(mx-objects.board.x-20)/400);
+		var new_y=Math.floor(8*(my-objects.board.y-20)/400);
 
 		//если выбрана новая шашка
-		if (this.selected_checker===0)
+		if (!this.selected_checker)
 		{
 			//находим шашку по координатам
 			this.selected_checker=board_func.get_checker_by_pos(new_x,new_y);
 
-			if (this.selected_checker.m_id===my_checkers)
+			//если мою выбрали фишку
+			if (this.selected_checker.m_id===1)
 			{
 				objects.selected_frame.x=this.selected_checker.x;
 				objects.selected_frame.y=this.selected_checker.y;
@@ -1610,7 +1858,7 @@ game = {
 			}
 		}
 
-		if (this.selected_checker!==0)
+		if (this.selected_checker)
 		{
 
 			//если нажали на выделенную шашку то отменяем выделение
@@ -3180,148 +3428,6 @@ main_menu = {
 
 	},
 
-	rules_button_down () {
-
-		if (anim2.any_on()===true) {
-			sound.play('locked');
-			return
-		};
-
-		sound.play('click');
-	
-		anim2.add(objects.rules_cont,{y:[-450, objects.rules_cont.sy]}, true, 0.5,'easeOutBack');
-
-	},
-
-	rules_ok_down () {
-
-		anim2.add(objects.rules_cont,{y:[objects.rules_cont.sy, -450]}, false, 0.5,'easeInBack');
-
-	},
-
-	pref_button_down () {
-
-		if (anim2.any_on()===true) {
-			sound.play('locked');
-			return
-		};
-			
-		sound.play('click');
-		objects.pref_cont.change_name_pressed=false;
-		anim2.add(objects.pref_cont,{y:[-200, objects.pref_cont.sy]}, true, 0.5,'easeOutBack');
-
-
-	},
-
-	pref_ok_down() {
-
-		sound.play('close');
-		anim2.add(objects.pref_cont,{y:[objects.pref_cont.sy, -200]}, false, 0.5,'easeInBack');
-
-	},
-		
-	async pref_change_nick_down() {
-
-		if(objects.pref_cont.change_name_pressed) return;
-		objects.pref_cont.change_name_pressed=true;
-				
-		//провряем можно ли менять ник
-		const tm=Date.now();
-		const days_since_nick_change=~~((tm-my_data.nick_tm)/86400000);
-		const days_befor_change=30-days_since_nick_change;
-		const ln=days_befor_change%10;
-		const opt=[0,5,6,7,8,9].includes(ln)*0+[2,3,4].includes(ln)*1+(ln===1)*2;
-		const day_str=['дней','дня','день'][opt];
-
-		if (days_befor_change>0){
-			message.add([`Поменять ник можно через ${days_befor_change} ${day_str}`,`Wait ${days_befor_change} days`][LANG]);
-			return;
-		}
-				
-		const res=await ad.show2();
-		if(res!=='ok'){
-			message.add(["Какая-то ошибка при показе рекламы","Error when showing ad"][LANG]);
-			//return;
-		}
-					
-		const nick=await feedback.show('',15);
-		if (nick[0]==='sent'){
-			my_data.name=nick[1];
-			fbs.ref("players/"+my_data.uid+"/name").set(my_data.name);
-			make_text(objects.my_card_name,my_data.name,150);
-			set_state({});
-			message.add(['Имя изменено','Name has been changed'][LANG]);
-			fbs.ref('players/'+my_data.uid+'/nick_tm').set(tm);
-			my_data.nick_tm=tm;
-		}
-
-	},
-		
-	async chat_button_down() {
-		
-		if (anim2.any_on()===true) {
-			sound.play('locked');
-			return
-		};
-
-		sound.play('click');
-
-		await this.close();
-		
-		chat.activate();
-		
-		
-	},
-
-	chk_type_sel(i) {
-
-		if (i===0)
-		{
-			objects.chk_opt_frame.x=60;
-			objects.chk_opt_frame.y=70;
-			board_func.chk_type = 'quad';
-
-		}
-
-		if (i===1)
-		{
-			objects.chk_opt_frame.x=160;
-			objects.chk_opt_frame.y=70;
-			board_func.chk_type = 'star';
-
-		}
-
-		if (i===2)
-		{
-			objects.chk_opt_frame.x=260;
-			objects.chk_opt_frame.y=70;
-			board_func.chk_type = 'round';
-		}
-	},
-
-	pref_sound_switched() {
-		
-		if (objects.pref_sound_switch.ready === false) {
-			sound.play('locked');
-			return;
-		}
-		
-		if (sound.on === 1) {
-			anim2.add(objects.pref_sound_switch,{x:[127, 91]}, true, 0.25,'linear');		
-			sound.on = 0;
-			return;
-		}
-
-		if (sound.on === 0){
-			
-			anim2.add(objects.pref_sound_switch,{x:[91, 127]}, true, 0.25,'linear');		
-			sound.on = 1;	
-			sound.play('close');			
-			return;			
-		}
-		
-	}
-
 }
 
 chat = {
@@ -4257,9 +4363,18 @@ lobby={
 		objects.invite_button_title.text=['Пригласить','Send invite'][LANG];
 
 		let invite_available = 	lobby._opp_data.uid !== my_data.uid;
-		invite_available=invite_available && (objects.mini_cards[card_id].state==="o" || objects.mini_cards[card_id].state==="b");
-		invite_available=invite_available || lobby._opp_data.uid==="BOT";
+		invite_available=invite_available && (objects.mini_cards[card_id].state==='o' || objects.mini_cards[card_id].state==='b');
+		invite_available=invite_available || lobby._opp_data.uid==='BOT';
 		invite_available=invite_available && lobby._opp_data.rating >= 50 && my_data.rating >= 50;
+		
+		//на моей карточке показываем стастику
+		if(lobby._opp_data.uid===my_data.uid){
+			objects.invite_my_stat.text=[`Рейтинг: ${my_data.rating}\nИгры: ${my_data.games}`,`Rating: ${my_data.rating}\nGames: ${my_data.games}`][LANG]
+			objects.invite_my_stat.visible=true;
+		}else{
+			objects.invite_my_stat.visible=false;
+		}
+		
 		
 		//кнопка удаления комментариев
 		objects.fb_delete_button.visible=my_data.uid===lobby._opp_data.uid;
@@ -5336,7 +5451,10 @@ async function init_game_env(lang) {
 	my_data.games = (other_data && other_data.games) || 0;
 	my_data.name = (other_data && other_data.name) || my_data.name;
 	my_data.nick_tm = (other_data && other_data.nick_tm) || 0;
+	my_data.design_id = (other_data && other_data.design_id) || 0;
 	
+	//загружаем дизайн
+	pref.load_design(my_data.design_id);
 	
 	//проверяем блокировку
 	check_blocked();
@@ -5424,7 +5542,7 @@ async function load_resources() {
 
 	document.getElementById("m_progress").style.display = 'flex';
 
-	let git_src="https://akukamil.github.io/corners_gp/"
+	git_src="https://akukamil.github.io/corners_gp/"
 	//git_src=""
 
 	//подпапка с ресурсами
@@ -5461,13 +5579,13 @@ async function load_resources() {
 	game_res.onProgress.add(function(loader, resource) {
 		document.getElementById("m_bar").style.width =  Math.round(loader.progress)+"%";
 	});
-
 	
 	
 	await new Promise((resolve, reject)=> game_res.load(resolve))
 	
 	//убираем элементы загрузки
 	document.getElementById("m_progress").outerHTML = "";	
+	game_res.onProgress=null;
 
 	//короткое обращение к ресурсам
 	gres=game_res.resources;
