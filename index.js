@@ -562,20 +562,6 @@ sound = {
 		
 	},
 	
-	switch(){
-		
-		if (this.on){
-			this.on=0;
-			objects.pref_req.text=['Звуки отключены','Sounds is off'][LANG];
-			
-		} else{
-			this.on=1;
-			objects.pref_req.text=['Звуки включены','Sounds is on'][LANG];
-		}
-		anim2.add(objects.pref_req,{alpha:[0,1]}, false, 3,'easeBridge',false);		
-		
-	}
-	
 }
 
 message =  {
@@ -1548,6 +1534,7 @@ pref={
 	chips:[0,{texture:null},{texture:null}],	
 	selected_design:0,
 	design_loader:new PIXI.Loader(),
+	sound_on:1,
 		
 	activate(){
 		
@@ -1631,7 +1618,16 @@ pref={
 			return;			
 		}
 		
-		sound.switch();
+		if (this.sound_on){
+			this.sound_on=0;
+			objects.pref_req.text=['Звуки отключены','Sounds is off'][LANG];
+			
+		} else{
+			this.sound_on=1;
+			objects.pref_req.text=['Звуки включены','Sounds is on'][LANG];
+		}
+		anim2.add(objects.pref_req,{alpha:[0,1]}, false, 3,'easeBridge',false);		
+		sound.on=this.sound_on;
 		sound.play('click');
 		const tar_x=sound.on?113:78;
 		anim2.add(objects.sound_slider,{x:[objects.sound_slider.x,tar_x]}, true, 0.1,'linear');	
@@ -5215,14 +5211,13 @@ function set_state(params) {
 
 function vis_change() {
 
-		if (document.hidden === true) {
-			hidden_state_start = Date.now();			
-			sound.on=0;
-		} else {
-			sound.on=1;	
-		}		
-		set_state({hidden : document.hidden});
-		
+	if (document.hidden === true) {
+		hidden_state_start = Date.now();			
+		sound.on=0;
+	} else {
+		sound.on=pref.sound_on;	
+	}		
+	set_state({hidden : document.hidden});
 		
 }
 
