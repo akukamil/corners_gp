@@ -1732,8 +1732,9 @@ game = {
 		}
 		
 		//устанаваем вид моих и чужих фишек в зависимости у кого первый ход и текущего дизайна
-		board_func.chips_tex[1]=pref.chips[2-my_turn].texture;
-		board_func.chips_tex[2]=pref.chips[1+my_turn].texture;		
+		board_func.chips_tex[1]=pref.chips[1+my_turn].texture;			
+		board_func.chips_tex[2]=pref.chips[2-my_turn].texture;
+	
 		
 		//устанаваем текстуру
 		objects.board.texture=pref.board_texture;
@@ -2092,8 +2093,8 @@ game_watching={
 		objects.my_card_rating.text=card_data['rating_text'+master_ind].text;
 		objects.opp_card_rating.text=card_data['rating_text'+slave_ind].text;		
 		
-		objects.gw_master_chip.texture=board_func.chips_tex[1]=pref.chips[1].texture;
-		objects.gw_slave_chip.texture=board_func.chips_tex[2]=pref.chips[2].texture;	
+		objects.gw_master_chip.texture=board_func.chips_tex[1]=pref.chips[2].texture;
+		objects.gw_slave_chip.texture=board_func.chips_tex[2]=pref.chips[1].texture;	
 		
 		//устанаваем текстуру доски
 		objects.board.texture=pref.board_texture;
