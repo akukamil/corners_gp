@@ -23,6 +23,12 @@ my_log={
 	
 };
 
+fbs_once=async function(path){
+	const info=await fbs.ref(path).once('value');
+	return info.val();	
+}
+
+
 irnd = function(min,max) {	
     min = Math.ceil(min);
     max = Math.floor(max);
@@ -3447,7 +3453,7 @@ chat = {
 
 		anim2.add(objects.chat_cont,{alpha:[0, 1]}, true, 0.1,'linear');
 		objects.desktop.texture=gres.desktop.texture;
-		objects.chat_enter_button.visible=my_data.rating>1430;
+		objects.chat_enter_button.visible=my_data.games>200;
 
 	},
 	
