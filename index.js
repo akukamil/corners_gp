@@ -1593,9 +1593,9 @@ pref={
 		const chip2_res_name=design_name+'_chip2';
 		const d_res=this.design_loader.resources;
 		
-		if (!d_res[board_res_name]) this.design_loader.add(board_res_name,git_src+'/res/design/'+board_res_name+'.png');		
-		if (!d_res[chip1_res_name]) this.design_loader.add(chip1_res_name,git_src+'/res/design/'+chip1_res_name+'.png');	
-		if (!d_res[chip2_res_name]) this.design_loader.add(chip2_res_name,git_src+'/res/design/'+chip2_res_name+'.png');
+		if (!d_res[board_res_name]) this.design_loader.add(board_res_name,git_src+'res/design/'+board_res_name+'.png');		
+		if (!d_res[chip1_res_name]) this.design_loader.add(chip1_res_name,git_src+'res/design/'+chip1_res_name+'.png');	
+		if (!d_res[chip2_res_name]) this.design_loader.add(chip2_res_name,git_src+'res/design/'+chip2_res_name+'.png');
 
 		console.time('load design');
 		await new Promise(resolve=> this.design_loader.load(resolve))
