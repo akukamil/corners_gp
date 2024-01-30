@@ -3480,6 +3480,7 @@ chat={
 	moderation_mode:0,
 	block_next_click:0,
 	kill_next_click:0,
+	delete_message_mode:0,
 	
 	activate() {	
 
@@ -3601,13 +3602,18 @@ chat={
 			this.kill_next_click=0;
 		}
 		
+		if(this.delete_message_mode){			
+			fbs.ref(`${chat_path}/${player_data.index}`).remove();
+			console.log(`сообщение ${player_data.index} удалено`)
+		}
 		
+		
+		if(this.moderation_mode||this.block_next_click||this.kill_next_click||this.delete_message_mode) return;
 		
 		if (objects.chat_keyboard_cont.visible)		
 			keyboard.response_message(player_data.uid,player_data.name.text);
 		else
 			lobby.show_invite_dialog_from_chat(player_data.uid,player_data.name.text);
-		
 		
 	},
 			
