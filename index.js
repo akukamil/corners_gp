@@ -1583,8 +1583,7 @@ pref={
 		
 		return 1;
 	},
-	
-		
+			
 	async load_design(design_id){
 		
 		const design_name=DESIGN_DATA[design_id].name;
@@ -1657,25 +1656,6 @@ pref={
 		const tar_x=sound.on?113:78;
 		anim2.add(objects.sound_slider,{x:[objects.sound_slider.x,tar_x]}, true, 0.1,'linear');	
 		
-	},
-	
-	ok_button_down(){
-		
-		if(anim2.any_on()){
-			sound.play('locked');
-			return;			
-		}
-		
-		sound.play('close');
-		this.close();
-		if(my_data.design_id!==this.selected_design.id){
-			my_data.design_id=this.selected_design.id;
-			fbs.ref('players/'+my_data.uid+'/design_id').set(my_data.design_id);
-			this.load_design(my_data.design_id);
-		}
-		
-
-				
 	},
 	
 	async change_name(){
@@ -1761,9 +1741,14 @@ pref={
 			players_cache.update_avatar(my_data.uid).then(()=>{
 				const my_card=objects.mini_cards.find(card=>card.uid===my_data.uid);
 				my_card.avatar.texture=players_cache.players[my_data.uid].texture;				
-			})	
-			
-		}		
+			})				
+		}
+		
+		if(my_data.design_id!==this.selected_design.id){
+			my_data.design_id=this.selected_design.id;
+			fbs.ref('players/'+my_data.uid+'/design_id').set(my_data.design_id);
+			this.load_design(my_data.design_id);
+		}
 		
 	}
 	
