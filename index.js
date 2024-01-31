@@ -5329,19 +5329,6 @@ async function define_platform_and_language() {
 
 }
 
-async function check_blocked(){
-	
-	//загружаем остальные данные из файербейса
-	let _block_data = await fbs.ref("blocked/" + my_data.uid).once('value');
-	let block_data = _block_data.val();
-	
-	if (block_data) my_data.blocked=1;
-		
-	
-	
-	
-}
-
 async function init_game_env(lang) {
 				
 	
@@ -5507,7 +5494,7 @@ async function init_game_env(lang) {
 	pref.load_design(my_data.design_id);
 	
 	//проверяем блокировку
-	check_blocked();
+	my_data.blocked=await fbs_once('blocked/'+my_data.uid);
 		
 	//устанавлием имена
 	objects.id_name.set2(my_data.name,150);
