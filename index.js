@@ -3989,12 +3989,20 @@ lobby={
 		//если мы в игре то не обновляем карточки
 		if (state==='p'||state==='b')
 			return;
+		
+		
 
 		//это столы
 		let tables = {};
 		
 		//это свободные игроки
 		let single = {};
+		
+		//удаляем инвалидных игроков
+		for (let uid in players){	
+			if(!players[uid].name||!players[uid].rating||!players[uid].state)
+				delete players[uid];
+		}
 
 		//делаем дополнительный объект с игроками и расширяем id соперника
 		let p_data = JSON.parse(JSON.stringify(players));
@@ -5325,8 +5333,6 @@ async function define_platform_and_language() {
 	game_platform = 'UNKNOWN';	
 	LANG = await language_dialog.show();
 	
-	
-
 }
 
 async function init_game_env(lang) {
