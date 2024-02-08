@@ -5494,7 +5494,13 @@ async function init_game_env(lang) {
 	my_data.nick_tm = other_data?.nick_tm || 0;
 	my_data.avatar_tm = other_data?.avatar_tm || 0;
 	my_data.design_id = (other_data && other_data.design_id) || 0;
-	my_data.pic_url=other_data?.pic_url || my_data.orig_pic_url;
+	
+	//правильно определяем аватарку
+	if (other_data.pic_url && other_data.pic_url.includes('mavatar'))
+		my_data.pic_url=other_data.pic_url
+	else
+		my_data.pic_url=my_data.orig_pic_url
+	
 	
 	//загружаем дизайн
 	pref.load_design(my_data.design_id);
