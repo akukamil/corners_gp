@@ -5496,7 +5496,7 @@ async function init_game_env(lang) {
 		my_data.pic_url=my_data.orig_pic_url
 	
 	//загружаем мои данные в кэш
-	await players_cache.update(my_data.uid,{pic_url:my_data.pic_url});
+	await players_cache.update(my_data.uid,{pic_url:my_data.pic_url,rating:my_data.rating,name:my_data.name});
 	await players_cache.update_avatar(my_data.uid);
 	
 	//устанавливаем фотки в попап
