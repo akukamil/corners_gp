@@ -5461,13 +5461,7 @@ async function init_game_env(lang) {
 	}
 
 
-	//загружаем мои данные в кэш
-	await players_cache.update(my_data.uid,{pic_url:my_data.pic_url});
-	await players_cache.update_avatar(my_data.uid);
-	
-	//устанавливаем фотки в попап
-	objects.id_avatar.texture=players_cache.players[my_data.uid].texture;
-	objects.id_name.set2(my_data.name,150);
+
 
 
 	//это разные события
@@ -5500,6 +5494,14 @@ async function init_game_env(lang) {
 		my_data.pic_url=other_data.pic_url
 	else
 		my_data.pic_url=my_data.orig_pic_url
+	
+	//загружаем мои данные в кэш
+	await players_cache.update(my_data.uid,{pic_url:my_data.pic_url});
+	await players_cache.update_avatar(my_data.uid);
+	
+	//устанавливаем фотки в попап
+	objects.id_avatar.texture=players_cache.players[my_data.uid].texture;
+	objects.id_name.set2(my_data.name,150);
 	
 	
 	//загружаем дизайн
