@@ -5480,15 +5480,15 @@ async function init_game_env(lang) {
 		fbs.ref("players/"+my_data.uid+"/s_msg").remove();
 	}
 
-	my_data.rating = (other_data && other_data.rating) || 1400;
-	my_data.games = (other_data && other_data.games) || 0;
-	my_data.name = (other_data && other_data.name) || my_data.name;
+	my_data.rating = (other_data?.rating) || 1400;
+	my_data.games = (other_data?.games) || 0;
+	my_data.name = (other_data?.name) || my_data.name;
 	my_data.nick_tm = other_data?.nick_tm || 0;
 	my_data.avatar_tm = other_data?.avatar_tm || 0;
-	my_data.design_id = (other_data && other_data.design_id) || 0;
+	my_data.design_id = (other_data?.design_id) || 0;
 	
 	//правильно определяем аватарку
-	if (other_data.pic_url && other_data.pic_url.includes('mavatar'))
+	if (other_data?.pic_url && other_data.pic_url.includes('mavatar'))
 		my_data.pic_url=other_data.pic_url
 	else
 		my_data.pic_url=my_data.orig_pic_url
