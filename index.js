@@ -3957,7 +3957,7 @@ lobby={
 			chat.init();
 			
 			//создаем заголовки
-			const room_desc=['КОМНАТА #','ROOM #'][LANG]+{'states':1,'states2':2,'states3':3,'states4':4,'states5':5}[room_name];
+			const room_desc=['КОМНАТА #','ROOM #'][LANG]+{'states1':1,'states2':2,'states3':3,'states4':4,'states5':5}[room_name];
 			this.sw_header.header_list=[['ДОБРО ПОЖАЛОВАТЬ В ИГРУ УГОЛКИ ОНЛАЙН!','WELCOME!!!'][LANG],room_desc]
 			objects.lobby_header.text=this.sw_header.header_list[0];
 			this.sw_header.time=Date.now()+12000;
@@ -5500,8 +5500,7 @@ async function init_game_env(lang) {
 	//устанавливаем фотки в попап
 	objects.id_avatar.texture=players_cache.players[my_data.uid].texture;
 	objects.id_name.set2(my_data.name,150);
-	
-	
+		
 	//загружаем дизайн
 	pref.load_design(my_data.design_id);
 	
@@ -5512,16 +5511,16 @@ async function init_game_env(lang) {
 	objects.id_name.set2(my_data.name,150);
 	objects.my_card_name.set2(my_data.name,150);
 			
-	//номер комнаты
-	let rooms_ranges = [0,1399,1500,1650,9999]
-	if (my_data.rating > rooms_ranges[0] && my_data.rating <= rooms_ranges[1])
-		room_name= 'states';			
-	if (my_data.rating > rooms_ranges[1] && my_data.rating <= rooms_ranges[2])
-		room_name= 'states2';					
-	if (my_data.rating > rooms_ranges[2] && my_data.rating <= rooms_ranges[3])
-		room_name= 'states3';	
-	if (my_data.rating > rooms_ranges[3] && my_data.rating <= rooms_ranges[4])
-		room_name= 'states4';	
+	//номер комнаты в зависимости от рейтинга игрока
+	const rooms_bins=[0,1366,1437,1663,9999];
+	for (let i=1;i<rooms_bins.length;i++){
+		const f=rooms_bins[i-1];
+		const t=rooms_bins[i];		
+		if (my_data.rating>f&&my_data.rating<=t){
+			room_name='states'+i;
+			break;
+		}
+	}
 	
 	
 	//room_name= 'states5';	
