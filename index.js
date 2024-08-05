@@ -1354,6 +1354,7 @@ online_game = {
 		let old_rating = my_data.rating;
 		my_data.rating = this.calc_new_rating (my_data.rating, result_number);
 		fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating);
+		fbs.ref('pdata/'+my_data.uid+'/PUB/rating').set(my_data.rating);
 		
 		//обновляем даные на карточке
 		objects.my_card_rating.text=my_data.rating;
@@ -1383,7 +1384,8 @@ online_game = {
 			
 			//увеличиваем количество игр
 			my_data.games++;
-			fbs.ref("players/"+[my_data.uid]+"/games").set(my_data.games);		
+			fbs.ref("players/"+my_data.uid+"/games").set(my_data.games);		
+			fbs.ref("pdata/"+my_data.uid+"/games").set(my_data.games);	
 
 			//записываем результат в базу данных
 			let duration = ~~((Date.now() - this.start_time)*0.001);
@@ -1661,6 +1663,9 @@ pref={
 			my_data.nick_tm=Date.now();			
 			fbs.ref(`players/${my_data.uid}/nick_tm`).set(my_data.nick_tm);
 			fbs.ref(`players/${my_data.uid}/name`).set(my_data.name);
+			
+			fbs.ref(`pdata/${my_data.uid}/PRV/nick_tm`).set(my_data.nick_tm);
+			fbs.ref(`pdata/${my_data.uid}/PUB/name`).set(my_data.name);
 
 		}else{
 			
@@ -1720,10 +1725,11 @@ pref={
 			
 			
 			fbs.ref(`players/${my_data.uid}/pic_url`).set(this.cur_pic_url);
+			fbs.ref(`pdata/${my_data.uid}/PUB/pic_url`).set(this.cur_pic_url);
 			
 			my_data.avatar_tm=Date.now();
 			fbs.ref(`players/${my_data.uid}/avatar_tm`).set(my_data.avatar_tm);
-
+			fbs.ref(`pdata/${my_data.uid}/PRV/avatar_tm`).set(my_data.avatar_tm);
 						
 			players_cache.update_avatar(my_data.uid).then(()=>{
 				const my_card=objects.mini_cards.find(card=>card.uid===my_data.uid);
@@ -1734,6 +1740,7 @@ pref={
 		if(my_data.design_id!==this.selected_design.id){
 			my_data.design_id=this.selected_design.id;
 			fbs.ref('players/'+my_data.uid+'/design_id').set(my_data.design_id);
+			fbs.ref('pdata/'+my_data.uid+'/PRV/design_id').set(my_data.design_id);
 			this.load_design(my_data.design_id);
 		}
 		
@@ -5458,20 +5465,15 @@ async function init_game_env(lang) {
 		objects.id_loup.y=20*Math.cos(game_tick*8)+150;
 	}
 
-
-
-
-
 	//это разные события
 	document.addEventListener("visibilitychange", vis_change);
 	
 	//событие ролика мыши в карточном меню и нажатие кнопки
 	window.addEventListener("wheel", (event) => {chat.wheel_event(Math.sign(event.deltaY))});	
 	window.addEventListener('keydown',function(event){keyboard.keydown(event.key)});
-
 	
 	//загружаем остальные данные из файербейса
-	let _other_data = await fbs.ref("players/" + my_data.uid).once('value');
+	let _other_data = await fbs.ref('players/' + my_data.uid).once('value');
 	let other_data = _other_data.val();
 
 	//сервисное сообщение
@@ -5547,6 +5549,15 @@ async function init_game_env(lang) {
 	fbs.ref("players/"+my_data.uid+"/games").set(my_data.games);
 	fbs.ref("players/"+my_data.uid+"/tm").set(firebase.database.ServerValue.TIMESTAMP);
 		
+		
+	//новое 	
+	fbs.ref('pdata/'+my_data.uid+'/PUB/name').set(my_data.name);
+	fbs.ref('pdata/'+my_data.uid+'/PUB/pic_url').set(my_data.pic_url);
+	fbs.ref('pdata/'+my_data.uid+'/PUB/rating').set(my_data.rating);
+	fbs.ref('pdata/'+my_data.uid+'/PRV/games').set(my_data.games);
+	fbs.ref('pdata/'+my_data.uid+'/PRV/tm').set(firebase.database.ServerValue.TIMESTAMP);
+	
+	
 	//устанавливаем мой статус в онлайн
 	set_state({state : 'o'});
 	
