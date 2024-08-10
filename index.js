@@ -992,40 +992,30 @@ board_func={
 
 	brd_to_str(boardv,move){
 		
+		//кодируем доску в символы base64
 		let b_str=''
-		for (var y=0;y<8;y++){
-			for (var x=0;x<8;x++){
-				if (boardv[y][x]===1){
-					b_str+=y;
-					b_str+=x;					
-				}			
-			}
-		}
-		
-		for (var y=0;y<8;y++){
-			for (var x=0;x<8;x++){
-				if (boardv[y][x]===2){
-					b_str+=y;
-					b_str+=x;					
-				}				
-			}
-		}
-		
-		b_str+=move
-		return b_str;	
+		for (let p=1;p<=2;p++)
+			for (let y=0;y<8;y++)
+				for (let x=0;x<8;x++)
+					if (boardv[y][x]===p)
+						b_str+=this.base64[x+y*8];
+					
+		if (move) b_str+=move
+		return b_str;		
 		
 	},
 	
 	str_to_brd(str){
 		
-		t_board =[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]];
+		const t_board =[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]];
 
-		for (i=0;i<48;i+=2){
-			const y=str[i];
-			const x=str[i+1];
-			t_board[y][x]=1+(i>=24)*1;			
+		//декодируем строку в доску
+		for (i=0;i<24;i++){
+			const ind=this.base64.indexOf(str[i]);
+			const y=Math.floor(ind/8);
+			const x=ind%8;
+			t_board[y][x]=1+(i>=12);			
 		}		
-
 		return t_board;	
 		
 	},
@@ -1377,7 +1367,9 @@ online_game = {
 			sound.play('win');
 
 		//также фиксируем данные стола
-		fbs.ref("tables/"+game_id+'/board').set('fin');
+		setTimeout(()=>{
+		fbs.ref('tables/'+game_id+'/board').set({uid:my_data.uid,fin:result,tm:Date.now()});			
+		},400)
 		
 		//если игра результативна то записываем дополнительные данные
 		if (result_number === DRAW || result_number === LOSE || result_number === WIN) {
@@ -4376,6 +4368,8 @@ lobby={
 			sound.play('locked');
 			return
 		};
+		
+		objects.watch_button.visible=false;
 		
 		sound.play('click');
 		//закрываем диалог стола если он открыт
