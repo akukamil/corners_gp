@@ -2155,7 +2155,7 @@ game_watching={
 
 		if(!this.on) return;
 		
-		if(!board_data){
+		if(!board_data || board_data.f_str.length>35){){
 			g_board = [[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
 			board_func.update_board();
 			return;
