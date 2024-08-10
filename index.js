@@ -681,6 +681,7 @@ board_func={
 	target_point:0,
 	chips_tex:[0,0,0],
 	moves:[],
+	base64:'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789()',
 	
 	move_end_callback(){},
 
@@ -1001,7 +1002,7 @@ board_func={
 						b_str+=this.base64[x+y*8];
 					
 		if (move) b_str+=move
-		return '123';		
+		return b_str;		
 		
 	},
 	
