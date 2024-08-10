@@ -1968,7 +1968,8 @@ game = {
 
 
 			//также фиксируем данные стола
-			fbs.ref('tables/'+game_id+'/board').set({uid:my_data.uid,f_str:board_func.brd_to_str(g_board,made_moves),tm:Date.now()});
+			const p_made_moves=my_role==='slave'?made_moves+1:0;
+			fbs.ref('tables/'+game_id+'/board').set({uid:my_data.uid,f_str:board_func.brd_to_str(g_board,p_made_moves),tm:Date.now()});
 		
 		}
 		
@@ -5596,7 +5597,7 @@ async function load_resources() {
 	document.getElementById("m_progress").style.display = 'flex';
 
 	git_src="https://akukamil.github.io/corners_gp/"
-	git_src=""
+	//git_src=""
 
 	//подпапка с ресурсами
 	let lang_pack = ['RUS','ENG'][LANG];
