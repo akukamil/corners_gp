@@ -3555,25 +3555,19 @@ players_cache={
 	
 	players:{},
 		
-	my_texture_from(pic_url){
+	async my_texture_from(pic_url){
 		
 		//если это мультиаватар
 		if(pic_url.includes('mavatar')) pic_url=multiavatar(pic_url);
-		
-		//это функция ждет пока обработается изображение и маватара
-		return new Promise((resolve,reject) => {
-			
-			const texture = PIXI.Texture.from(pic_url);		
-
-			if (texture.baseTexture.valid) {
-				resolve(texture);
-			} else {
-				texture.baseTexture.on('loaded', () => {resolve(texture)});
-				texture.baseTexture.on('error', () => {resolve(PIXI.Texture.BLACK)});
-			}						
-
-		});		
 	
+
+		try{
+			const texture = await PIXI.Texture.fromURL(pic_url);	
+			return texture;
+		}catch(er){
+			return PIXI.Texture.WHITE;
+		}
+
 	},
 	
 	async update(uid,params={}){
