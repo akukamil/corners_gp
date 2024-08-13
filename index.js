@@ -3561,13 +3561,17 @@ players_cache={
 		if(pic_url.includes('mavatar')) pic_url=multiavatar(pic_url);
 		
 		//это функция ждет пока обработается изображение и маватара
-		return new Promise(resolve => {
-			const texture = PIXI.Texture.from(pic_url);
+		return new Promise((resolve,reject) => {
+			
+			const texture = PIXI.Texture.from(pic_url);		
+
 			if (texture.baseTexture.valid) {
 				resolve(texture);
 			} else {
-				texture.baseTexture.once('loaded', () => {resolve(texture)});
-			}
+				texture.baseTexture.on('loaded', () => {resolve(texture)});
+				texture.baseTexture.on('error', () => {resolve(PIXI.Texture.BLACK)});
+			}						
+
 		});		
 	
 	},
@@ -3602,7 +3606,7 @@ players_cache={
 			player.pic_url='https://akukamil.github.io/domino/vk_icon.png';
 				
 		//загружаем и записываем текстуру
-		if (player.pic_url) player.texture=await this.my_texture_from(player.pic_url);	
+		if (player.pic_url) player.texture=await this.my_texture_from(player.pic_url);		
 		
 	},
 	
