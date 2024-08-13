@@ -2054,6 +2054,10 @@ game_watching={
 		//восстанавливаем мое имя так как оно могло меняться
 		objects.my_card_name.set2(my_data.name,150);
 		objects.my_card_rating.text = my_data.rating;
+		
+		
+		anim2.kill_anim(objects.my_card_cont);
+		anim2.kill_anim(objects.opp_card_cont);
 				
 		objects.my_avatar.texture=objects.id_avatar.texture;
 		objects.gw_back_button.visible=false;
