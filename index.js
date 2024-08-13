@@ -3560,7 +3560,6 @@ players_cache={
 		//если это мультиаватар
 		if(pic_url.includes('mavatar')) pic_url=multiavatar(pic_url);
 	
-
 		try{
 			const texture = await PIXI.Texture.fromURL(pic_url);	
 			return texture;
@@ -3763,6 +3762,9 @@ pref={
 		anim2.add(objects.pref_info,{alpha:[0,1]}, false, 3,'easeBridge',false);	
 		objects.pref_info.text=['Менять аватар и имя можно 1 раз в 30 дней!','You can change name and avatar once per month'][LANG];
 		
+		
+		objects.pref_sound_slider.x=sound.on?367:322;
+		
 		//пока ничего не изменено
 		this.avatar_changed=0;
 		this.name_changed=0;
@@ -3921,7 +3923,7 @@ pref={
 		
 		sound.switch();
 		sound.play('click');
-		const tar_x=sound.on?357:312;
+		const tar_x=sound.on?367:322;
 		anim2.add(objects.pref_sound_slider,{x:[objects.pref_sound_slider.x,tar_x]}, true, 0.1,'linear');	
 		
 	},
