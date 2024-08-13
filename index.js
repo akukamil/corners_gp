@@ -661,10 +661,12 @@ big_message = {
 
 	async feedback_down() {
 		
-		if (objects.big_message_cont.ready===false) {
+		if (anim2.any_on()){
 			sound.play('locked');
 			return;			
 		}
+
+		sound.play('click');	
 
 		anim2.add(objects.big_message_cont,{y:[objects.big_message_cont.sy,450]}, false, 0.4,'easeInBack');	
 		
@@ -681,9 +683,13 @@ big_message = {
 
 	close() {
 		
-		if (objects.big_message_cont.ready===false)
-			return;
+		if (anim2.any_on()){
+			sound.play('locked');
+			return;			
+		}
 
+		sound.play('click');		
+		
 		anim2.add(objects.big_message_cont,{y:[objects.big_message_cont.sy,450]}, false, 0.4,'easeInBack');		
 		this.p_resolve("close");			
 	}
