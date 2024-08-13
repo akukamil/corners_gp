@@ -3867,46 +3867,7 @@ pref={
 		}
 		
 	},
-	
-	pointerdown(e){
-		
-		
-		if (anim2.any_on()) {
-			sound.play('blocked');
-			return;
-		}
-		
-		//x,y,x2,y2
-		const mx = e.data.global.x/app.stage.scale.x-objects.pref_cont.x;	
-		const my = e.data.global.y/app.stage.scale.y-objects.pref_cont.y;	
-		
-		//ищем попадание нажатия на кнопку
-		const margin = 5;
-		let button_data=0;
-		for (let button of this.buttons_data)	{
-			if (mx > button[0] - margin && mx <button[2] + margin  && my > button[1] - margin && my < button[3] + margin){
-				button_data=button;	
-				break;				
-			}			
-		}
-		
-		//если нашли то подсвечиваем
-		if (button_data){		
-
 			
-			const command=button_data[4];
-			if (command==='arrow_left') this.arrow_down(-1,button_data);
-			if (command==='arrow_right') this.arrow_down(1,button_data);
-			if (command==='photo_button') this.reset_avatar(button_data);
-			if (command==='change_name') this.change_name(button_data);
-			if (command==='design1') this.swipe_down(-1);
-			if (command==='design2') this.swipe_down(1);
-			if (command==='design3') this.goto_chat_down();
-			if (command==='design4') this.pref_down();
-			
-		}		
-	},
-		
 	async arrow_down(dir){
 		
 		if (anim2.any_on()||this.tex_loading) {
