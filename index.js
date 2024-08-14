@@ -53,30 +53,30 @@ class player_mini_card_class extends PIXI.Container {
 		
 		
 		this.bcg=new PIXI.Sprite(game_res.resources.mini_player_card.texture);
-		this.bcg.width=190;
+		this.bcg.width=200;
 		this.bcg.height=90;
 		this.bcg.interactive=true;
 		this.bcg.buttonMode=true;
 		this.bcg.pointerdown=function(){lobby.card_down(id)};
 		
 		this.table_rating_hl=new PIXI.Sprite(gres.table_rating_hl.texture);
-		this.table_rating_hl.width=190;
+		this.table_rating_hl.width=200;
 		this.table_rating_hl.height=90;
 		
 		this.avatar=new PIXI.Graphics();
-		this.avatar.x=20;
-		this.avatar.y=20;
-		this.avatar.w=this.avatar.h=50;
+		this.avatar.x=16;
+		this.avatar.y=16;
+		this.avatar.w=this.avatar.h=58.2;
 		
 		this.avatar_frame=new PIXI.Sprite(gres.circle_frame50.texture);
-		this.avatar_frame.x=10;
-		this.avatar_frame.y=10;
-		this.avatar_frame.width=this.avatar_frame.height=70;
+		this.avatar_frame.x=16-11.64;
+		this.avatar_frame.y=16-11.64;
+		this.avatar_frame.width=this.avatar_frame.height=81.48;
 				
 		this.name="";
 		this.name_text=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 22,align: 'center'});
 		this.name_text.anchor.set(1,0);
-		this.name_text.x=170;
+		this.name_text.x=180;
 		this.name_text.y=20;
 		this.name_text.tint=0xffffff;		
 
@@ -84,46 +84,46 @@ class player_mini_card_class extends PIXI.Container {
 		this.rating_text=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 30,align: 'center'});
 		this.rating_text.tint=0xffff00;
 		this.rating_text.anchor.set(1,0.5);
-		this.rating_text.x=170;
+		this.rating_text.x=180;
 		this.rating_text.y=60;		
 		this.rating_text.tint=0xffff00;
 
 		//аватар первого игрока
 		this.avatar1=new PIXI.Graphics();
-		this.avatar1.x=20;
-		this.avatar1.y=20;
-		this.avatar1.w=this.avatar1.h=50;
+		this.avatar1.x=19;
+		this.avatar1.y=16;
+		this.avatar1.w=this.avatar1.h=58.2;
 		
 		this.avatar1_frame=new PIXI.Sprite(gres.circle_frame50.texture);
-		this.avatar1_frame.x=10;
-		this.avatar1_frame.y=10;
-		this.avatar1_frame.width=this.avatar1_frame.height=70;
+		this.avatar1_frame.x=this.avatar1.x-11.64;
+		this.avatar1_frame.y=this.avatar1.y-11.64;
+		this.avatar1_frame.width=this.avatar1_frame.height=81.48;
 
 
 
 		//аватар второго игрока
 		this.avatar2=new PIXI.Graphics();
-		this.avatar2.x=120;
-		this.avatar2.y=20;
-		this.avatar2.w=this.avatar2.h=50;
+		this.avatar2.x=121;
+		this.avatar2.y=16;
+		this.avatar2.w=this.avatar2.h=58.2;
 		
 		this.avatar2_frame=new PIXI.Sprite(gres.circle_frame50.texture);
-		this.avatar2_frame.x=110;
-		this.avatar2_frame.y=10;
-		this.avatar2_frame.width=this.avatar2_frame.height=70;
+		this.avatar2_frame.x=this.avatar2.x-11.64;
+		this.avatar2_frame.y=this.avatar2.y-11.64;
+		this.avatar2_frame.width=this.avatar2_frame.height=81.48;
 		
 		
 		this.rating_text1=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 24,align: 'center'});
 		this.rating_text1.tint=0xffff00;
 		this.rating_text1.anchor.set(0.5,0);
-		this.rating_text1.x=45;
-		this.rating_text1.y=58;
+		this.rating_text1.x=48.1;
+		this.rating_text1.y=56;
 
 		this.rating_text2=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 24,align: 'center'});
 		this.rating_text2.tint=0xffff00;
 		this.rating_text2.anchor.set(0.5,0);
-		this.rating_text2.x=145;
-		this.rating_text2.y=58;		
+		this.rating_text2.x=150.1;
+		this.rating_text2.y=56;		
 		
 		this.name1="";
 		this.name2="";
