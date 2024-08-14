@@ -958,13 +958,17 @@ board_func={
 	async start_gentle_move(move_data, moves, board) {
 
 		moving_chip = this.get_checker_by_pos(move_data.x1, move_data.y1);		
-							
-		for (let i = 1 ; i < moves.length; i++) {			
-			let tar_x = moves[i][0] * 50 + objects.board.x+20;
-			let tar_y = moves[i][1] * 50 + objects.board.y+20;
-			await anim2.add(moving_chip,{x:[moving_chip.x, tar_x], y: [moving_chip.y, tar_y]}, true, 0.16,'linear');
-			sound.play('move');
-		}		
+				
+		if (!document.hidden){
+			for (let i = 1 ; i < moves.length; i++) {			
+				let tar_x = moves[i][0] * 50 + objects.board.x+20;
+				let tar_y = moves[i][1] * 50 + objects.board.y+20;
+				await anim2.add(moving_chip,{x:[moving_chip.x, tar_x], y: [moving_chip.y, tar_y]}, true, 0.16,'linear');
+				sound.play('move');
+			}		
+		}
+		
+		moving_chip.ready=true;
 		
 		var [sx,sy]=moves[0];
 		var [tx,ty]=moves[moves.length-1];
@@ -1999,14 +2003,16 @@ game_watching={
 		const new_board=board_func.str_to_brd(b_str);
 		
 		
-		
-		if (uid===this.master_uid){
-			anim2.add(objects.opp_card_cont,{alpha:[0.25,1]}, true, 0.3,'linear',false);
-			anim2.add(objects.my_card_cont,{alpha:[1,0.25]}, true, 0.3,'linear',false);
-		}else{
-			anim2.add(objects.opp_card_cont,{alpha:[1,0.25]}, true, 0.3,'linear',false);
-			anim2.add(objects.my_card_cont,{alpha:[0.25,1]}, true, 0.3,'linear',false);
+		if (!document.hidden){
+			if (uid===this.master_uid){
+				anim2.add(objects.opp_card_cont,{alpha:[0.25,1]}, true, 0.3,'linear',false);
+				anim2.add(objects.my_card_cont,{alpha:[1,0.25]}, true, 0.3,'linear',false);
+			}else{
+				anim2.add(objects.opp_card_cont,{alpha:[1,0.25]}, true, 0.3,'linear',false);
+				anim2.add(objects.my_card_cont,{alpha:[0.25,1]}, true, 0.3,'linear',false);
+			}			
 		}
+
 		
 		if (uid===this.slave_uid)
 			board_func.rotate_board(new_board)		
