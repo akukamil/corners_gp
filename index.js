@@ -5515,12 +5515,9 @@ main_loader={
 		//ресурсы
 		game_res=new PIXI.Loader();
 		gres=game_res.resources;
-	
-		//подпапка с ресурсами
-		const lang_pack = ['RUS','ENG'][LANG];	
 		
 		//добавляем фон отдельно
-		game_res.add('loader_bcg',git_src+'res/common/loader_bcg_ru_img.jpg');
+		game_res.add('loader_bcg',git_src+`res/common/loader_bcg_${['ru','en'][LANG]}_img.jpg`);
 		game_res.add('loader_bar_frame',git_src+'res/common//loader_bar_frame_img.png');	
 		game_res.add('loader_bar_bcg',git_src+'res/common/loader_bar_bcg_img.png');
 				
