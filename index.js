@@ -4171,7 +4171,7 @@ pin_panel={
 			
 		
 		
-		this.check_is_on=1;
+		
 		sound.play('click');
 
 		//выход в дефолтную комнату
@@ -4181,6 +4181,7 @@ pin_panel={
 		}else{		
 
 			//проверяем наличие комнаты
+			this.check_is_on=1;
 			const check_room=await fbs_once('states'+this.t_pin);
 			this.check_is_on=0;		
 			if (!check_room){
