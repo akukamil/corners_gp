@@ -393,6 +393,15 @@ anim2 = {
 			return 1;		
 	},
 	
+	easeTwiceBlink(x){
+		
+		if(x<0.333)
+			return 1;
+		if(x>0.666)
+			return 1;
+		return 0		
+	},
+	
 	easeOutBack(x) {
 		return 1 + this.c3 * Math.pow(x - 1, 3) + this.c1 * Math.pow(x - 1, 2);
 	},
@@ -2251,7 +2260,7 @@ keyboard={
 	
 }
 
-ad = {
+ad={
 		
 		
 	show() {
@@ -3152,7 +3161,7 @@ req_dialog = {
 		//если активен режим тишины
 		const tm=Date.now();
 		if(tm<this.silent_mode_tm){
-			fbs.ref('inbox/'+req_dialog._opp_data.uid).set({sender:my_data.uid,message:'REJECT_ALL',tm:Date.now()});
+			fbs.ref('inbox/'+uid).set({sender:my_data.uid,message:'REJECT_ALL',tm:Date.now()});
 			return;
 		}
 		
@@ -3926,6 +3935,19 @@ pref={
 		objects.pref_info.visible=true;
 	},
 			
+	pin_btn_down(){
+		
+		if (anim2.any_on()) {
+			sound.play('locked');
+			return
+		};
+
+		sound.play('click');
+		
+		pin_panel.activate();
+		
+	},
+			
 	sound_btn_down(){
 		
 		if(anim2.any_on()){
@@ -4022,6 +4044,196 @@ pref={
 		
 }
 
+pin_panel={
+	
+	buttons_data:[[20,101,69.13,150,'pin_button_1'],[80,101,129.13,150,'pin_button_2'],[140,101,190,151,'pin_button_3'],[20,160,70,210,'pin_button_4'],[80,160,130,210,'pin_button_5'],[140,160,190,210,'pin_button_6'],[20,220,70,271,'pin_button_7'],[80,221,130,271,'pin_button_8'],[140,221,190,271,'pin_button_9'],[20,281,130,331,'pin_button_create'],[140,281,250,331,'pin_button_enter'],[200,21,250,71,'pin_button_erase'],[200,101,250,151,'pin_button_close']],
+	t_pin:'',
+	check_is_on:0,
+	admin_mode:0,
+	
+	activate(){
+		
+		anim2.add(objects.pin_panel_cont,{alpha:[0, 1]}, true, 0.1,'linear');	
+		objects.pin_panel_msg.text='Введите четырехзначный номер комнаты';
+		anim2.add(objects.pin_panel_msg,{alpha:[0, 1]}, true, 0.15,'easeTwiceBlink');		
+		
+	},
+		
+	button_down(e){
+
+		//координаты нажатия в плоскости спрайта клавиатуры
+		let mx = e.data.global.x/app.stage.scale.x - objects.pin_panel_bcg.x;
+		let my = e.data.global.y/app.stage.scale.y - objects.pin_panel_bcg.y;
+		
+		//ищем попадание нажатия на кнопку
+		let margin = 2;
+		let button_data=0;
+		for (let k of this.buttons_data){
+			if (mx > k[0] - margin && mx <k[2] + margin  && my > k[1] - margin && my < k[3] + margin){
+				button_data=k;
+				break;
+			}			
+		}	
+		
+		if(!button_data) return;
+		
+		let [x,y,x2,y2,key]=button_data;
+		
+		//подсвечиваем клавишу
+		objects.pin_panel_hl.width=20+x2-x;
+		objects.pin_panel_hl.height=20+y2-y;		
+		objects.pin_panel_hl.x = x+objects.pin_panel_bcg.x-10;
+		objects.pin_panel_hl.y = y+objects.pin_panel_bcg.y-10;			
+		anim2.add(objects.pin_panel_hl,{alpha:[0, 1]}, false, 0.15,'easeTwiceBlink',false);
+		
+		
+		key=key.slice(11);
+		
+		if (isNaN(key)){
+			
+			if (key==='erase'){
+				this.t_pin='';
+				this.update_pin();				
+			}			
+			
+			if (key==='enter')
+				this.enter_room_down();					
+			
+			
+			if (key==='create')
+				this.create_room_down();			
+			
+			
+			if (key==='close')
+				this.close_button_down();		
+			
+			
+		}else{
+			
+			this.pin_button_down(key)
+			
+		}
+	
+		
+	},
+	
+	update_pin(){
+		
+		const t_pins=[objects.t_pin0,objects.t_pin1,objects.t_pin2,objects.t_pin3];		
+		t_pins.forEach(t=>t.text='');
+		for (let c=0;c<this.t_pin.length;c++)
+			t_pins[c].text=this.t_pin[c];
+		
+	},
+		
+	pin_button_down(num){
+		
+		if (anim2.any_on()) {
+			sound.play('locked');
+			return
+		};
+		sound.play('click');
+		
+		this.t_pin+=num;
+		if (this.t_pin.length>4) return;
+		this.update_pin();		
+	},
+	
+	create_room_down(){
+		
+		if(!this.admin_mode){
+			objects.pin_panel_msg.text='Это функция недоступна';
+			anim2.add(objects.pin_panel_msg,{alpha:[0, 1]}, true, 0.15,'easeTwiceBlink',false);	
+			return;				
+		}
+
+		if (anim2.any_on()) {
+			sound.play('locked');
+			return
+		};
+		sound.play('click');
+		
+		
+		if (this.t_pin.length!==4) return;
+		
+		//создаем комнату
+		fbs.ref(`states${this.t_pin}/tm`).set(firebase.database.ServerValue.TIMESTAMP);
+		objects.pin_panel_msg.text='Создали комнату №'+this.t_pin;
+		anim2.add(objects.pin_panel_msg,{alpha:[0, 1]}, true, 0.3,'easeTwiceBlink');
+	},
+	
+	async enter_room_down(){
+		
+		if (anim2.any_on() || this.t_pin.length!==4||this.check_is_on) {
+			sound.play('locked');
+			return
+		};		
+			
+		
+		
+		this.check_is_on=1;
+		sound.play('click');
+
+		//выход в дефолтную комнату
+		if (this.t_pin==='9999'){			
+			this.t_pin=lobby.get_room_index_from_rating();			
+			
+		}else{		
+
+			//проверяем наличие комнаты
+			const check_room=await fbs_once('states'+this.t_pin);
+			this.check_is_on=0;		
+			if (!check_room){
+				this.t_pin='';
+				this.update_pin();
+				objects.pin_panel_msg.text='Такой комнаты не существует';
+				anim2.add(objects.pin_panel_msg,{alpha:[0, 1]}, true, 0.15,'easeTwiceBlink');	
+				return;
+			}			
+		}
+
+				
+		//удаляемся из текущей комнаты
+		fbs.ref(room_name+'/'+my_data.uid).remove();
+		const new_room_name='states'+this.t_pin;		
+		fbs.ref(`{new_room_name}/tm`).set(firebase.database.ServerValue.TIMESTAMP);
+		this.close();
+		pref.close();
+		lobby.activate(new_room_name,0);
+		
+		
+	},
+	
+	close_button_down(){
+		
+		if (anim2.any_on()) {
+			sound.play('locked');
+			return
+		};
+		sound.play('click');
+		
+		this.close();
+		
+	},
+	
+	close(){
+		
+		anim2.add(objects.pin_panel_cont,{alpha:[1, 0]}, false, 0.1,'linear');	
+		
+	},
+	
+	erase_pin_down(){
+		
+		
+	},
+	
+	exit_down(){
+		
+		
+	}
+		
+}
+
 lobby={
 	
 	state_tint :{},
@@ -4030,9 +4242,9 @@ lobby={
 	rejected_invites:{},
 	fb_cache:{},
 	first_run:0,
-	sw_header:{time:0,index:0,header_list:[]},
-	
-	activate() {
+	bot_on:1,
+		
+	activate(room,bot_on) {
 		
 		//первый запуск лобби
 		if (!this.activated){			
@@ -4054,11 +4266,8 @@ lobby={
 			}		
 
 			//запускаем чат
-			chat.init();
-			
-			//создаем заголовки
-			const room_desc=['Комната #','ROOM #'][LANG]+{'states1':1,'states2':2,'states3':3,'states4':4,'states5':5}[room_name];
-			objects.t_room_name.text=room_desc;
+			chat.init();			
+
 			this.activated=true;
 		}
 		
@@ -4071,58 +4280,69 @@ lobby={
 		//отключаем все карточки
 		for(let i=0;i<objects.mini_cards.length;i++)
 			objects.mini_cards[i].visible=false;
-		
+				
 		//процессинг
 		some_process.lobby=function(){lobby.process()};
 
-		//добавляем карточку ии
-		this.add_card_ai();
-		
-		//подписываемся на изменения состояний пользователей
-		fbs.ref(room_name).on('value', (snapshot) => {lobby.players_list_updated(snapshot.val());});
-
-	},
-
-	footer_down(e){
-		
-		//x,y,x2,y2
-		const buttons_pos=[
-			[29,26,76.244,73.244,'left'],
-			[88,26,135.244,73.244,'right'],
-			[158,26,205.244,73.244,'chat'],
-			[695,26,742.244,73.244,'pref'],
-			[761,26,808.244,73.244,'back']
-		];	
-		
-		const mx = e.data.global.x/app.stage.scale.x-objects.lobby_footer_cont.x;	
-		const my = e.data.global.y/app.stage.scale.y-objects.lobby_footer_cont.y;		
-		
-		//ищем попадание нажатия на кнопку
-		const margin = 5;
-		let button_data=0;
-		for (let button of buttons_pos)	{
-			if (mx > button[0] - margin && mx <button[2] + margin  && my > button[1] - margin && my < button[3] + margin){
-				button_data=button;	
-				break;				
-			}			
+		//добавляем карточку бота если надо
+		if (bot_on!==undefined) this.bot_on=bot_on;
+		this.starting_card=0;
+		if (this.bot_on){
+			this.starting_card=1;
+			this.add_card_ai();			
 		}
 		
-		//если нашли то подсвечиваем
-		if (button_data){
-			anim2.add(objects.lobby_footer_button_hl,{alpha:[0,1]}, false, 0.2,'ease3peaks',false);	
-			objects.lobby_footer_button_hl.x=button_data[0]-10;
-			objects.lobby_footer_button_hl.y=button_data[1]-10;
-			
-			const command=button_data[4];
-			if (command==='left') this.swipe_down(-1);
-			if (command==='right') this.swipe_down(1);			
-			if (command==='chat') this.goto_chat_down();			
-			if (command==='pref') this.pref_down();
-			
-		}			
 		
+		//убираем старое и подписываемся на новую комнату
+		if (room){			
+			if(room_name){
+				fbs.ref(room_name).off('value');
+				fbs.ref(room_name+'/'+my_data.uid).remove();
+			}
+			room_name=room;	
+		}
+		
+		fbs.ref(room_name).on('value', snapshot => {lobby.players_list_updated(snapshot.val());});
+		fbs.ref(room_name+'/'+my_data.uid).onDisconnect().remove();		
+		
+		set_state({state : 'o'});
+		
+		//создаем заголовки
+		const room_desc=['КОМНАТА #','ROOM #'][LANG]+room_name.slice(6);
+		objects.t_room_name.text=room_desc;				
+
 	},
 	
+	change_room(new_room){
+				
+		//создаем заголовки
+		const room_desc=['КОМНАТА #','ROOM #'][LANG]+new_room.slice(6);
+		objects.t_room_name.text=room_desc;
+		
+		//отписываемся от изменений текущей комнаты
+		fbs.ref(room_name).off('value');
+		
+		//анимации разные
+		anim2.add(objects.cards_cont,{alpha:[0, 1]}, true, 0.1,'linear');
+		anim2.add(objects.lobby_footer_cont,{y:[450, objects.lobby_footer_cont.sy]}, true, 0.1,'linear');
+		anim2.add(objects.lobby_header_cont,{y:[-50, objects.lobby_header_cont.sy]}, true, 0.1,'linear');
+		objects.cards_cont.x=0;
+		
+		//отключаем все карточки
+		objects.mini_cards.forEach(c=>c.visible=false);
+		
+		room_name=new_room;
+		
+		set_state ({state : 'o'});
+		
+		//бота нету
+		this.bot_on=0;
+		
+		//подписываемся на изменения состояний пользователей
+		fbs.ref(room_name).on('value', snapshot => {lobby.players_list_updated(snapshot.val());});
+		
+	},
+		
 	pref_btn_down(){
 		
 		//если какая-то анимация
@@ -4153,8 +4373,7 @@ lobby={
 
 		//если мы в игре то пока не обновляем карточки
 		if (state==='p'||state==='b')
-			return;
-				
+			return;				
 
 		//это столы
 		let tables = {};
@@ -4233,7 +4452,7 @@ lobby={
 		}
 		
 		//убираем карточки пропавших игроков и обновляем карточки оставшихся
-		for(let i=1;i<objects.mini_cards.length;i++) {			
+		for(let i=this.starting_card;i<objects.mini_cards.length;i++) {			
 			if (objects.mini_cards[i].visible === true && objects.mini_cards[i].type === 'single') {				
 				const card_uid = objects.mini_cards[i].uid;				
 				if (single[card_uid] === undefined)					
@@ -4263,7 +4482,7 @@ lobby={
 		}
 				
 		//убираем исчезнувшие столы (если их нет в новом перечне) и оставляем новые
-		for(let i=1;i<objects.mini_cards.length;i++) {			
+		for(let i=this.starting_card;i<objects.mini_cards.length;i++) {			
 		
 			if (objects.mini_cards[i].visible && objects.mini_cards[i].type === 'table') {
 				
@@ -4361,7 +4580,7 @@ lobby={
 	place_table(params={uid1:0,uid2:0,name1: 'X',name2:'X', rating1: 1400, rating2: 1400,game_id:0}) {
 				
 				
-		for(let i=1;i<objects.mini_cards.length;i++) {
+		for(let i=this.starting_card;i<objects.mini_cards.length;i++) {
 			
 			const card=objects.mini_cards[i];
 
@@ -4437,7 +4656,7 @@ lobby={
 
 	place_new_card(params={uid:0, state: 'o', name:'X ', rating: rating}) {
 
-		for(let i=1;i<objects.mini_cards.length;i++) {
+		for(let i=this.starting_card;i<objects.mini_cards.length;i++) {
 
 			//ссылка на карточку
 			const card=objects.mini_cards[i];
@@ -4768,6 +4987,20 @@ lobby={
 		objects.inst_msg_avatar.texture=players_cache.players[data.uid].texture||PIXI.Texture.WHITE;
 		objects.inst_msg_text.set2(data.msg,300);
 		objects.inst_msg_cont.tm=Date.now();
+	},
+	
+	get_room_index_from_rating(){		
+		//номер комнаты в зависимости от рейтинга игрока
+		const rooms_bins=[0,1366,1437,1663,9999];
+		let room_to_go='state1';
+		for (let i=1;i<rooms_bins.length;i++){
+			const f=rooms_bins[i-1];
+			const t=rooms_bins[i];		
+			if (my_data.rating>f&&my_data.rating<=t)
+				return i;
+		}				
+		return 1;
+		
 	},
 	
 	process(){
@@ -5608,7 +5841,7 @@ main_loader={
 async function init_game_env(lang) {
 				
 	git_src="https://akukamil.github.io/corners_gp/"
-	//git_src=""
+	git_src=""
 	
 	
 	await define_platform_and_language();
@@ -5665,7 +5898,6 @@ async function init_game_env(lang) {
 		this.endFill();		
 		
 	}
-
 	
 	//идентификатор клиента
 	client_id = irnd(10,999999);
@@ -5726,7 +5958,6 @@ async function init_game_env(lang) {
             break;
         }
     }
-
 
 	anim2.add(objects.id_cont,{y:[-200,objects.id_cont.sy]}, true, 0.5,'easeOutBack');
 
@@ -5808,20 +6039,7 @@ async function init_game_env(lang) {
 		
 	//устанавлием имена
 	objects.my_card_name.set2(my_data.name,150);
-			
-	//номер комнаты в зависимости от рейтинга игрока
-	const rooms_bins=[0,1366,1437,1663,9999];
-	for (let i=1;i<rooms_bins.length;i++){
-		const f=rooms_bins[i-1];
-		const t=rooms_bins[i];		
-		if (my_data.rating>f&&my_data.rating<=t){
-			room_name='states'+i;
-			break;
-		}
-	}
-	
-	
-	//room_name= 'states5';	
+				
 	//это путь к чату
 	chat_path='states_chat';
 	
@@ -5844,16 +6062,14 @@ async function init_game_env(lang) {
 	fbs.ref("players/"+my_data.uid+"/rating").set(my_data.rating);
 	fbs.ref("players/"+my_data.uid+"/games").set(my_data.games);
 	fbs.ref("players/"+my_data.uid+"/tm").set(firebase.database.ServerValue.TIMESTAMP);
-		
-		
+				
 	//новое 	
 	fbs.ref('pdata/'+my_data.uid+'/PUB/name').set(my_data.name);
 	fbs.ref('pdata/'+my_data.uid+'/PUB/pic_url').set(my_data.pic_url);
 	fbs.ref('pdata/'+my_data.uid+'/PUB/rating').set(my_data.rating);
 	fbs.ref('pdata/'+my_data.uid+'/PRV/games').set(my_data.games);
 	fbs.ref('pdata/'+my_data.uid+'/PRV/tm').set(firebase.database.ServerValue.TIMESTAMP);
-	
-	
+		
 	//устанавливаем мой статус в онлайн
 	set_state({state : 'o'});
 	
@@ -5862,15 +6078,13 @@ async function init_game_env(lang) {
 
 	//отключение от игры и удаление не нужного
 	fbs.ref("inbox/"+my_data.uid).onDisconnect().remove();
-	fbs.ref(room_name+"/"+my_data.uid).onDisconnect().remove();
-
+	
 
 	//keep-alive сервис
 	setInterval(function()	{keep_alive()}, 40000);
 
 	anim2.add(objects.id_cont,{y:[objects.id_cont.sy, -200]}, false, 0.5,'easeInBack');
 	
-
 	//контроль за присутсвием
 	var connected_control = fbs.ref(".info/connected");
 	connected_control.on("value", (snap) => {
@@ -5881,8 +6095,12 @@ async function init_game_env(lang) {
 	  }
 	});
 	
-	//показыаем основное меню
-	lobby.activate();
+	
+
+	
+	//загружаем лобби с включенным ботом
+	const room_to_go='states'+lobby.get_room_index_from_rating();
+	lobby.activate(room_to_go,1);
 }
 
 function main_loop() {
