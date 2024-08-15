@@ -5841,7 +5841,7 @@ main_loader={
 async function init_game_env(lang) {
 				
 	git_src="https://akukamil.github.io/corners_gp/"
-	git_src=""
+	//git_src=""
 	
 	
 	await define_platform_and_language();
