@@ -4132,7 +4132,7 @@ pin_panel={
 			sound.play('locked');
 			return
 		};
-		sound.play('click');
+		sound.play('beep');
 		
 		this.t_pin+=num;
 		if (this.t_pin.length>4) return;
@@ -5815,6 +5815,7 @@ main_loader={
 		game_res.add('keypress',git_src+'sounds/keypress.mp3');
 		game_res.add('online_message',git_src+'sounds/online_message.mp3');
 		game_res.add('inst_msg',git_src+'sounds/inst_msg.mp3');
+		game_res.add('beep',git_src+'sounds/beep.mp3');
 		
 		//добавляем текстуры стикеров
 		for (var i=0;i<16;i++)
