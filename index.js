@@ -1213,7 +1213,7 @@ online_game = {
 		//вычиcляем рейтинг при проигрыше и устанавливаем его в базу он потом изменится
 		let lose_rating = this.calc_new_rating(my_data.rating, LOSE);
 		if (lose_rating >100 && lose_rating<9999)
-			fbs.ref("players/"+my_data.uid+"/rating").set(lose_rating);
+			this.update_my_rating_fbs(lose_rating);
 		
 		//возможность чата
 		this.chat_out=1;
@@ -1330,6 +1330,14 @@ online_game = {
 		message.add(['Соперник отключил чат','Chat disabled'][LANG]);
 	},
 		
+	update_my_rating_fbs(rating){
+		
+		fbs.ref('players/'+my_data.uid+'/rating').set(rating||my_data.rating);
+		fbs.ref('pdata/'+my_data.uid+'/PUB/rating').set(rating||my_data.rating);
+		fbs.ref('pdata/'+my_data.uid+'/rating').set(rating||my_data.rating);
+		
+	},
+		
 	async forced_inbox_check(game_id,opp_name){
 				
 		let c_data=await fbs.ref('inbox/'+my_data.uid).once('value');
@@ -1370,8 +1378,7 @@ online_game = {
 		let result_info = result_row[2][LANG];				
 		let old_rating = my_data.rating;
 		my_data.rating = this.calc_new_rating (my_data.rating, result_number);
-		fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating);
-		fbs.ref('pdata/'+my_data.uid+'/PUB/rating').set(my_data.rating);
+		this.update_my_rating_fbs();
 		
 		//обновляем даные на карточке
 		objects.my_card_rating.text=my_data.rating;
