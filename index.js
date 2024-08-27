@@ -6135,7 +6135,8 @@ async function init_game_env(lang) {
 	fbs.ref('pdata/'+my_data.uid+'/PUB/pic_url').set(my_data.pic_url);
 	fbs.ref('pdata/'+my_data.uid+'/PUB/rating').set(my_data.rating);
 	fbs.ref('pdata/'+my_data.uid+'/PRV/games').set(my_data.games);
-	fbs.ref('pdata/'+my_data.uid+'/PRV/tm').set(firebase.database.ServerValue.TIMESTAMP);
+	if(!other_data?.PRV?.first_log_tm)
+		fbs.ref('pdata/'+my_data.uid+'/PRV/first_log_tm').set(firebase.database.ServerValue.TIMESTAMP);
 		
 	//устанавливаем мой статус в онлайн
 	set_state({state : 'o'});
