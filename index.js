@@ -729,8 +729,8 @@ board_func={
 				const chip_id=board[y][x];
 				if (chip_id){
 
-					objects.checkers[ind].x=x*50+objects.board.x+20;
-					objects.checkers[ind].y=y*50+objects.board.y+20;
+					objects.checkers[ind].x=x*50+objects.board.x+30;
+					objects.checkers[ind].y=y*50+objects.board.y+30;
 
 					objects.checkers[ind].ix=x;
 					objects.checkers[ind].iy=y;
@@ -970,8 +970,8 @@ board_func={
 				
 		if (!document.hidden){
 			for (let i = 1 ; i < moves.length; i++) {			
-				let tar_x = moves[i][0] * 50 + objects.board.x+20;
-				let tar_y = moves[i][1] * 50 + objects.board.y+20;
+				let tar_x = moves[i][0] * 50 + objects.board.x+30;
+				let tar_y = moves[i][1] * 50 + objects.board.y+30;
 				await anim2.add(moving_chip,{x:[moving_chip.x, tar_x], y: [moving_chip.y, tar_y]}, true, 0.16,'linear');
 				sound.play('move');
 			}		
@@ -1285,8 +1285,19 @@ online_game = {
 	
 	async send_message() {
 				
-		if (my_data.blocked || !this.chat_out) return;		
+		if (!this.chat_out){
+			sound.play('locked');
+			return;	
+		} 
+
+		if (my_data.blocked){
+			message.add('Вы не можете писать в чат, так как вы находитесь в черном списке');
+			sound.play('locked');
+			return;	
+		} 	
+
 		
+		sound.play('click');
 		const msg=await keyboard.read();
 
 		if (msg) fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'CHAT',tm:Date.now(),data:msg});
@@ -1666,12 +1677,12 @@ game = {
 		}
 
 		//координаты указателя
-		const mx = e.data.global.x/app.stage.scale.x-objects.board_cont.x+225;
-		const my = e.data.global.y/app.stage.scale.y-objects.board_cont.y+225;
+		const mx = e.data.global.x/app.stage.scale.x-objects.board_cont.x+240;
+		const my = e.data.global.y/app.stage.scale.y-objects.board_cont.y+240;
 
 		//координаты указателя на игровой доске
-		const new_x=Math.floor(8*(mx-objects.board.x-20)/400);
-		const new_y=Math.floor(8*(my-objects.board.y-20)/400);
+		const new_x=Math.floor(8*(mx-objects.board.x-30)/400);
+		const new_y=Math.floor(8*(my-objects.board.y-30)/400);
 
 		//если выбрана новая шашка
 		if (!this.selected_checker) {
@@ -2397,8 +2408,7 @@ keep_alive = function() {
 		return;		
 	}
 
-	fbs.ref('players/'+my_data.uid+'/tm').set(firebase.database.ServerValue.TIMESTAMP);
-	fbs.ref('pdata/PRV/'+my_data.uid+'/tm').set(firebase.database.ServerValue.TIMESTAMP);
+	fbs.ref('pdata/'+my_data.uid+'/tm').set(firebase.database.ServerValue.TIMESTAMP);
 	fbs.ref('inbox/'+my_data.uid).onDisconnect().remove();
 	fbs.ref(room_name+'/'+my_data.uid).onDisconnect().remove();
 
@@ -3288,13 +3298,22 @@ chat={
 	block_next_click:0,
 	kill_next_click:0,
 	delete_message_mode:0,
-	games_to_chat:200,
+	payments:0,
 	
 	activate() {	
 
 		anim2.add(objects.chat_cont,{alpha:[0, 1]}, true, 0.1,'linear');
 		objects.bcg.texture=gres.bcg.texture;
-		objects.chat_enter_button.visible=!my_data.blocked && my_data.games>=this.games_to_chat;
+		objects.chat_enter_button.visible=!my_data.blocked&&my_data.games>=this.games_to_chat;
+
+		if(my_data.blocked)		
+			objects.chat_enter_button.texture=gres.chat_blocked_img.texture;
+		else
+			objects.chat_enter_button.texture=gres.chat_enter_img.texture;
+
+		objects.chat_rules.text='Правила чата!\n\n1. Будьте вежливы: Общайтесь с другими игроками с уважением. Избегайте угроз, грубых выражений, оскорблений, конфликтов.\n\n2. Отправлять сообщения в чат могут игроки сыгравшие более 200 онлайн партий.\n\n3. За нарушение правил игрок может попасть в черный список.'
+		if(my_data.blocked) objects.chat_rules.text='Вы не можете писать в чат, так как вы находитесь в черном списке';
+
 
 	},
 	
@@ -3313,14 +3332,24 @@ chat={
 			rec.tm=0;
 		}
 		
-		
-		objects.chat_rules.text='Правила чата!\n\n1. Будьте вежливы: Общайтесь с другими игроками с уважением. Избегайте угроз, грубых выражений, оскорблений, конфликтов.\n\n2. Отправлять сообщения в чат могут игроки сыгравшие более 200 онлайн партий.\n\n3. За нарушение правил игрок может попасть в черный список.'
-		if(my_data.blocked) objects.chat_rules.text+='\n\n4. Вы не можете писать в чат, так как вы находитесь в черном списке';
-		
 		//загружаем чат
 		fbs.ref(chat_path).orderByChild('tm').limitToLast(20).once('value', snapshot => {chat.chat_load(snapshot.val());});		
 		
+		this.init_yandex_payments();
+		
 	},			
+
+	init_yandex_payments(){
+				
+		if (game_platform!=='YANDEX') return;			
+				
+		if(this.payments) return;
+		
+		ysdk.getPayments({ signed: true }).then(_payments => {
+			chat.payments = _payments;
+		}).catch(err => {})			
+		
+	},	
 
 	get_oldest_index () {
 		
@@ -3397,7 +3426,7 @@ chat={
 		
 		if (this.moderation_mode){
 			console.log(player_data.index,player_data.uid,player_data.name.text,player_data.msg.text);
-			fbs_once('players/'+player_data.uid+'/games').then((data)=>{
+			fbs_once('pdata/'+player_data.uid+'/PRV/games').then((data)=>{
 				console.log('сыграно игр: ',data)
 			})
 		}
@@ -3540,8 +3569,28 @@ chat={
 			return
 		};
 		
-		if (my_data.blocked){			
-			message.add('Закрыто');
+		//оплата разблокировки чата
+		if (my_data.blocked){	
+		
+			if(game_platform==='YANDEX'){
+				
+				this.payments.purchase({ id: 'unblock' }).then(purchase => {
+					this.unblock_chat();
+				}).catch(err => {
+					message.add(['Ошибка при покупке!','Error!'][LANG]);
+				})				
+			}
+			
+			if (game_platform==='VK') {
+				
+				vkBridge.send('VKWebAppShowOrderBox', { type: 'item', item: 'unblock'}).then(data =>{
+					this.unblock_chat();
+				}).catch((err) => {
+					message.add(['Ошибка при покупке!','Error!'][LANG]);
+				});			
+			
+			};			
+				
 			return;
 		}
 		
@@ -3570,6 +3619,15 @@ chat={
 		
 	},
 		
+	unblock_chat(){
+		objects.chat_rules.text='Правила чата!\n\n1. Будьте вежливы: Общайтесь с другими игроками с уважением. Избегайте угроз, грубых выражений, оскорблений, конфликтов.\n\n2. Отправлять сообщения в чат могут игроки сыгравшие более 200 онлайн партий.\n\n3. За нарушение правил игрок может попасть в черный список.'
+		objects.chat_enter_button.texture=gres.chat_enter_img.texture;	
+		fbs.ref('blocked/'+my_data.uid).remove();
+		my_data.blocked=0;
+		message.add('Вы разблокировали чат');
+		sound.play('mini_dialog');	
+	},
+	
 	close() {
 		
 		anim2.add(objects.chat_cont,{alpha:[1, 0]}, false, 0.1,'linear');
@@ -3608,8 +3666,8 @@ players_cache={
 		//заполняем параметры которые дали
 		for (let param in params) player[param]=params[param];
 		
-		if (!player.name) player.name=await fbs_once('players/'+uid+'/name');
-		if (!player.rating) player.rating=await fbs_once('players/'+uid+'/rating');
+		if (!player.name) player.name=await fbs_once('pdata/'+uid+'/PUB/name');
+		if (!player.rating) player.rating=await fbs_once('pdata/'+uid+'/PUB/rating');
 	},
 	
 	async update_avatar(uid){
@@ -3621,7 +3679,7 @@ players_cache={
 		if (player.texture) return;
 		
 		//если нет URL
-		if (!player.pic_url) player.pic_url=await fbs_once('players/'+uid+'/pic_url');
+		if (!player.pic_url) player.pic_url=await fbs_once('pdata/'+uid+'/PUB/pic_url');
 		
 		if(player.pic_url==='https://vk.com/images/camera_100.png')
 			player.pic_url='https://akukamil.github.io/domino/vk_icon.png';
@@ -3709,7 +3767,7 @@ lb={
 
 	async update() {
 
-		let leaders=await fbs.ref('players').orderByChild('rating').limitToLast(20).once('value');
+		let leaders=await fbs.ref('pdata').orderByChild('rating').limitToLast(20).once('value');
 		leaders=leaders.val();
 
 		const top={
@@ -3730,7 +3788,7 @@ lb={
 		Object.keys(leaders).forEach(uid => {
 			
 			const leader_data=leaders[uid];
-			const leader_params={uid,name:leader_data.name, rating:leader_data.rating, pic_url:leader_data.pic_url};
+			const leader_params={uid,name:leader_data.PUB.name, rating:leader_data.PUB.rating, pic_url:leader_data.PUB.pic_url};
 			leaders_array.push(leader_params);
 			
 			//добавляем в кэш
@@ -3789,8 +3847,7 @@ pref={
 		
 		anim2.add(objects.pref_info,{alpha:[0,1]}, false, 3,'easeBridge',false);	
 		objects.pref_info.text=['Менять аватар и имя можно 1 раз в 30 дней!','You can change name and avatar once per month'][LANG];
-		
-		
+				
 		objects.pref_sound_slider.x=sound.on?367:322;
 		
 		//пока ничего не изменено
@@ -4041,7 +4098,6 @@ pref={
 		
 		if(my_data.design_id!==this.selected_design.id){
 			my_data.design_id=this.selected_design.id;
-			fbs.ref('players/'+my_data.uid+'/design_id').set(my_data.design_id);
 			fbs.ref('pdata/'+my_data.uid+'/PRV/design_id').set(my_data.design_id);
 			this.load_design(my_data.design_id);
 		}
@@ -5823,6 +5879,7 @@ main_loader={
 		game_res.add('online_message',git_src+'sounds/online_message.mp3');
 		game_res.add('inst_msg',git_src+'sounds/inst_msg.mp3');
 		game_res.add('beep',git_src+'sounds/beep.mp3');
+		game_res.add('mini_dialog',git_src+'sounds/mini_dialog.mp3');
 		
 		//добавляем текстуры стикеров
 		for (var i=0;i<16;i++)
@@ -5850,7 +5907,7 @@ main_loader={
 async function init_game_env(lang) {
 				
 	git_src="https://akukamil.github.io/corners_gp/"
-	//git_src=""
+	git_src=""
 	
 	
 	await define_platform_and_language();
@@ -6010,7 +6067,7 @@ async function init_game_env(lang) {
 	window.addEventListener('keydown',function(event){keyboard.keydown(event.key)});
 	
 	//загружаем остальные данные из файербейса
-	let _other_data = await fbs.ref('players/' + my_data.uid).once('value');
+	let _other_data = await fbs.ref('pdata/' + my_data.uid).once('value');
 	let other_data = _other_data.val();
 
 	//сервисное сообщение
@@ -6019,16 +6076,17 @@ async function init_game_env(lang) {
 		fbs.ref("players/"+my_data.uid+"/s_msg").remove();
 	}
 
-	my_data.rating = (other_data?.rating) || 1400;
-	my_data.games = (other_data?.games) || 0;
-	my_data.name = (other_data?.name) || my_data.name;
-	my_data.nick_tm = other_data?.nick_tm || 0;
-	my_data.avatar_tm = other_data?.avatar_tm || 0;
-	my_data.design_id = (other_data?.design_id) || 0;
+	my_data.rating = (other_data?.PUB?.rating) || 1400;
+	my_data.games = (other_data?.PRV?.games) || 0;
+	my_data.name = (other_data?.PUB?.name) || my_data.name;
+	my_data.nick_tm = other_data?.PRV?.nick_tm || 0;
+	my_data.avatar_tm = other_data?.PRV?.avatar_tm || 0;
+	my_data.design_id = (other_data?.PRV?.design_id) || 0;
 	
 	//правильно определяем аватарку
-	if (other_data?.pic_url && other_data.pic_url.includes('mavatar'))
-		my_data.pic_url=other_data.pic_url
+	const _pic_url=other_data?.PUB?.pic_url;
+	if (_pic_url && _pic_url.includes('mavatar'))
+		my_data.pic_url=_pic_url
 	else
 		my_data.pic_url=my_data.orig_pic_url
 	
