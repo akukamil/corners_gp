@@ -1344,8 +1344,8 @@ online_game = {
 	update_my_rating_fbs(rating){
 		
 		fbs.ref('players/'+my_data.uid+'/rating').set(rating||my_data.rating);
-		fbs.ref('pdata/'+my_data.uid+'/PUB/rating').set(rating||my_data.rating);
-		fbs.ref('pdata/'+my_data.uid+'/rating').set(rating||my_data.rating);
+		//fbs.ref('pdata/'+my_data.uid+'/PUB/rating').set(rating||my_data.rating);
+		//fbs.ref('pdata/'+my_data.uid+'/rating').set(rating||my_data.rating);
 		
 	},
 		
@@ -1423,7 +1423,7 @@ online_game = {
 			//увеличиваем количество игр
 			my_data.games++;
 			fbs.ref("players/"+my_data.uid+"/games").set(my_data.games);		
-			fbs.ref("pdata/"+my_data.uid+"/PRV/games").set(my_data.games);	
+			//fbs.ref("pdata/"+my_data.uid+"/PRV/games").set(my_data.games);	
 
 			//записываем результат в базу данных
 			let duration = ~~((Date.now() - this.start_time)*0.001);
@@ -1569,7 +1569,6 @@ game = {
 		if (role==='master') {
 			my_turn=1;		
 			message.add(['Ваши шашки в нижнем правом углу. Последний ход за соперником','Ready to play. The last move for the opponent'][LANG])
-			
 		} else {
 			my_turn=0;
 			message.add(['Ваши шашки в нижнем правом углу. Последний ход за вами','Ready to play. The last move is yours'][LANG])
@@ -2408,7 +2407,7 @@ keep_alive = function() {
 		return;		
 	}
 
-	fbs.ref('pdata/'+my_data.uid+'/tm').set(firebase.database.ServerValue.TIMESTAMP);
+	fbs.ref('players/'+my_data.uid+'/tm').set(firebase.database.ServerValue.TIMESTAMP);
 	fbs.ref('inbox/'+my_data.uid).onDisconnect().remove();
 	fbs.ref(room_name+'/'+my_data.uid).onDisconnect().remove();
 
@@ -3427,7 +3426,7 @@ chat={
 		
 		if (this.moderation_mode){
 			console.log(player_data.index,player_data.uid,player_data.name.text,player_data.msg.text);
-			fbs_once('pdata/'+player_data.uid+'/PRV/games').then((data)=>{
+			fbs_once('players/'+player_data.uid+'/games').then((data)=>{
 				console.log('сыграно игр: ',data)
 			})
 		}
@@ -3667,8 +3666,8 @@ players_cache={
 		//заполняем параметры которые дали
 		for (let param in params) player[param]=params[param];
 		
-		if (!player.name) player.name=await fbs_once('pdata/'+uid+'/PUB/name');
-		if (!player.rating) player.rating=await fbs_once('pdata/'+uid+'/PUB/rating');
+		if (!player.name) player.name=await fbs_once('players/'+uid+'/name');
+		if (!player.rating) player.rating=await fbs_once('players/'+uid+'/rating');
 	},
 	
 	async update_avatar(uid){
@@ -3680,7 +3679,7 @@ players_cache={
 		if (player.texture) return;
 		
 		//если нет URL
-		if (!player.pic_url) player.pic_url=await fbs_once('pdata/'+uid+'/PUB/pic_url');
+		if (!player.pic_url) player.pic_url=await fbs_once('players/'+uid+'/pic_url');
 		
 		if(player.pic_url==='https://vk.com/images/camera_100.png')
 			player.pic_url='https://akukamil.github.io/domino/vk_icon.png';
@@ -3768,7 +3767,7 @@ lb={
 
 	async update() {
 
-		let leaders=await fbs.ref('pdata').orderByChild('rating').limitToLast(20).once('value');
+		let leaders=await fbs.ref('players').orderByChild('rating').limitToLast(20).once('value');
 		leaders=leaders.val();
 
 		const top={
@@ -3789,7 +3788,7 @@ lb={
 		Object.keys(leaders).forEach(uid => {
 			
 			const leader_data=leaders[uid];
-			const leader_params={uid,name:leader_data.PUB.name, rating:leader_data.PUB.rating, pic_url:leader_data.PUB.pic_url};
+			const leader_params={uid,name:leader_data.name, rating:leader_data.rating, pic_url:leader_data.pic_url};
 			leaders_array.push(leader_params);
 			
 			//добавляем в кэш
@@ -3812,7 +3811,7 @@ lb={
 			const target=top[place];
 			const leader=leaders_array[place];
 			await players_cache.update_avatar(leader.uid);			
-			target.avatar.texture=players_cache.players[leader.uid].texture;		
+			target.avatar.texture=players_cache.players[leader.uid].texture;
 		}
 	
 	}
@@ -4068,11 +4067,11 @@ pref={
 		if (this.avatar_changed){
 									
 			fbs.ref(`players/${my_data.uid}/pic_url`).set(this.cur_pic_url);
-			fbs.ref(`pdata/${my_data.uid}/PUB/pic_url`).set(this.cur_pic_url);			
+			//fbs.ref(`pdata/${my_data.uid}/PUB/pic_url`).set(this.cur_pic_url);			
 
 			my_data.avatar_tm=Date.now();
 			fbs.ref(`players/${my_data.uid}/avatar_tm`).set(my_data.avatar_tm);
-			fbs.ref(`pdata/${my_data.uid}/PRV/avatar_tm`).set(my_data.avatar_tm);
+			//fbs.ref(`pdata/${my_data.uid}/PRV/avatar_tm`).set(my_data.avatar_tm);
 					
 			//обновляем аватар в кэше
 			players_cache.update_avatar_forced(my_data.uid,this.cur_pic_url).then(()=>{
@@ -4092,14 +4091,14 @@ pref={
 			fbs.ref(`players/${my_data.uid}/nick_tm`).set(my_data.nick_tm);
 			fbs.ref(`players/${my_data.uid}/name`).set(my_data.name);
 			
-			fbs.ref(`pdata/${my_data.uid}/PRV/nick_tm`).set(my_data.nick_tm);
-			fbs.ref(`pdata/${my_data.uid}/PUB/name`).set(my_data.name);
+			//fbs.ref(`pdata/${my_data.uid}/PRV/nick_tm`).set(my_data.nick_tm);
+			//fbs.ref(`pdata/${my_data.uid}/PUB/name`).set(my_data.name);
 			
 		}
 		
 		if(my_data.design_id!==this.selected_design.id){
 			my_data.design_id=this.selected_design.id;
-			fbs.ref('pdata/'+my_data.uid+'/PRV/design_id').set(my_data.design_id);
+			fbs.ref('players/'+my_data.uid+'/design_id').set(my_data.design_id);
 			this.load_design(my_data.design_id);
 		}
 		
@@ -5929,8 +5928,7 @@ async function init_game_env(lang) {
 	main_loop();
 	
 	await main_loader.load1();	
-	await main_loader.load2();	
-	
+	await main_loader.load2();		
 		
 	//доп функция для текста битмап
 	PIXI.BitmapText.prototype.set2=function(text,w){		
@@ -6068,7 +6066,7 @@ async function init_game_env(lang) {
 	window.addEventListener('keydown',function(event){keyboard.keydown(event.key)});
 	
 	//загружаем остальные данные из файербейса
-	let _other_data = await fbs.ref('pdata/' + my_data.uid).once('value');
+	let _other_data = await fbs.ref('players/' + my_data.uid).once('value');
 	let other_data = _other_data.val();
 
 	//сервисное сообщение
@@ -6077,15 +6075,15 @@ async function init_game_env(lang) {
 		fbs.ref("players/"+my_data.uid+"/s_msg").remove();
 	}
 
-	my_data.rating = (other_data?.PUB?.rating) || 1400;
-	my_data.games = (other_data?.PRV?.games) || 0;
-	my_data.name = (other_data?.PUB?.name) || my_data.name;
-	my_data.nick_tm = other_data?.PRV?.nick_tm || 0;
-	my_data.avatar_tm = other_data?.PRV?.avatar_tm || 0;
-	my_data.design_id = (other_data?.PRV?.design_id) || 0;
+	my_data.rating = (other_data?.rating) || 1400;
+	my_data.games = (other_data?.games) || 0;
+	my_data.name = (other_data?.name) || my_data.name;
+	my_data.nick_tm = other_data?.nick_tm || 0;
+	my_data.avatar_tm = other_data?.avatar_tm || 0;
+	my_data.design_id = (other_data?.design_id) || 0;
 	
 	//правильно определяем аватарку
-	const _pic_url=other_data?.PUB?.pic_url;
+	const _pic_url=other_data?.pic_url;
 	if (_pic_url && _pic_url.includes('mavatar'))
 		my_data.pic_url=_pic_url
 	else
@@ -6132,12 +6130,12 @@ async function init_game_env(lang) {
 	fbs.ref("players/"+my_data.uid+"/tm").set(firebase.database.ServerValue.TIMESTAMP);
 				
 	//новое 	
-	fbs.ref('pdata/'+my_data.uid+'/PUB/name').set(my_data.name);
-	fbs.ref('pdata/'+my_data.uid+'/PUB/pic_url').set(my_data.pic_url);
-	fbs.ref('pdata/'+my_data.uid+'/PUB/rating').set(my_data.rating);
-	fbs.ref('pdata/'+my_data.uid+'/PRV/games').set(my_data.games);
-	if(!other_data?.PRV?.first_log_tm)
-		fbs.ref('pdata/'+my_data.uid+'/PRV/first_log_tm').set(firebase.database.ServerValue.TIMESTAMP);
+	//fbs.ref('pdata/'+my_data.uid+'/PUB/name').set(my_data.name);
+	//fbs.ref('pdata/'+my_data.uid+'/PUB/pic_url').set(my_data.pic_url);
+	////fbs.ref('pdata/'+my_data.uid+'/PUB/rating').set(my_data.rating);
+	//fbs.ref('pdata/'+my_data.uid+'/PRV/games').set(my_data.games);
+	if(!other_data?.first_log_tm)
+		fbs.ref('players/'+my_data.uid+'/first_log_tm').set(firebase.database.ServerValue.TIMESTAMP);
 		
 	//устанавливаем мой статус в онлайн
 	set_state({state : 'o'});
