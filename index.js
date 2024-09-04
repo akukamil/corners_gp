@@ -1554,7 +1554,6 @@ game = {
 
 	opponent : '',
 	selected_checker : 0,
-	checker_is_moving : 0,
 	state : 0,
 
 	activate(opponent, role) {
@@ -1748,9 +1747,7 @@ game = {
 	async process_my_move(move_data, moves) {
 
 		//делаем перемещение шашки
-		this.checker_is_moving = 1;
-		await board_func.start_gentle_move(move_data, moves, g_board, objects.board, objects.checkers);	
-		this.checker_is_moving = 0;
+		await board_func.start_gentle_move(move_data, moves, g_board);	
 		
 		//начинаем процесс плавного перемещения шашки
 		if (state === 'b') {					
@@ -1837,9 +1834,8 @@ game = {
 		const moves = board_func.get_moves_path(move_data,g_board);
 
 		//плавно перемещаем шашку
-		this.checker_is_moving = 1;
 		await board_func.start_gentle_move(move_data, moves,g_board, objects.board, objects.checkers);
-		this.checker_is_moving = 0;		
+
 		
 		if (my_role === 'master') {
 			made_moves++;
@@ -2016,7 +2012,7 @@ game_watching={
 			
 		//если предыдущее движение не завершено то завершаем его и ждем
 		while (moving_chip&&!moving_chip.ready) {
-			anim2.kill_anim(moving_chip);
+			//anim2.kill_anim(moving_chip);
 			await new Promise(resolve => setTimeout(resolve, 100)); // wait for 1 second
 		}
 						
@@ -2071,6 +2067,8 @@ game_watching={
 		}
 		const moves=board_func.get_moves_path(move_data,g_board);		
 		await board_func.start_gentle_move(move_data,moves,g_board);
+		board_func.update_board(new_board);
+		g_board=new_board;
 		if (move) objects.cur_move_text.text=['сделано ходов: ','made moves: '][LANG]+move;
 		
 	},
