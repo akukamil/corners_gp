@@ -5902,6 +5902,23 @@ main_loader={
 	
 }
 
+
+async function check_admin_info(){
+	
+	//проверяем и показываем инфо от админа и потом удаляем
+	const admin_msg_path=`players/${my_data.uid}/admin_info`;
+	const data=await fbs_once(admin_msg_path);
+	if (data){
+		if (data.type='FIXED_MATCH'){
+			my_data.rating=1400;
+			fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating);
+			message.add('Ваш рейтинг обнулен. Причина - договорные игры.',7000);
+		}				
+		fbs.ref(admin_msg_path).remove();		
+	}		
+}
+
+
 async function init_game_env(lang) {
 				
 	git_src="https://akukamil.github.io/corners_gp/"
@@ -6110,9 +6127,7 @@ async function init_game_env(lang) {
 	//устанавливаем рейтинг в попап
 	objects.id_rating.text=objects.my_card_rating.text=my_data.rating;
 
-	//убираем лупу
-	some_process.loup_anim = function(){};
-	objects.id_loup.visible=false;
+
 
 	//обновляем почтовый ящик
 	fbs.ref("inbox/"+my_data.uid).set({sender:"-",message:"-",tm:"-",data:{x1:0,y1:0,x2:0,y2:0,board_state:0}});
@@ -6160,8 +6175,12 @@ async function init_game_env(lang) {
 	  }
 	});
 	
+	//сообщение от админа
+	await check_admin_info();
 	
-
+	//убираем лупу
+	some_process.loup_anim = function(){};
+	objects.id_loup.visible=false;
 	
 	//загружаем лобби с включенным ботом
 	const room_to_go='states'+lobby.get_room_index_from_rating();
