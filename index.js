@@ -3111,6 +3111,10 @@ var process_new_message = function(msg) {
 		if (msg.client_id !== client_id)
 			kill_game();
 
+	//сообщение о блокировке чата
+	if (msg.message==='CHAT_BLOCK'){
+		my_data.blocked=1;		
+	}
 
 	//получение сообщение в состояни игры
 	if (state==="p") {
@@ -3372,6 +3376,16 @@ chat={
 			if (rec.visible===true && rec.tm < oldest.tm)
 				oldest = rec;	
 		return oldest;		
+		
+	},
+		
+	block_player(uid){
+		
+		fbs.ref('blocked/'+uid).set(Date.now());
+		fbs.ref('inbox/'+uid).set({message:'CHAT_BLOCK',tm:Date.now()});
+		
+		//увеличиваем количество блокировок
+		fbs.ref('players/'+uid+'/block_num').transaction(val=> {return (val || 0) + 1});
 		
 	},
 		
