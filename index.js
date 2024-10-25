@@ -1602,6 +1602,26 @@ quiz={
 		
 	},
 	
+	getHodText(n) {
+	  const lastDigit = n % 10;
+	  const lastTwoDigits = n % 100;
+
+	  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+		return `${n} ходов`;
+	  }
+
+	  switch (lastDigit) {
+		case 1:
+		  return `${n} ход`;
+		case 2:
+		case 3:
+		case 4:
+		  return `${n} хода`;
+		default:
+		  return `${n} ходов`;
+	  }
+	},
+
 	async update_leader(){
 				
 		//обновляем только если 5 минут прошло
@@ -1630,7 +1650,7 @@ quiz={
 				
 		//заполняем данные лидера
 		objects.opp_card_name.set2(cur_leader_data.name,110);
-		objects.opp_card_rating.text=this.quiz_data.moves;		
+		objects.opp_card_rating.text=this.getHodText(this.quiz_data.moves);		
 		objects.opp_avatar.texture=players_cache.players[this.quiz_data.cur_leader].texture;	
 		
 		//показываем карточку лидера
