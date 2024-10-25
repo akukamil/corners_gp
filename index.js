@@ -1573,7 +1573,7 @@ quiz={
 
 		//показываем и заполняем мою карточку	
 		objects.my_card_name.set2(my_data.name,110);
-		objects.my_card_rating.visible=false;
+		objects.my_card_rating.visible=true;
 		objects.my_avatar.texture=players_cache.players[my_data.uid].texture;	
 		anim2.add(objects.my_card_cont,{x:[-100, objects.my_card_cont.sx],alpha:[0,1]}, true, 0.5,'linear');	
 
@@ -1695,6 +1695,7 @@ quiz={
 		
 		this.made_moves++;
 		objects.cur_move_text.text='Сделано ходов: '+this.made_moves;
+		objects.my_card_rating.text=this.getHodText(this.made_moves);	
 		
 		//проверка завершения
 		if (board_func.finished1(g_board)){
