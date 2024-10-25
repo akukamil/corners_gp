@@ -1483,8 +1483,7 @@ bot_game = {
 		if (my_data.rating>=2000)
 			g_board = [[0,0,0,0,0,0,0,0],[0,0,0,0,2,2,0,0],[0,0,2,2,2,2,0,0],[0,0,2,2,0,0,0,0],[0,2,2,0,0,0,0,0],[0,2,2,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
 
-		board_func.update_board(g_board);
-		
+		board_func.update_board(g_board);		
 
 	},
 
@@ -1550,11 +1549,172 @@ bot_game = {
 
 }
 
+quiz={
+	
+	make_moves:0,
+	made_moves_leader:999,
+	accepted_leader:'',	
+	prv_quiz_read:0,
+	quiz_data:0,
+	on:0,
+	
+	activate(){
+				
+		game.opponent=quiz;
+		this.on=1;
+		
+		//устанавливаем локальный и удаленный статус
+		set_state ({state : 'b'});
+		
+		//таймер уже не нужен
+		objects.timer_cont.visible = false;
+		objects.game_buttons_cont.visible = false;
+		objects.stop_bot_button.visible = true;
+
+		//показываем и заполняем мою карточку	
+		objects.my_card_name.set2(my_data.name,110);
+		objects.my_card_rating.visible=false;
+		objects.my_avatar.texture=players_cache.players[my_data.uid].texture;	
+		anim2.add(objects.my_card_cont,{x:[-100, objects.my_card_cont.sx],alpha:[0,1]}, true, 0.5,'linear');	
+
+		//обновляем карточку лидера
+		this.update_leader();
+
+		//устанаваем вид моих и чужих фишек в зависимости у кого первый ход и текущего дизайна
+		board_func.chips_tex[1]=pref.chips[2-my_turn].texture;
+		board_func.chips_tex[2]=pref.chips[1+my_turn].texture;	
+
+		//основные элементы игры
+		objects.board_cont.visible=true;
+		objects.my_card_cont.visible=true;
+		objects.opp_card_cont.visible=false;		
+		
+		game.move_processor=this.process_my_move.bind(quiz);
+	
+		this.made_moves=0;
+		objects.cur_move_text.visible=true;
+		objects.cur_move_text.text=['Загрузка...','Loading...'][LANG];
+		
+		objects.board.pointerdown = game.mouse_down_on_board.bind(game);
+
+		//устанаваем текстуру
+		objects.board.texture=pref.board_texture;		
+		
+	},
+	
+	async update_leader(){
+				
+		//обновляем только если 5 минут прошло
+		const tm=Date.now();
+		if (tm-this.prv_quiz_read>300000)
+			this.quiz_data=await fbs_once('quiz');
+		
+		
+		if (!this.quiz_data) return;
+		
+		await players_cache.update(this.quiz_data.cur_leader,{});
+		await players_cache.update_avatar(this.quiz_data.cur_leader);		
+		const cur_leader_data=players_cache.players[this.quiz_data.cur_leader];
+		const block=this.quiz_data.block;
+	
+		//если уже выключили игру
+		if (!this.on) return;
+				
+		objects.cur_move_text.text='Сделано ходов: '+this.made_moves;
+		
+		//очереди
+		my_turn=1;
+		
+		//сколько ходов сделал лидер
+		this.made_moves_leader=this.quiz_data.moves;
+				
+		//заполняем данные лидера
+		objects.opp_card_name.set2(cur_leader_data.name,110);
+		objects.opp_card_rating.text=this.quiz_data.moves;		
+		objects.opp_avatar.texture=players_cache.players[this.quiz_data.cur_leader].texture;	
+		
+		//показываем карточку лидера
+		anim2.add(objects.opp_card_cont,{x:[800, objects.opp_card_cont.sx],alpha:[0,1]}, true, 0.5,'linear');		
+		objects.opp_avatar_frame.texture=gres.leader_avatar_frame.texture;
+		
+		//правила				
+		if (this.quiz_data.acc_leader){
+			objects.t_quiz_rules.text='';
+			objects.quiz_rules_bcg.texture=gres.quiz_complete.texture;				
+		} else {
+			objects.t_quiz_rules.text=`Переведи все шашки в новый дом быстрее всех. Победитель получит кастомную карточку "Дом на холме". Подведение итогов ${this.quiz_data?.fin_date}`;
+			objects.quiz_rules_bcg.texture=gres.quiz_rules_bcg.texture;		
+		}
+		anim2.add(objects.quiz_rules_cont,{x:[-100, objects.quiz_rules_cont.sx]}, true, 0.25,'easeOutBack');	
+		
+		//инициируем вид доски
+		g_board = [[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
+		board_func.update_board(g_board);
+				
+	},
+	
+	stop(){
+				
+		this.clear();
+		
+	},
+	
+	clear(){
+		
+		//выключаем элементы
+		this.on=0;
+		objects.stop_bot_button.visible = false;
+		objects.quiz_rules_cont.visible=false;
+		
+	},
+	
+	async process_my_move(move_data, moves){
+		
+		//делаем перемещение шашки
+		await board_func.start_gentle_move(move_data, moves, g_board);	
+		
+		this.made_moves++;
+		objects.cur_move_text.text='Сделано ходов: '+this.made_moves;
+		
+		//проверка завершения
+		if (board_func.finished1(g_board)){
+			my_turn=0;			
+			objects.stop_bot_button.visible = false;
+			
+			if (this.accepted_leader){				
+				await big_message.show('Конкурс завершен!', `сделано ходов: ${this.made_moves}`,false);	
+				sound.play('lose');				
+			}else{
+				if (this.made_moves<this.made_moves_leader){
+					fbs.ref('quiz/cur_leader').set(my_data.uid);
+					fbs.ref('quiz/moves').set(this.made_moves);
+					sound.play('win');
+					await big_message.show('Вы теперь лидер!', `сделано ходов: ${this.made_moves}`,false);
+					this.prv_quiz_read=0;
+					
+				}else{
+					sound.play('lose');
+					await big_message.show('Вы проиграли лидеру!', `сделано ходов: ${this.made_moves}`,false);					
+				}				
+			}		
+			
+			quiz.activate();
+		}
+		
+	},
+	
+	close(){
+		
+		
+	}	
+}
+
 game = {
 
 	opponent : '',
 	selected_checker : 0,
 	state : 0,
+	move_processor:0,
 
 	activate(opponent, role) {
 
@@ -1593,15 +1753,18 @@ game = {
 		
 		this.opponent = opponent;
 		this.opponent.activate();
+		this.move_processor=this.process_my_move;
 		
 		//показываем и заполняем мою карточку	
 		objects.my_card_name.set2(my_data.name,110);
 		objects.my_card_rating.text=my_data.rating;
+		objects.my_card_rating.visible=true;
 		objects.my_avatar.texture=players_cache.players[my_data.uid].texture;	
 		anim2.add(objects.my_card_cont,{x:[-100, objects.my_card_cont.sx],alpha:[0,1]}, true, 0.5,'linear');	
 		
 		objects.opp_card_name.set2(opp_data.name,110);
 		objects.opp_card_rating.text=opp_data.rating;
+		objects.opp_avatar_frame.texture=gres.avatar_frame.texture;
 		objects.opp_avatar.texture=players_cache.players[opp_data.uid].texture;	
 		anim2.add(objects.opp_card_cont,{x:[800, objects.opp_card_cont.sx],alpha:[0,1]}, true, 0.5,'linear');	
 					
@@ -1734,7 +1897,7 @@ game = {
 				this.selected_checker=0;
 
 				//отправляем ход сопернику
-				game.process_my_move(m_data, moves);
+				game.move_processor(m_data, moves);
 			}
 			else
 			{
@@ -1865,7 +2028,7 @@ game = {
 		objects.opp_card_cont.visible=false;
 		objects.my_card_cont.visible=false;
 		objects.selected_frame.visible=false;
-		objects.checkers.forEach((c)=> {c.visible=false});
+		//objects.checkers.forEach((c)=> {c.visible=false});
 		
 		//рекламная пауза
 		ad.show();
@@ -4630,7 +4793,12 @@ lobby={
 		}
 	},
 	
-	get_state_texture(s) {
+	get_state_texture(s,uid) {
+	
+		//если это утвержденный лидер
+		if (uid===quiz.accepted_leader)			
+			return gres.quiz_leader_card.texture;
+		
 	
 		switch(s) {
 
@@ -4667,8 +4835,7 @@ lobby={
 				card.bcg.texture=this.get_state_texture(params.state);
 				card.state=params.state;
 
-				card.type = "table";
-				
+				card.type = "table";				
 				
 				card.bcg.texture = gres.mini_player_card_table.texture;
 				
@@ -4721,7 +4888,7 @@ lobby={
 
 		//устанавливаем цвет карточки в зависимости от состояния( аватар не поменялись)
 		const card=objects.mini_cards[params.id];
-		card.bcg.texture=this.get_state_texture(params.state);
+		card.bcg.texture=this.get_state_texture(params.state,card.uid);
 		card.state=params.state;
 
 		card.name_text.set2(params.name,105);
@@ -4741,7 +4908,7 @@ lobby={
 			if (!card.visible) {
 
 				//устанавливаем цвет карточки в зависимости от состояния
-				card.bcg.texture=this.get_state_texture(params.state);
+				card.bcg.texture=this.get_state_texture(params.state,params.uid);
 				card.state=params.state;
 
 				card.type = 'single';
@@ -5061,7 +5228,7 @@ lobby={
 		sound.play('inst_msg');		
 		anim2.add(objects.inst_msg_cont,{alpha:[0, 1]},true,0.4,'linear',false);		
 		objects.inst_msg_avatar.texture=players_cache.players[data.uid].texture||PIXI.Texture.WHITE;
-		objects.inst_msg_text.set2(data.msg,300);
+		objects.inst_msg_text.set2(data.msg,290);
 		objects.inst_msg_cont.tm=Date.now();
 	},
 	
@@ -5206,7 +5373,7 @@ lobby={
 	},
 
 	chat_btn_down(){
-		if (anim2.any_on()===true) {
+		if (anim2.any_on()) {
 			sound.play('locked');
 			return
 		};
@@ -5221,6 +5388,32 @@ lobby={
 		this.close();
 		chat.activate();
 		
+	},
+
+	quiz_btn_down(){
+		
+		if (anim2.any_on()) {
+			sound.play('locked');
+			return
+		};		
+		
+		if (room_name!=='states2'&&room_name!=='states5'){
+			sound.play('locked');
+			message.add(['Закрыто','Closed'][LANG]);
+			return;
+		}		
+			
+		sound.play('click');	
+		
+
+		
+		//подсветка
+		objects.lobby_btn_hl.x=objects.lobby_quiz_btn.x;
+		objects.lobby_btn_hl.y=objects.lobby_quiz_btn.y;
+		anim2.add(objects.lobby_btn_hl,{alpha:[0,1]}, false, 0.25,'ease3peaks',false);	
+		
+		this.close();
+		quiz.activate();
 	},
 
 	async lb_btn_down() {
@@ -6146,8 +6339,6 @@ async function init_game_env(lang) {
 	//устанавливаем рейтинг в попап
 	objects.id_rating.text=objects.my_card_rating.text=my_data.rating;
 
-
-
 	//обновляем почтовый ящик
 	fbs.ref("inbox/"+my_data.uid).set({sender:"-",message:"-",tm:"-",data:{x1:0,y1:0,x2:0,y2:0,board_state:0}});
 
@@ -6161,11 +6352,6 @@ async function init_game_env(lang) {
 	fbs.ref("players/"+my_data.uid+"/games").set(my_data.games);
 	fbs.ref("players/"+my_data.uid+"/tm").set(firebase.database.ServerValue.TIMESTAMP);
 				
-	//новое 	
-	//fbs.ref('pdata/'+my_data.uid+'/PUB/name').set(my_data.name);
-	//fbs.ref('pdata/'+my_data.uid+'/PUB/pic_url').set(my_data.pic_url);
-	////fbs.ref('pdata/'+my_data.uid+'/PUB/rating').set(my_data.rating);
-	//fbs.ref('pdata/'+my_data.uid+'/PRV/games').set(my_data.games);
 	if(!other_data?.first_log_tm)
 		fbs.ref('players/'+my_data.uid+'/first_log_tm').set(firebase.database.ServerValue.TIMESTAMP);
 		
@@ -6178,6 +6364,8 @@ async function init_game_env(lang) {
 	//отключение от игры и удаление не нужного
 	fbs.ref("inbox/"+my_data.uid).onDisconnect().remove();
 	
+	//утвержденный лидер задачки (чтобы показывать кастомную карточку)
+	quiz.accepted_leader=await fbs_once('quiz/acc_leader');
 
 	//keep-alive сервис
 	setInterval(function()	{keep_alive()}, 40000);
@@ -6202,7 +6390,8 @@ async function init_game_env(lang) {
 	objects.id_loup.visible=false;
 	
 	//загружаем лобби с включенным ботом
-	const room_to_go='states'+lobby.get_room_index_from_rating();
+	let room_to_go='states'+lobby.get_room_index_from_rating();
+	room_to_go='states5';
 	lobby.activate(room_to_go,1);
 }
 
