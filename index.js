@@ -5417,7 +5417,7 @@ lobby={
 			return
 		};		
 		
-		if (room_name!=='states2'&&room_name!=='states5'){
+		if (room_name!=='states2'&&room_name!=='states3'){
 			sound.play('locked');
 			message.add(['Закрыто','Closed'][LANG]);
 			return;
