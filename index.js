@@ -1751,7 +1751,7 @@ game = {
 		//если открыт просмтотр игры то закрываем его
 		if (game_watching.on) game_watching.close();		
 		
-		this.opponent = opponent;
+		this.opponent=opponent;
 		this.opponent.activate();
 		this.move_processor=this.process_my_move;
 		
@@ -6391,7 +6391,7 @@ async function init_game_env(lang) {
 	
 	//загружаем лобби с включенным ботом
 	let room_to_go='states'+lobby.get_room_index_from_rating();
-	room_to_go='states5';
+	//room_to_go='states5';
 	lobby.activate(room_to_go,1);
 }
 
