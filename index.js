@@ -1050,9 +1050,22 @@ board_func={
 			const x=ind%8;
 			t_board[y][x]=1+(i>=12);			
 		}		
-		return t_board;			
+		return t_board;
+	},
 	
-	
+	str_to_quiz_brd(str){
+		
+		const t_board =[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]];
+
+		//декодируем строку в доску
+		const len=str.length;
+		for (i=0;i<len;i++){
+			const ind=this.base64.indexOf(str[i]);
+			const y=Math.floor(ind/8);
+			const x=ind%8;
+			t_board[y][x]=1+(i>=12);			
+		}		
+		return t_board;
 	},
 	
 	rotate_board(brd){	
@@ -1557,6 +1570,7 @@ quiz={
 	prv_quiz_read:0,
 	quiz_data:0,
 	on:0,
+	path:'quiz2',
 	
 	activate(){
 				
@@ -1627,15 +1641,14 @@ quiz={
 		//обновляем только если 5 минут прошло
 		const tm=Date.now();
 		if (tm-this.prv_quiz_read>300000)
-			this.quiz_data=await fbs_once('quiz');
-		
-		
-		if (!this.quiz_data) return;
+			this.quiz_data=await fbs_once(this.path);
+				
+		if (!this.quiz_data) return;		
 		
 		await players_cache.update(this.quiz_data.cur_leader,{});
 		await players_cache.update_avatar(this.quiz_data.cur_leader);		
 		const cur_leader_data=players_cache.players[this.quiz_data.cur_leader];
-		const block=this.quiz_data.block;
+		const brd_str=this.quiz_data.brd_str;
 	
 		//если уже выключили игру
 		if (!this.on) return;
@@ -1668,7 +1681,7 @@ quiz={
 		anim2.add(objects.quiz_rules_cont,{x:[-100, objects.quiz_rules_cont.sx]}, true, 0.25,'easeOutBack');	
 		
 		//инициируем вид доски
-		g_board = [[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
+		g_board = board_func.str_to_quiz_brd(brd_str);
 		board_func.update_board(g_board);
 				
 	},
@@ -1707,8 +1720,8 @@ quiz={
 				sound.play('lose');				
 			}else{
 				if (this.made_moves<this.made_moves_leader){
-					fbs.ref('quiz/cur_leader').set(my_data.uid);
-					fbs.ref('quiz/moves').set(this.made_moves);
+					fbs.ref(this.path+'/cur_leader').set(my_data.uid);
+					fbs.ref(this.path+'/moves').set(this.made_moves);
 					sound.play('win');
 					await big_message.show('Вы теперь лидер!', `сделано ходов: ${this.made_moves}`,false);
 					this.prv_quiz_read=0;
@@ -5417,17 +5430,9 @@ lobby={
 			sound.play('locked');
 			return
 		};		
-		
-		if (room_name!=='states2'&&room_name!=='states3'){
-			sound.play('locked');
-			message.add(['Закрыто','Closed'][LANG]);
-			return;
-		}		
-			
+					
 		sound.play('click');	
-		
-
-		
+				
 		//подсветка
 		objects.lobby_btn_hl.x=objects.lobby_quiz_btn.x;
 		objects.lobby_btn_hl.y=objects.lobby_quiz_btn.y;
@@ -6386,7 +6391,7 @@ async function init_game_env(lang) {
 	fbs.ref("inbox/"+my_data.uid).onDisconnect().remove();
 	
 	//утвержденный лидер задачки (чтобы показывать кастомную карточку)
-	quiz.accepted_leader=await fbs_once('quiz/acc_leader');
+	quiz.accepted_leader=await fbs_once(quiz.path+'/acc_leader');
 
 	//keep-alive сервис
 	setInterval(function()	{keep_alive()}, 40000);
