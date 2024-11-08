@@ -2133,6 +2133,7 @@ game_watching={
 		
 		//устанаваем текстуру доски
 		objects.board.texture=pref.board_texture;
+		objects.opp_avatar_frame.texture=gres.avatar_frame.texture;
 				
 		this.master_uid=main_data.master;
 		this.slave_uid=main_data.slave;
