@@ -5430,6 +5430,9 @@ lobby={
 			sound.play('locked');
 			return
 		};		
+		
+		sound.play('locked');
+		return
 					
 		sound.play('click');	
 				
