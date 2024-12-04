@@ -2147,6 +2147,9 @@ game_watching={
 		
 	async new_move(board_data){
 
+
+		//console.log('Data size GW:', JSON.stringify(board_data).length);
+		
 		if(!this.on) return;
 		
 		if(!board_data || board_data?.f_str?.length>35){
@@ -3602,7 +3605,7 @@ chat={
 			await this.chat_updated(c,true);	
 		
 		//подписываемся на новые сообщения
-		fbs.ref(chat_path).on('child_changed', snapshot => {chat.chat_updated(snapshot.val());});
+		fbs.ref(chat_path).on('child_changed', snapshot => {chat.chat_updated(snapshot.val())});
 	},	
 				
 	async chat_updated(data, first_load) {		
@@ -4131,7 +4134,7 @@ pref={
 			const msg=[`НУЖНО: Рейтинг >${rating_req} или Игры >${games_req}`,`NEED: Rating >${rating_req} or Games >${games_req}`][LANG];
 			this.message(msg);
 			sound.play('locked');
-			return;
+			//return;
 		}
 		
 		sound.play('click');
@@ -4516,6 +4519,7 @@ lobby={
 	fb_cache:{},
 	first_run:0,
 	bot_on:1,
+	global_players:{},
 		
 	activate(room,bot_on) {
 		
@@ -4575,7 +4579,28 @@ lobby={
 			room_name=room;	
 		}
 		
-		fbs.ref(room_name).on('value', snapshot => {lobby.players_list_updated(snapshot.val());});
+		//fbs.ref(room_name).on('value', snapshot => {lobby.players_list_updated(snapshot.val());});
+		
+		
+		fbs.ref(room_name).on('child_changed', snapshot => {	
+			const val=snapshot.val()
+			//console.log('child_changed',snapshot.key,val,JSON.stringify(val).length)
+			this.global_players[snapshot.key]=val;
+			lobby.players_list_updated(this.global_players);
+		});
+		fbs.ref(room_name).on('child_added', snapshot => {			
+			const val=snapshot.val()
+			//console.log('child_added',snapshot.key,val,JSON.stringify(val).length)
+			this.global_players[snapshot.key]=val;
+			lobby.players_list_updated(this.global_players);
+		});
+		fbs.ref(room_name).on('child_removed', snapshot => {			
+			const val=snapshot.val()
+			//console.log('child_removed',snapshot.key,val,JSON.stringify(val).length)
+			delete this.global_players[snapshot.key];
+			lobby.players_list_updated(this.global_players);
+		});
+		
 		fbs.ref(room_name+'/'+my_data.uid).onDisconnect().remove();		
 		
 		set_state({state : 'o'});
@@ -4643,7 +4668,8 @@ lobby={
 	},
 
 	players_list_updated(players) {
-
+	
+		
 		//если мы в игре то пока не обновляем карточки
 		if (state==='p'||state==='b')
 			return;				
@@ -4972,8 +4998,6 @@ lobby={
 
 				card.visible=true;
 
-				//стираем старые данные
-				card.avatar.set_texture();
 
 				//получаем аватар и загружаем его
 				this.load_avatar2({uid:params.uid, tar_obj:card.avatar});
@@ -5300,14 +5324,6 @@ lobby={
 		
 		//активируем просмотр игры
 		game_watching.activate(objects.td_cont.card);
-	},
-	
-	async switch_header(){
-		
-		await anim2.add(objects.lobby_header,{y:[objects.lobby_header.sy, -60],alpha:[1,0]},false,1,'linear',false);	
-		objects.lobby_header.text=this.sw_header.header_list[this.sw_header.index];		
-		anim2.add(objects.lobby_header,{y:[-60,objects.lobby_header.sy],alpha:[0,1]},true,1,'linear',false);	
-		
 	},
 	
 	wheel_event(dir) {
@@ -6385,7 +6401,7 @@ async function init_game_env(lang) {
 		fbs.ref('players/'+my_data.uid+'/first_log_tm').set(firebase.database.ServerValue.TIMESTAMP);
 		
 	//устанавливаем мой статус в онлайн
-	set_state({state : 'o'});
+	//set_state({state : 'o'});
 	
 	//сообщение для дубликатов
 	fbs.ref("inbox/"+my_data.uid).set({message:"CLIEND_ID",tm:Date.now(),client_id});
