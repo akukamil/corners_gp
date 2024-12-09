@@ -1949,21 +1949,21 @@ game = {
 		//начинаем процесс плавного перемещения шашки
 		if (state === 'b') {					
 			bot_game.make_move();
-		}
-		else
-		{
+		} else {
 			//переворачиваем данные о ходе так как оппоненту они должны попасть как ход шашками №2
 			move_data.x1=7-move_data.x1;
 			move_data.y1=7-move_data.y1;
 			move_data.x2=7-move_data.x2;
 			move_data.y2=7-move_data.y2;
-			
+			const move_data_short=move_data.x1.toString()+move_data.y1.toString()+move_data.x2.toString()+move_data.y2.toString();
 			//отправляем ход сопернику
 			//my_log.add({name:my_data.name,opp_name:opp_data.name,move_data,game_id,made_moves,connected,tm:Date.now(),info:'process_my_move'})
 			
-			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'MOVE',tm:Date.now(),data:{...move_data, board_state:0}}).then(()=>{
-				//my_log.add({name:my_data.name,opp_name:opp_data.name,move_data,game_id,made_moves,connected,tm:Date.now(),info:'process_my_move_ok'})
-			})
+			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'MOVE',tm:Date.now(),data:{...move_data, board_state:0}});
+			
+			//новая версия
+			//fbs.ref('inbox/'+opp_data.uid).set({s:left(my_data.uid,5),m:'M',t:'32.4',d:move_data_short});
+
 
 
 			//также фиксируем данные стола
@@ -2011,6 +2011,54 @@ game = {
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
 		if (game.state !== 'on')
 			return;		
+		
+		//защита от двойных ходов
+		if (my_turn === 1) return;
+		
+		//воспроизводим уведомление о том что соперник произвел ход
+		sound.play('receive_move');
+
+		//обозначаем кто ходит
+		my_turn = 1;	
+
+		//обозначаем что соперник сделал ход и следовательно подтвердил согласие на игру
+		this.opponent.opp_conf_play = 1;	
+		
+		//обновляем таймер
+		this.opponent.reset_timer();			
+
+		//считаем последовательность ходов
+		const moves = board_func.get_moves_path(move_data,g_board);
+
+		//плавно перемещаем шашку
+		await board_func.start_gentle_move(move_data, moves,g_board, objects.board, objects.checkers);
+
+		
+		if (my_role === 'master') {
+			made_moves++;
+			objects.cur_move_text.text="сделано ходов: "+made_moves;
+				
+			const result = board_func.get_board_state(g_board, made_moves);
+			
+			//бота нельзя блокировать
+			if (result === 'opp_left_after_30' && this.opponent.name === 'bot')	result = '';
+			
+			if (result !== '') {
+				this.stop(result);
+			}			
+		}
+		
+		//my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move_ok'})		
+	},
+		
+	async receive_move2(data) {
+		
+		
+		const move_data={x1:+data[0],y1:+data[1],x2:+data[2],y2:+data[3]}
+		//my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move'})			
+			
+		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
+		if (game.state !== 'on') return;		
 		
 		//защита от двойных ходов
 		if (my_turn === 1) return;
@@ -3321,7 +3369,7 @@ var process_new_message = function(msg) {
 	if (state==="p") {
 
 		//учитываем только сообщения от соперника
-		if (msg.sender===opp_data.uid) {
+		if (msg.sender===opp_data.uid||left(msg.s,5)===left(opp_data.uid)) {
 
 			//получение отказа от игры
 			if (msg.message==='REFUSE')
@@ -3342,6 +3390,10 @@ var process_new_message = function(msg) {
 			//получение сообщение с ходом игорка
 			if (msg.message==='MOVE')
 				game.receive_move(msg.data);
+			
+			//получение сообщение с ходом игорка оптимизированный вариант
+			if (msg.message==='M')
+				game.receive_move2(msg.d);
 			
 			//получение сообщение с ходом игорка
 			if (msg.message==='CHAT')
@@ -5625,12 +5677,12 @@ auth1 = {
 		
 	load_script : function(src) {
 	  return new Promise((resolve, reject) => {
-		const script = document.createElement('script')
-		script.type = 'text/javascript'
-		script.onload = resolve
-		script.onerror = reject
-		script.src = src
-		document.head.appendChild(script)
+        const script = document.createElement('script')
+        script.type = 'text/javascript'
+        script.onload = () => resolve(1)
+        script.onerror = () => resolve(0)
+        script.src = src
+        document.head.appendChild(script)
 	  })
 	},
 		
@@ -5684,8 +5736,8 @@ auth1 = {
 			
 			game_platform = 'VK';
 			
-			try {await this.load_script('https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js')} catch (e) {alert(e)};
-			
+			await this.load_script('https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js')||await this.load_script('https://akukamil.github.io/durak/vkbridge.js');
+	
 			let _player;
 			
 			try {
@@ -5742,12 +5794,12 @@ auth2 = {
 	
 	load_script(src) {
 	  return new Promise((resolve, reject) => {
-		const script = document.createElement('script')
-		script.type = 'text/javascript'
-		script.onload = resolve
-		script.onerror = reject
-		script.src = src
-		document.head.appendChild(script)
+        const script = document.createElement('script')
+        script.type = 'text/javascript'
+        script.onload = () => resolve(1)
+        script.onerror = () => resolve(0)
+        script.src = src
+        document.head.appendChild(script)
 	  })
 	},
 			
@@ -5856,8 +5908,8 @@ auth2 = {
 		
 		if (game_platform === 'VK') {
 			
-			try {await this.load_script('https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js')} catch (e) {alert(e)};
-			
+			await this.load_script('https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js')||await this.load_script('https://akukamil.github.io/durak/vkbridge.js');
+	
 			let _player;
 			
 			try {
