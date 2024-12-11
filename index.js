@@ -6237,8 +6237,7 @@ async function define_platform_and_language() {
 
 main_loader={
 	
-	async load1(){
-		
+	async load1(){		
 		
 		//ресурсы
 		const loader=new PIXI.Loader();		
@@ -6247,7 +6246,8 @@ main_loader={
 		loader.add('loader_bcg',git_src+`res/common/loader_bcg_${['ru','en'][LANG]}_img.jpg`);
 		loader.add('loader_bar_frame',git_src+'res/common//loader_bar_frame_img.png');	
 		loader.add('loader_bar_bcg',git_src+'res/common/loader_bar_bcg_img.png');
-				
+
+		
 		await new Promise(res=>loader.load(res))
 		
 		//переносим все в ассеты
@@ -6330,6 +6330,9 @@ main_loader={
 			if (load_list[i].class === "sprite" || load_list[i].class === "image" )
 				loader.add(load_list[i].name, git_src+'res/'+lang_pack + '/' + load_list[i].name + "." +  load_list[i].image_format);
 
+		//добавляем библиотеку аватаров
+		loader.add('multiavatar', git_src+'multiavatar.min.txt');	
+	
 		loader.onProgress.add(ldr=>{
 			objects.loader_bar_mask.width =  240*ldr.progress*0.01;
 		});		
@@ -6340,6 +6343,11 @@ main_loader={
 			const res=loader.resources[res_name];			
 			assets[res_name]=res.texture||res.sound||res.data;			
 		}	
+		
+		//Включаем библиотеку аватаров
+		const script = document.createElement('script');
+		script.textContent = assets.multiavatar;
+		document.head.appendChild(script);
 		
 		anim2.add(objects.bcg,{alpha:[1,0]}, false, 0.5,'linear');
 		await anim2.add(objects.loader_cont,{alpha:[1,0]}, false, 0.5,'linear');
@@ -6493,9 +6501,6 @@ async function init_game_env(lang) {
 
 	anim2.add(objects.id_cont,{y:[-200,objects.id_cont.sy]}, true, 0.5,'easeOutBack');
 
-	//подгружаем библиотеку аватаров
-	await auth2.load_script('multiavatar.min.js');
-	
 	if ((game_platform === 'YANDEX' || game_platform === 'VK') && LANG === 0)
 		await auth1.init();
 	else
