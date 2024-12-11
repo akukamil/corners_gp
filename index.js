@@ -6110,7 +6110,6 @@ auth2 = {
 			my_data.orig_pic_url = 'mavatar'+my_data.uid;			
 			return;
 		}		
-
 		
 		if (game_platform === 'UNKNOWN') {
 			
@@ -6505,6 +6504,11 @@ async function init_game_env(lang) {
 		await auth1.init();
 	else
 		await auth2.init();
+	
+	//убираем ё
+	my_data.name=my_data.name.replace(/ё/g, 'е');
+	my_data.name=my_data.name.replace(/Ё/g, 'Е');
+
 
 	//инициируем файербейс
 	if (firebase.apps.length===0) {
