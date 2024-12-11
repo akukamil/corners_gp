@@ -68,7 +68,7 @@ class player_mini_card_class extends PIXI.Container {
 		this.avatar.y=16;
 		this.avatar.w=this.avatar.h=58.2;
 		
-		this.avatar_frame=new PIXI.Sprite(assets.circle_frame50);
+		this.avatar_frame=new PIXI.Sprite(assets.chat_avatar_frame_img);
 		this.avatar_frame.x=16-11.64;
 		this.avatar_frame.y=16-11.64;
 		this.avatar_frame.width=this.avatar_frame.height=81.48;
@@ -94,7 +94,7 @@ class player_mini_card_class extends PIXI.Container {
 		this.avatar1.y=16;
 		this.avatar1.w=this.avatar1.h=58.2;
 		
-		this.avatar1_frame=new PIXI.Sprite(assets.circle_frame50);
+		this.avatar1_frame=new PIXI.Sprite(assets.chat_avatar_frame_img);
 		this.avatar1_frame.x=this.avatar1.x-11.64;
 		this.avatar1_frame.y=this.avatar1.y-11.64;
 		this.avatar1_frame.width=this.avatar1_frame.height=81.48;
@@ -107,7 +107,7 @@ class player_mini_card_class extends PIXI.Container {
 		this.avatar2.y=16;
 		this.avatar2.w=this.avatar2.h=58.2;
 		
-		this.avatar2_frame=new PIXI.Sprite(assets.circle_frame50);
+		this.avatar2_frame=new PIXI.Sprite(assets.chat_avatar_frame_img);
 		this.avatar2_frame.x=this.avatar2.x-11.64;
 		this.avatar2_frame.y=this.avatar2.y-11.64;
 		this.avatar2_frame.width=this.avatar2_frame.height=81.48;
