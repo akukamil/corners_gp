@@ -1670,7 +1670,7 @@ quiz={
 	prv_quiz_read:0,
 	quiz_data:0,
 	on:0,
-	path:'quiz2',
+	path:'quiz3',
 	
 	activate(){
 				
@@ -1798,6 +1798,31 @@ quiz={
 		this.on=0;
 		objects.stop_bot_button.visible = false;
 		objects.quiz_rules_cont.visible=false;
+		
+	},
+	
+	make_new_quiz(){
+		
+		const brd=[
+			[0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,2,0,0],
+			[0,0,0,0,0,2,0,2],
+			[0,0,0,2,2,0,0,0],
+			[0,0,0,2,2,0,0,0],
+			[0,2,0,0,1,1,1,1],
+			[2,2,0,0,1,1,1,1],
+			[0,0,0,0,1,1,1,1]
+		]
+		//кодируем доску в символы base64
+		let b_str=''
+		for (let p=1;p<=2;p++)
+			for (let y=0;y<8;y++)
+				for (let x=0;x<8;x++)
+					if (brd[y][x]===p)
+						b_str+=board_func.base64[x+y*8];
+					
+		const quiz_data={brd_str:b_str,moves:99,cur_leader:'debug99',fin_date:'13.12.2024'};
+		fbs.ref('quiz3').set(quiz_data);
 		
 	},
 	
@@ -5603,8 +5628,8 @@ lobby={
 			return
 		};		
 		
-		sound.play('locked');
-		return
+		//sound.play('locked');
+		//return
 					
 		sound.play('click');	
 				
