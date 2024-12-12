@@ -1670,12 +1670,18 @@ quiz={
 	prv_quiz_read:0,
 	quiz_data:0,
 	on:0,
-	path:'quiz3',
+	path:'quiz4',
+	board_loaded:0,
+	moves_hist:[],
 	
 	activate(){
 				
 		game.opponent=quiz;
 		this.on=1;
+		this.moves_hist=[];
+		
+		//убираем все чтобы играть не могли
+		objects.checkers.forEach(c=>{c.visible=false});
 		
 		//устанавливаем локальный и удаленный статус
 		set_state ({state : 'b'});
@@ -1701,15 +1707,14 @@ quiz={
 		//основные элементы игры
 		objects.board_cont.visible=true;
 		objects.my_card_cont.visible=true;
-		objects.opp_card_cont.visible=false;		
-		
-		game.move_processor=this.process_my_move.bind(quiz);
+		objects.opp_card_cont.visible=false;			
+		objects.board.interactive=false;
 	
 		this.made_moves=0;
 		objects.cur_move_text.visible=true;
 		objects.cur_move_text.text=['Загрузка...','Loading...'][LANG];
 		
-		objects.board.pointerdown = game.mouse_down_on_board.bind(game);
+		
 
 		//устанаваем текстуру
 		objects.board.texture=pref.board_texture;		
@@ -1749,9 +1754,14 @@ quiz={
 		await players_cache.update_avatar(this.quiz_data.cur_leader);		
 		const cur_leader_data=players_cache.players[this.quiz_data.cur_leader];
 		const brd_str=this.quiz_data.brd_str;
-	
+		
+		
 		//если уже выключили игру
 		if (!this.on) return;
+		
+		game.move_processor=this.process_my_move.bind(quiz);
+		objects.board.pointerdown = game.mouse_down_on_board.bind(game);
+		objects.board.interactive=true;
 				
 		objects.cur_move_text.text='Сделано ходов: '+this.made_moves;
 		
@@ -1822,12 +1832,14 @@ quiz={
 						b_str+=board_func.base64[x+y*8];
 					
 		const quiz_data={brd_str:b_str,moves:99,cur_leader:'debug99',fin_date:'13.12.2024'};
-		fbs.ref('quiz3').set(quiz_data);
+		fbs.ref(this.path).set(quiz_data);
 		
 	},
 	
 	async process_my_move(move_data, moves){
-		
+						
+		this.moves_hist.push(move_data);
+				
 		//делаем перемещение шашки
 		await board_func.start_gentle_move(move_data, moves, g_board);	
 		
@@ -1847,13 +1859,19 @@ quiz={
 				if (this.made_moves<this.made_moves_leader){
 					fbs.ref(this.path+'/cur_leader').set(my_data.uid);
 					fbs.ref(this.path+'/moves').set(this.made_moves);
+					fbs.ref(this.path+'/moves_hist').set(this.moves_hist);
 					sound.play('win');
 					await big_message.show('Вы теперь лидер!', `сделано ходов: ${this.made_moves}`,false);
 					this.prv_quiz_read=0;
 					
 				}else{
-					sound.play('lose');
-					await big_message.show('Вы проиграли лидеру!', `сделано ходов: ${this.made_moves}`,false);					
+					
+					if (this.made_moves===this.made_moves_leader)
+						await big_message.show('Вы не смогли обойти лидера!', `сделано ходов: ${this.made_moves}`,false);
+					else
+						await big_message.show('Вы проиграли лидеру!', `сделано ходов: ${this.made_moves}`,false);
+					
+					sound.play('lose');					
 				}				
 			}		
 			
@@ -1946,6 +1964,7 @@ game = {
 
 		//включаем взаимодейтсвие с доской
 		objects.board.pointerdown = game.mouse_down_on_board.bind(game);
+		objects.board.interactive=true;
 		
 
 	},
@@ -2473,7 +2492,6 @@ game_watching={
 		objects.my_avatar.texture=objects.id_avatar.texture;
 		objects.gw_back_button.visible=false;
 		objects.board_cont.visible=false;
-		objects.board.interactive=true;
 		objects.cur_move_text.visible=false;
 		objects.my_card_cont.visible = false;	
 		objects.opp_card_cont.visible = false;	
@@ -4702,6 +4720,8 @@ lobby={
 	first_run:0,
 	bot_on:1,
 	global_players:{},
+	state_listener_on:0,
+	state_listener_timeout:0,
 		
 	activate(room,bot_on) {
 		
@@ -4756,34 +4776,45 @@ lobby={
 			if(room_name){
 				fbs.ref(room_name).off('value');
 				fbs.ref(room_name+'/'+my_data.uid).remove();
+				this.state_listener_on=0;
 			}
-			room_name=room;	
+			room_name=room;
 		}
 		
-		//fbs.ref(room_name).on('value', snapshot => {lobby.players_list_updated(snapshot.val());});
 		
+		//удаляем таймаут слушателя комнаты
+		clearTimeout(this.state_listener_timeout);
 		
-		fbs.ref(room_name).on('child_changed', snapshot => {	
-			const val=snapshot.val()
-			//console.log('child_changed',snapshot.key,val,JSON.stringify(val).length)
-			this.global_players[snapshot.key]=val;
-			lobby.players_list_updated(this.global_players);
-		});
-		fbs.ref(room_name).on('child_added', snapshot => {			
-			const val=snapshot.val()
-			//console.log('child_added',snapshot.key,val,JSON.stringify(val).length)
-			this.global_players[snapshot.key]=val;
-			lobby.players_list_updated(this.global_players);
-		});
-		fbs.ref(room_name).on('child_removed', snapshot => {			
-			const val=snapshot.val()
-			//console.log('child_removed',snapshot.key,val,JSON.stringify(val).length)
-			delete this.global_players[snapshot.key];
-			lobby.players_list_updated(this.global_players);
-		});
+		this.players_list_updated(this.global_players);
 		
-		fbs.ref(room_name+'/'+my_data.uid).onDisconnect().remove();		
-		
+		//включаем прослушивание если надо
+		if (!this.state_listener_on){
+			
+			//console.log('Подключаем прослушивание...');
+			fbs.ref(room_name).on('child_changed', snapshot => {	
+				const val=snapshot.val()
+				//console.log('child_changed',snapshot.key,val,JSON.stringify(val).length)
+				this.global_players[snapshot.key]=val;
+				lobby.players_list_updated(this.global_players);
+			});
+			fbs.ref(room_name).on('child_added', snapshot => {			
+				const val=snapshot.val()
+				//console.log('child_added',snapshot.key,val,JSON.stringify(val).length)
+				this.global_players[snapshot.key]=val;
+				lobby.players_list_updated(this.global_players);
+			});
+			fbs.ref(room_name).on('child_removed', snapshot => {			
+				const val=snapshot.val()
+				//console.log('child_removed',snapshot.key,val,JSON.stringify(val).length)
+				delete this.global_players[snapshot.key];
+				lobby.players_list_updated(this.global_players);
+			});
+			
+			fbs.ref(room_name+'/'+my_data.uid).onDisconnect().remove();	
+			
+			this.state_listener_on=1;						
+		}
+
 		set_state({state : 'o'});
 		
 		//создаем заголовки
@@ -4850,10 +4881,10 @@ lobby={
 
 	players_list_updated(players) {
 	
-		
+		//console.log(new Date(Date.now()).toLocaleTimeString());
 		//если мы в игре то пока не обновляем карточки
-		if (state==='p'||state==='b')
-			return;				
+		//if (state==='p'||state==='b')
+		//	return;				
 
 		//это столы
 		let tables = {};
@@ -4882,8 +4913,6 @@ lobby={
 				single[uid] = player.name;						
 		}
 		
-		//console.table(single);
-		
 		//оставляем только тех кто за столом
 		for (let uid in p_data)
 			if (p_data[uid].state !== 'p')
@@ -4901,7 +4930,6 @@ lobby={
 				}							
 			}			
 		}
-				
 		
 		//определяем столы
 		for (let uid in p_data) {
@@ -5449,10 +5477,14 @@ lobby={
 		anim2.add(objects.lobby_header_cont,{y:[objects.lobby_header_cont.y,-50]}, false, 0.2,'linear');
 		
 		//больше ни ждем ответ ни от кого
-		pending_player="";
+		pending_player='';
 		
-		//отписываемся от изменений состояний пользователей
-		fbs.ref(room_name).off();
+		//отписываемся от изменений состояний пользователей через 30 секунд
+		this.state_listener_timeout=setTimeout(()=>{
+			fbs.ref(room_name).off();
+			this.state_listener_on=0;
+			//console.log('Отключаем прослушивание...');
+		},30000);
 
 	},
 	
