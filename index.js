@@ -6448,6 +6448,8 @@ async function init_game_env(lang) {
 			other_data=old_data;
 		}
 		my_data.uid=my_data.uid2;
+	}else{
+		other_data=await fbs_once('players/' + my_data.uid);
 	}
 
 
