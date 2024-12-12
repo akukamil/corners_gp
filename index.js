@@ -6432,7 +6432,24 @@ async function init_game_env(lang) {
 	window.addEventListener('keydown',function(event){keyboard.keydown(event.key)});
 	
 	//загружаем остальные данные из файербейса
-	const other_data = await fbs_once('players/' + my_data.uid);
+	let other_data;
+	if (my_data.uid2){
+		const new_data=await fbs_once('players/' + my_data.uid2);
+		if (new_data){
+			other_data=new_data;
+			
+			//удаляем старые данные если они остались вдруг
+			fbs.ref('players/'+my_data.uid).remove();
+			
+		}else{			
+			//копируем
+			const old_data=await fbs_once('players/' + my_data.uid);
+			fbs.ref('players/'+my_data.uid2).set(old_data);
+			other_data=old_data;
+		}
+		my_data.uid=my_data.uid2;
+	}
+
 
 	//сервисное сообщение
 	if(other_data && other_data.s_msg){
@@ -6491,13 +6508,7 @@ async function init_game_env(lang) {
 	fbs.ref('players/'+my_data.uid+'/auth_mode').set(my_data.auth_mode);
 	fbs.ref('players/'+my_data.uid+'/tm').set(firebase.database.ServerValue.TIMESTAMP);
 	
-	if (my_data.uid2){
-		//обновляем данные в файербейс нового айди
-		fbs.ref('players/'+my_data.uid2+'/name').set(my_data.name);
-		fbs.ref('players/'+my_data.uid2+'/pic_url').set(my_data.pic_url);
-		fbs.ref('players/'+my_data.uid2+'/rating').set(my_data.rating);
-		fbs.ref('players/'+my_data.uid2+'/games').set(my_data.games);
-	}
+
 				
 	if(!other_data?.first_log_tm)
 		fbs.ref('players/'+my_data.uid+'/first_log_tm').set(firebase.database.ServerValue.TIMESTAMP);
