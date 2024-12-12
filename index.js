@@ -5835,123 +5835,35 @@ stickers = {
 }
 
 auth1 = {
-		
-	load_script : function(src) {
-	  return new Promise((resolve, reject) => {
-        const script = document.createElement('script')
-        script.type = 'text/javascript'
-        script.onload = () => resolve(1)
-        script.onerror = () => resolve(0)
-        script.src = src
-        document.head.appendChild(script)
-	  })
-	},
-		
-	get_random_name : function(e_str) {
-		
-		let rnd_names = ['Gamma','Жираф','Зебра','Тигр','Ослик','Мамонт','Волк','Лиса','Мышь','Сова','Hot','Енот','Кролик','Бизон','Super','ZigZag','Magik','Alpha','Beta','Foxy','Fazer','King','Kid','Rock'];
-		let chars = '+0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-		if (e_str !== undefined) {
 			
-			let e_num1 = chars.indexOf(e_str[0]) + chars.indexOf(e_str[1]) + chars.indexOf(e_str[2]) +	chars.indexOf(e_str[3]);
-			e_num1 = Math.abs(e_num1) % (rnd_names.length - 1);					
-			let e_num2 = chars.indexOf(e_str[4]).toString()  + chars.indexOf(e_str[5]).toString()  + chars.indexOf(e_str[6]).toString() ;	
-			e_num2 = e_num2.substring(0, 3);
-			return rnd_names[e_num1] + e_num2;					
-			
-		} else {
-
-			let rnd_num = irnd(0, rnd_names.length - 1);
-			let rand_uid = irnd(0, 999999)+ 100;
-			let name_postfix = rand_uid.toString().substring(0, 3);
-			let name =	rnd_names[rnd_num] + name_postfix;				
-			return name;
-		}							
-
-	},		
-	
-	init : async function() {	
+	async init() {	
 			
 		if (game_platform === 'YANDEX') {
-			
-			
-			try {await this.load_script('https://yandex.ru/games/sdk/v2')} catch (e) {alert(e)};									
+						
+			try {await auth2.load_script('https://yandex.ru/games/sdk/v2')} catch (e) {alert(e)};									
 					
-			let _player;
-			
+			let _player;			
 			try {
 				window.ysdk = await YaGames.init({});			
 				_player = await window.ysdk.getPlayer();
 			} catch (e) { alert(e)};
 			
-			my_data.name 	= _player.getName();
-			my_data.uid 	= _player.getUniqueID().replace(/\//g, "Z");
-			my_data.orig_pic_url = _player.getPhoto('medium');						
-			my_data.name = my_data.name || this.get_random_name(my_data.uid);
+			my_data.name=_player.getName();
+			const uid=_player.getUniqueID();
+			my_data.uid=uid.replace(/\//g, "Z");
+			my_data.uid2 = uid.replace(/[\/+=]/g, '');
+			my_data.orig_pic_url = _player.getPhoto('medium');					
+			my_data.auth_mode=_player.getMode()||'auth';
+			my_data.name = my_data.name || auth2.get_random_name(my_data.uid);
+			
 			if (my_data.orig_pic_url === 'https://games-sdk.yandex.ru/games/api/sdk/v1/player/avatar/0/islands-retina-medium')
 				my_data.orig_pic_url = 'mavatar'+my_data.uid;	
 			return;
-		}
-		
-		if (game_platform === 'VK') {
-			
-			game_platform = 'VK';
-			
-			await this.load_script('https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js')||await this.load_script('https://akukamil.github.io/durak/vkbridge.js');
-	
-			let _player;
-			
-			try {
-				await vkBridge.send('VKWebAppInit');
-				_player = await vkBridge.send('VKWebAppGetUserInfo');				
-			} catch (e) {alert(e)};
-
-			
-			my_data.name 	= _player.first_name + ' ' + _player.last_name;
-			my_data.uid 	= "vk"+_player.id;
-			my_data.orig_pic_url = _player.photo_100;
-			
-			return;
-			
-		}
-		
-	}
-	
+		}				
+	}	
 }
 
 auth2 = {
-	
-	my_games_user_profile_resolve : {},
-	my_games_login_status_resolve : {},
-	my_games_register_user_resolve : {},
-	ok_resolve : {},
-	
-	get_mygames_user_data () {
-		
-		return new Promise(function(resolve, reject){			
-			auth2.my_games_user_profile_resolve = resolve;
-			my_games_api.userProfile();	  
-		});	
-		
-	},
-	
-	get_mygames_login_status() {
-		
-		return new Promise(function(resolve, reject){			
-			auth2.my_games_login_status_resolve = resolve;
-			my_games_api.getLoginStatus();	  
-		});	
-		
-	},
-	
-	register_mygames_user () {
-		
-		return new Promise(function(resolve, reject){			
-			auth2.my_games_register_user_resolve = resolve;
-			my_games_api.registerUser();	  
-		});	
-		
-	},
 	
 	load_script(src) {
 	  return new Promise((resolve, reject) => {
@@ -6052,18 +5964,14 @@ auth2 = {
 			my_data.uid = _player.getUniqueID().replace(/[\/+=]/g, '');
 			my_data.name = _player.getName();
 			my_data.orig_pic_url = _player.getPhoto('medium');
+			my_data.auth_mode=_player.getMode()||'auth';
 			
 			if (my_data.orig_pic_url === 'https://games-sdk.yandex.ru/games/api/sdk/v1/player/avatar/0/islands-retina-medium')
 				my_data.orig_pic_url = 'mavatar'+my_data.uid;	
 			
 			if (my_data.name === '')
 				my_data.name = this.get_random_name(my_data.uid);
-			
-			//если английский яндекс до добавляем к имени страну
-			my_data.name = my_data.name;			
-
-
-			
+					
 			return;
 		}
 		
@@ -6071,75 +5979,24 @@ auth2 = {
 			
 			await this.load_script('https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js')||await this.load_script('https://akukamil.github.io/durak/vkbridge.js');
 	
-			let _player;
-			
+			let _player;			
 			try {
 				await vkBridge.send('VKWebAppInit');
 				_player = await vkBridge.send('VKWebAppGetUserInfo');				
 			} catch (e) {alert(e)};
 			
-			my_data.name 	= _player.first_name + ' ' + _player.last_name;
-			my_data.uid 	= "vk"+_player.id;
-			my_data.orig_pic_url = _player.photo_100;
-			
+			my_data.name=_player.first_name + ' ' + _player.last_name;
+			my_data.uid='vk'+_player.id;
+			my_data.orig_pic_url=_player.photo_100;
+			my_data.auth_mode='auth';			
 			return;			
-		}
-		
-		if (game_platform === 'GOOGLE_PLAY') {	
-		
-			my_data.uid = this.search_in_local_storage() || this.get_random_uid_for_local('GP_');
-			my_data.name = this.get_random_name(my_data.uid);
-			my_data.orig_pic_url = 'https://api.dicebear.com/7.x/adventurer/svg?seed='+my_data.uid;		
-			return;
-		}
-		
-		if (game_platform === 'MY_GAMES') {	
-
-			game_platform = 'MY_GAMES';
-			
-			try {await this.load_script('//store.my.games/app/19671/static/mailru.core.js')} catch (e) {alert(e)};													
-			try {my_games_api = await window.iframeApi({
-				appid: 19671,
-				getLoginStatusCallback: function(status) {auth2.my_games_login_status_resolve(status)},
-				userInfoCallback: function(info) {},
-				userProfileCallback: function(profile) {auth2.my_games_user_profile_resolve(profile)},
-				registerUserCallback: function(info) {auth2.my_games_register_user_resolve(info)},
-				paymentFrameUrlCallback: function(url) {},
-				getAuthTokenCallback: function(token) {},
-				paymentReceivedCallback: function(data) {},
-				paymentWindowClosedCallback: function() {},
-				userConfirmCallback: function() {},
-				paymentFrameItem: function(object) {},
-				adsCallback: function(context) {console.log(context)}
-			})} catch (e) {alert(e)};	
-					
-					
-			let res = await this.get_mygames_login_status();
-			console.log(res);
-			if (res.loginStatus ===0) {
-				my_games_api.authUser();				
-				return;				
-			}
-			
-			let player_data;
-			if (res.loginStatus ===1)
-				await this.register_mygames_user();	
-				
-			player_data = await this.get_mygames_user_data();			
-
-	
-			console.log(player_data);
-			
-			my_data.uid = 'MG_' + player_data.uid;
-			my_data.name = player_data.nick;
-			my_data.orig_pic_url = player_data.avatar;	
-			
 		}
 		
 		if (game_platform === 'DEBUG') {		
 
 			my_data.name = my_data.uid = 'debug' + prompt('Отладка. Введите ID', 100);
-			my_data.orig_pic_url = 'mavatar'+my_data.uid;			
+			my_data.orig_pic_url = 'mavatar'+my_data.uid;
+			my_data.auth_mode='debug'	
 			return;
 		}		
 		
@@ -6150,6 +6007,7 @@ auth2 = {
 			my_data.uid = this.search_in_local_storage() || this.get_random_uid_for_local('LS_');
 			my_data.name = this.get_random_name(my_data.uid);
 			my_data.orig_pic_url = 'mavatar'+my_data.uid;	
+			my_data.auth_mode='no'	
 		}
 	}
 	
@@ -6532,7 +6390,7 @@ async function init_game_env(lang) {
 
 	anim2.add(objects.id_cont,{y:[-200,objects.id_cont.sy]}, true, 0.5,'easeOutBack');
 
-	if ((game_platform === 'YANDEX' || game_platform === 'VK') && LANG === 0)
+	if (game_platform === 'YANDEX' && LANG === 0)
 		await auth1.init();
 	else
 		await auth2.init();
@@ -6574,8 +6432,7 @@ async function init_game_env(lang) {
 	window.addEventListener('keydown',function(event){keyboard.keydown(event.key)});
 	
 	//загружаем остальные данные из файербейса
-	let _other_data = await fbs.ref('players/' + my_data.uid).once('value');
-	let other_data = _other_data.val();
+	const other_data = await fbs_once('players/' + my_data.uid);
 
 	//сервисное сообщение
 	if(other_data && other_data.s_msg){
@@ -6627,11 +6484,20 @@ async function init_game_env(lang) {
 	fbs.ref("inbox/"+my_data.uid).on('value', (snapshot) => { process_new_message(snapshot.val());});
 
 	//обновляем данные в файербейс так как могли поменяться имя или фото
-	fbs.ref("players/"+my_data.uid+"/name").set(my_data.name);
-	fbs.ref("players/"+my_data.uid+"/pic_url").set(my_data.pic_url);
-	fbs.ref("players/"+my_data.uid+"/rating").set(my_data.rating);
-	fbs.ref("players/"+my_data.uid+"/games").set(my_data.games);
-	fbs.ref("players/"+my_data.uid+"/tm").set(firebase.database.ServerValue.TIMESTAMP);
+	fbs.ref('players/'+my_data.uid+'/name').set(my_data.name);
+	fbs.ref('players/'+my_data.uid+'/pic_url').set(my_data.pic_url);
+	fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating);
+	fbs.ref('players/'+my_data.uid+'/games').set(my_data.games);
+	fbs.ref('players/'+my_data.uid+'/auth_mode').set(my_data.auth_mode);
+	fbs.ref('players/'+my_data.uid+'/tm').set(firebase.database.ServerValue.TIMESTAMP);
+	
+	if (my_data.uid2){
+		//обновляем данные в файербейс нового айди
+		fbs.ref('players/'+my_data.uid2+'/name').set(my_data.name);
+		fbs.ref('players/'+my_data.uid2+'/pic_url').set(my_data.pic_url);
+		fbs.ref('players/'+my_data.uid2+'/rating').set(my_data.rating);
+		fbs.ref('players/'+my_data.uid2+'/games').set(my_data.games);
+	}
 				
 	if(!other_data?.first_log_tm)
 		fbs.ref('players/'+my_data.uid+'/first_log_tm').set(firebase.database.ServerValue.TIMESTAMP);
