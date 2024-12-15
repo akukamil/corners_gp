@@ -1492,8 +1492,7 @@ online_game = {
 			['my_no_connection',LOSE , ['Потеряна связь!\nИспользуйте надежное интернет соединение.','Lost connection!\nUse a reliable internet connection']],
 			['my_stop',DRAW , ['Вы отменили игру.','You canceled the game']]		
 		];
-	
-	
+		
 		clearTimeout(this.timer_id);		
 		
 		let result_row = res_array.find( p => p[0] === result);
@@ -1546,7 +1545,7 @@ online_game = {
 			
 			//контрольные концовки
 			if (my_data.rating>2130 || opp_data.rating>2130)
-				fbs.ref('finishes2/'+irnd(1,999999)).({uid:my_data.uid,player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration, rating: [old_rating,my_data.rating],client_id, ts:firebase.database.ServerValue.TIMESTAMP});	
+				fbs.ref('finishes2/'+irnd(1,999999)).set({uid:my_data.uid,player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration, rating: [old_rating,my_data.rating],client_id, ts:firebase.database.ServerValue.TIMESTAMP});	
 						
 		}
 		
