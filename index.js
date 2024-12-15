@@ -1535,18 +1535,19 @@ online_game = {
 			
 			//увеличиваем количество игр
 			my_data.games++;
-			fbs.ref("players/"+my_data.uid+"/games").set(my_data.games);		
-			//fbs.ref("pdata/"+my_data.uid+"/PRV/games").set(my_data.games);	
-
+			fbs.ref('players/'+my_data.uid+'/games').set(my_data.games);		
+	
 			//записываем результат в базу данных
-			let duration = ~~((Date.now() - this.start_time)*0.001);
-			fbs.ref("finishes/"+game_id).set({player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration:duration,rating: [old_rating,my_data.rating],client_id:client_id, ts:firebase.database.ServerValue.TIMESTAMP});
+			const duration = ~~((Date.now() - this.start_time)*0.001);
+			fbs.ref('finishes/'+game_id).set({player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration,rating: [old_rating,my_data.rating],client_id, ts:firebase.database.ServerValue.TIMESTAMP});
+			
+			//записываем дату последней игры
+			fbs.ref('players/'+my_data.uid+'/last_game_tm').set(firebase.database.ServerValue.TIMESTAMP);		
 			
 			//контрольные концовки
-			if (my_data.rating>2130 || opp_data.rating>2130) {
-			fbs.ref("finishes2").push({uid:my_data.uid,player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration:duration, rating: [old_rating,my_data.rating],client_id:client_id, ts:firebase.database.ServerValue.TIMESTAMP});	
-			}
-			
+			if (my_data.rating>2130 || opp_data.rating>2130)
+				fbs.ref('finishes2/'+irnd(1,999999)).({uid:my_data.uid,player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration, rating: [old_rating,my_data.rating],client_id, ts:firebase.database.ServerValue.TIMESTAMP});	
+						
 		}
 		
 		
@@ -6248,6 +6249,26 @@ main_loader={
 
 async function check_admin_info(){
 	
+	
+	//проверяем долгое отсутствие игру у рейтинговых игроков
+	if (my_data.rating>2000){
+		const last_game_tm=await fbs_once(`players/${my_data.uid}/last_game_tm`);
+		const cur_tm=await fbs_once(`players/${my_data.uid}/tm`);
+		
+		if (!last_game_tm)
+			fbs.ref('players/'+my_data.uid+'/last_game_tm').set(firebase.database.ServerValue.TIMESTAMP);	
+			
+		if (last_game_tm&&cur_tm){
+			const days_passed=(cur_tm-last_game_tm)/3600000/24;
+			if (days_passed>3){
+				my_data.rating=2000;
+				fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating);
+				message.add('Ваш рейтинг округлен до 2000. Причина - отсутвие игр.',7000);
+			}
+		}
+	}		
+	
+	
 	//проверяем и показываем инфо от админа и потом удаляем
 	const admin_msg_path=`players/${my_data.uid}/admin_info`;
 	const data=await fbs_once(admin_msg_path);
@@ -6512,7 +6533,7 @@ async function init_game_env(lang) {
 	fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating);
 	fbs.ref('players/'+my_data.uid+'/games').set(my_data.games);
 	fbs.ref('players/'+my_data.uid+'/auth_mode').set(my_data.auth_mode);
-	fbs.ref('players/'+my_data.uid+'/tm').set(firebase.database.ServerValue.TIMESTAMP);
+	await fbs.ref('players/'+my_data.uid+'/tm').set(firebase.database.ServerValue.TIMESTAMP);
 	
 
 				
@@ -6534,7 +6555,7 @@ async function init_game_env(lang) {
 	//keep-alive сервис
 	setInterval(function()	{keep_alive()}, 40000);
 
-	anim2.add(objects.id_cont,{y:[objects.id_cont.sy, -200]}, false, 0.5,'easeInBack');
+
 	
 	//контроль за присутсвием
 	var connected_control = fbs.ref(".info/connected");
@@ -6548,6 +6569,9 @@ async function init_game_env(lang) {
 	
 	//сообщение от админа
 	await check_admin_info();
+	
+	
+	anim2.add(objects.id_cont,{y:[objects.id_cont.sy, -200]}, false, 0.5,'easeInBack');	
 	
 	//убираем лупу
 	some_process.loup_anim = function(){};
