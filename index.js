@@ -5854,7 +5854,7 @@ auth1 = {
 			my_data.uid=uid.replace(/\//g, "Z");
 			my_data.uid2 = uid.replace(/[\/+=]/g, '');
 			my_data.orig_pic_url = _player.getPhoto('medium');					
-			my_data.auth_mode=_player.getMode()||'auth';
+			my_data.auth_mode=_player.getMode()==='lite'?0:1;
 			my_data.name = my_data.name || auth2.get_random_name(my_data.uid);
 			
 			if (my_data.orig_pic_url === 'https://games-sdk.yandex.ru/games/api/sdk/v1/player/avatar/0/islands-retina-medium')
@@ -5965,7 +5965,7 @@ auth2 = {
 			my_data.uid = _player.getUniqueID().replace(/[\/+=]/g, '');
 			my_data.name = _player.getName();
 			my_data.orig_pic_url = _player.getPhoto('medium');
-			my_data.auth_mode=_player.getMode()||'auth';
+			my_data.auth_mode=_player.getMode()==='lite'?0:1;
 			
 			if (my_data.orig_pic_url === 'https://games-sdk.yandex.ru/games/api/sdk/v1/player/avatar/0/islands-retina-medium')
 				my_data.orig_pic_url = 'mavatar'+my_data.uid;	
@@ -5989,7 +5989,7 @@ auth2 = {
 			my_data.name=_player.first_name + ' ' + _player.last_name;
 			my_data.uid='vk'+_player.id;
 			my_data.orig_pic_url=_player.photo_100;
-			my_data.auth_mode='auth';			
+			my_data.auth_mode=1;			
 			return;			
 		}
 		
@@ -5997,7 +5997,7 @@ auth2 = {
 
 			my_data.name = my_data.uid = 'debug' + prompt('Отладка. Введите ID', 100);
 			my_data.orig_pic_url = 'mavatar'+my_data.uid;
-			my_data.auth_mode='debug'	
+			my_data.auth_mode=1
 			return;
 		}		
 		
@@ -6008,7 +6008,7 @@ auth2 = {
 			my_data.uid = this.search_in_local_storage() || this.get_random_uid_for_local('LS_');
 			my_data.name = this.get_random_name(my_data.uid);
 			my_data.orig_pic_url = 'mavatar'+my_data.uid;	
-			my_data.auth_mode='no'	
+			my_data.auth_mode=1	
 		}
 	}
 	
