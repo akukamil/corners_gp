@@ -1683,6 +1683,7 @@ quiz={
 		[0,0,0,0,1,1,1,1],
 		[0,0,0,0,1,1,1,1]
 	],
+	
 	bonuses_points:[
 		{y:6,x:0},
 		{y:1,x:7}
@@ -1821,6 +1822,8 @@ quiz={
 		g_board=JSON.parse(JSON.stringify(this.init_board));
 		board_func.update_board(g_board);		
 		
+		this.made_moves=0;
+		objects.cur_move_text.text='Сделано ходов: '+this.made_moves;
 		
 		for (let i=0;i<this.bonuses_points.length;i++){		
 
