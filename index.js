@@ -308,7 +308,7 @@ class chat_record_class extends PIXI.Container {
 		if (msg_data.msg.startsWith('GIF')){			
 			
 			const mp4BaseT=await new Promise((resolve, reject)=>{
-				const baseTexture = PIXI.BaseTexture.from('res/gifs/'+msg_data.msg+'.mp4');
+				const baseTexture = PIXI.BaseTexture.from('https://akukamil.github.io/common/gifs/'+msg_data.msg+'.mp4');
 				if (baseTexture.width>1) resolve(baseTexture);
 				baseTexture.on('loaded', () => resolve(baseTexture));
 				baseTexture.on('error', (error) => resolve(null));
@@ -1079,8 +1079,8 @@ board_func={
 		
 		moving_chip.ready=true;
 		
-		var [sx,sy]=moves[0];
-		var [tx,ty]=moves[moves.length-1];
+		const [sx,sy]=moves[0];
+		const [tx,ty]=moves[moves.length-1];
 
 		//меняем старую и новую позицию шашки
 		[board[ty][tx],board[sy][sx]]=[board[sy][sx],board[ty][tx]];
@@ -1670,9 +1670,23 @@ quiz={
 	prv_quiz_read:0,
 	quiz_data:0,
 	on:0,
-	path:'quiz4',
+	path:'quiz5',
 	board_loaded:0,
 	moves_hist:[],
+	init_board:[
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,2,2,0],
+		[0,0,0,0,0,2,0,2],
+		[0,0,0,2,2,0,0,0],
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,1,1,1,1],
+		[0,0,0,0,1,1,1,1],
+		[0,0,0,0,1,1,1,1]
+	],
+	bonuses_points:[
+		{y:6,x:0},
+		{y:1,x:7}
+	],	
 	
 	activate(){
 				
@@ -1684,12 +1698,13 @@ quiz={
 		objects.checkers.forEach(c=>{c.visible=false});
 		
 		//устанавливаем локальный и удаленный статус
-		set_state ({state : 'b'});
+		set_state ({state:'b'});
 		
 		//таймер уже не нужен
 		objects.timer_cont.visible = false;
 		objects.game_buttons_cont.visible = false;
 		objects.stop_bot_button.visible = true;
+		objects.quiz_reload_btn.visible = true;
 
 		//показываем и заполняем мою карточку	
 		objects.my_card_name.set2(my_data.name,110);
@@ -1714,8 +1729,6 @@ quiz={
 		objects.cur_move_text.visible=true;
 		objects.cur_move_text.text=['Загрузка...','Loading...'][LANG];
 		
-		
-
 		//устанаваем текстуру
 		objects.board.texture=pref.board_texture;		
 		
@@ -1748,13 +1761,15 @@ quiz={
 		if (tm-this.prv_quiz_read>300000)
 			this.quiz_data=await fbs_once(this.path);
 				
-		if (!this.quiz_data) return;		
+		if (!this.quiz_data){
+			objects.cur_move_text.text=['Ошибка при загрузке!','Loading error!'][LANG];
+			return;		
+		}
 		
 		await players_cache.update(this.quiz_data.cur_leader,{});
 		await players_cache.update_avatar(this.quiz_data.cur_leader);		
 		const cur_leader_data=players_cache.players[this.quiz_data.cur_leader];
-		const brd_str=this.quiz_data.brd_str;
-		
+	
 		
 		//если уже выключили игру
 		if (!this.on) return;
@@ -1785,20 +1800,44 @@ quiz={
 			objects.t_quiz_rules.text='';
 			objects.quiz_rules_bcg.texture=assets.quiz_complete;				
 		} else {
-			objects.t_quiz_rules.text=`Переведи все шашки в новый дом быстрее всех. Победитель получит кастомную карточку "Дом на холме". Подведение итогов ${this.quiz_data?.fin_date}`;
+			objects.t_quiz_rules.text=`Собери звезды и переведи все шашки в новый дом быстрее всех. Победитель получит кастомную карточку. Подведение итогов 20.12.2024`;
 			objects.quiz_rules_bcg.texture=assets.quiz_rules_bcg;		
 		}
 		anim2.add(objects.quiz_rules_cont,{x:[-100, objects.quiz_rules_cont.sx]}, true, 0.25,'easeOutBack');	
 		
-		//инициируем вид доски
-		g_board = board_func.str_to_quiz_brd(brd_str);
-		board_func.update_board(g_board);
-				
+		this.restart();
+			
 	},
 	
 	stop(){
 				
 		this.clear();
+		
+	},
+	
+	restart(){
+		
+		//инициируем вид доски
+		g_board=JSON.parse(JSON.stringify(this.init_board));
+		board_func.update_board(g_board);		
+		
+		
+		for (let i=0;i<this.bonuses_points.length;i++){		
+
+			const bonus=this.bonuses_points[i];
+			
+			//показываем точки взятия
+			objects.bonuses[i].x=bonus.x*50+objects.board.x+55;
+			objects.bonuses[i].y=bonus.y*50+objects.board.y+55;
+			objects.bonuses[i].visible=true;
+			objects.bonuses[i].texture=assets.bonus_star;	
+			objects.bonuses[i].angle=0;
+			objects.bonuses[i].alpha=1;
+			objects.bonuses[i].scale_xy=0.666;
+			objects.bonuses[i].ix=bonus.x;
+			objects.bonuses[i].iy=bonus.y;
+			objects.bonuses[i].taken=0;
+		}	
 		
 	},
 	
@@ -1808,30 +1847,14 @@ quiz={
 		this.on=0;
 		objects.stop_bot_button.visible = false;
 		objects.quiz_rules_cont.visible=false;
+		objects.bonuses.forEach(b=>b.visible=false);
+		objects.quiz_reload_btn.visible = false;
 		
 	},
 	
-	make_new_quiz(){
-		
-		const brd=[
-			[0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,2,0,0],
-			[0,0,0,0,0,2,0,2],
-			[0,0,0,2,2,0,0,0],
-			[0,0,0,2,2,0,0,0],
-			[0,2,0,0,1,1,1,1],
-			[2,2,0,0,1,1,1,1],
-			[0,0,0,0,1,1,1,1]
-		]
-		//кодируем доску в символы base64
-		let b_str=''
-		for (let p=1;p<=2;p++)
-			for (let y=0;y<8;y++)
-				for (let x=0;x<8;x++)
-					if (brd[y][x]===p)
-						b_str+=board_func.base64[x+y*8];
+	make_new_quiz(){		
 					
-		const quiz_data={brd_str:b_str,moves:99,cur_leader:'debug99',fin_date:'13.12.2024'};
+		const quiz_data={moves:99,cur_leader:'debug99'};
 		fbs.ref(this.path).set(quiz_data);
 		
 	},
@@ -1842,13 +1865,36 @@ quiz={
 				
 		//делаем перемещение шашки
 		await board_func.start_gentle_move(move_data, moves, g_board);	
-		
+				
+		let bonuses_taken_num=0;
+		for (let i=0;i<this.bonuses_points.length;i++){		
+			
+			const bonus=objects.bonuses[i];
+			
+			if (bonus.taken)
+				bonuses_taken_num++;
+			
+			if (bonus.visible){
+				
+				const intersect=moves.find(m=>{
+					return m[0]===bonus.ix&&m[1]===bonus.iy
+				})
+				
+				if (intersect){
+					sound.play('bonus');
+					anim2.add(bonus,{scale_xy:[0.6666,2],angle:[0,40],alpha:[1,0]}, false, 0.5,'linear',false);
+					bonus.taken=1;					
+				}
+			}			
+		}
+				
 		this.made_moves++;
 		objects.cur_move_text.text='Сделано ходов: '+this.made_moves;
 		objects.my_card_rating.text=this.getHodText(this.made_moves);	
+
 		
 		//проверка завершения
-		if (board_func.finished1(g_board)){
+		if (bonuses_taken_num===2&&board_func.finished1(g_board)){
 			my_turn=0;			
 			objects.stop_bot_button.visible = false;
 			
@@ -5616,7 +5662,6 @@ lobby={
 		else
 			big_message.show(['Соперник отказался от игры. Повторить приглашение можно через 1 минуту.','The opponent refused to play. You can repeat the invitation in 1 minute'][LANG],'---');
 
-
 	},
 
 	async accepted_invite(seed) {
@@ -6209,6 +6254,7 @@ main_loader={
 		loader.add('inst_msg',git_src+'sounds/inst_msg.mp3');
 		loader.add('beep',git_src+'sounds/beep.mp3');
 		loader.add('mini_dialog',git_src+'sounds/mini_dialog.mp3');
+		loader.add('bonus',git_src+'sounds/bonus.mp3');
 		
 		//добавляем текстуры стикеров
 		for (var i=0;i<16;i++)
@@ -6455,7 +6501,7 @@ async function init_game_env(lang) {
 	window.addEventListener("wheel", (event) => {chat.wheel_event(Math.sign(event.deltaY))});	
 	window.addEventListener('keydown',function(event){keyboard.keydown(event.key)});
 	
-	//загружаем остальные данные из файербейса
+	//конвертируем юид
 	let other_data;
 	if (my_data.uid2){
 		const new_data=await fbs_once('players/' + my_data.uid2);
