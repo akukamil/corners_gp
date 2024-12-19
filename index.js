@@ -2140,7 +2140,7 @@ game = {
 	},
 
 	async process_my_move(move_data, moves) {
-
+		
 		//делаем перемещение шашки
 		await board_func.start_gentle_move(move_data, moves, g_board);	
 		
@@ -2160,9 +2160,8 @@ game = {
 			//fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'MOVE',tm:Date.now(),data:{...move_data, board_state:0}});
 			
 			//новая версия
-			fbs.ref('inbox/'+opp_data.uid).set({s:my_data.uid.substring(0,8),m:'M',t:'32.4',d:move_data_short});
-
-
+			const t=((Date.now()-online_game.start_time||2323)*0.001).toFixed(1);
+			fbs.ref('inbox/'+opp_data.uid).set({s:my_data.uid.substring(0,8),m:'M',t,d:move_data_short});
 
 			//также фиксируем данные стола
 			const moves_made=my_role === 'slave'?made_moves+1:0;
@@ -2200,58 +2199,10 @@ game = {
 		//обозначаем что я сделал ход и следовательно подтвердил согласие на игру
 		this.opponent.me_conf_play=1;
 
-	},
-	
-	async receive_move(move_data) {
-			
-		//my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move'})			
-			
-		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
-		if (game.state !== 'on')
-			return;		
-		
-		//защита от двойных ходов
-		if (my_turn === 1) return;
-		
-		//воспроизводим уведомление о том что соперник произвел ход
-		sound.play('receive_move');
+	},	
 
-		//обозначаем кто ходит
-		my_turn = 1;	
-
-		//обозначаем что соперник сделал ход и следовательно подтвердил согласие на игру
-		this.opponent.opp_conf_play = 1;	
-		
-		//обновляем таймер
-		this.opponent.reset_timer();			
-
-		//считаем последовательность ходов
-		const moves = board_func.get_moves_path(move_data,g_board);
-
-		//плавно перемещаем шашку
-		await board_func.start_gentle_move(move_data, moves,g_board, objects.board, objects.checkers);
-
-		
-		if (my_role === 'master') {
-			made_moves++;
-			objects.cur_move_text.text="сделано ходов: "+made_moves;
-				
-			const result = board_func.get_board_state(g_board, made_moves);
-			
-			//бота нельзя блокировать
-			if (result === 'opp_left_after_30' && this.opponent.name === 'bot')	result = '';
-			
-			if (result !== '') {
-				this.stop(result);
-			}			
-		}
-		
-		//my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move_ok'})		
-	},
-		
 	async receive_move2(data) {
-		
-		
+				
 		const move_data={x1:+data[0],y1:+data[1],x2:+data[2],y2:+data[3]}
 		//my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move'})			
 			
@@ -2394,7 +2345,7 @@ game_watching={
 	async new_move(board_data){
 
 
-		//console.log('Data size GW:', JSON.stringify(board_data).length);
+		console.log('Data size GW:', JSON.stringify(board_data).length);
 		
 		if(!this.on) return;
 		
@@ -3535,6 +3486,9 @@ var kill_game = function() {
 
 var process_new_message = function(msg) {
 
+
+	//console.log('msg:',msg,JSON.stringify(msg).length);
+	
 	//проверяем плохие сообщения
 	if (msg===null || msg===undefined)
 		return;
@@ -3583,10 +3537,6 @@ var process_new_message = function(msg) {
 			//получение сообщение с сдаче
 			if (msg.message==='END')
 				game.stop('opp_giveup');
-
-			//получение сообщение с ходом игорка
-			if (msg.message==='MOVE')
-				game.receive_move(msg.data);
 			
 			//получение сообщение с ходом игорка оптимизированный вариант
 			if (msg.m==='M')
@@ -3858,7 +3808,7 @@ chat={
 				
 	async chat_updated(data, first_load) {		
 	
-		//console.log('receive message',data)
+		//console.log('chat_updated:',JSON.stringify(data).length);
 		if(data===undefined) return;
 				
 		//ждем пока процессинг пройдет
@@ -4861,7 +4811,7 @@ lobby={
 			
 			//console.log('Подключаем прослушивание...');
 			fbs.ref(room_name).on('child_changed', snapshot => {	
-				const val=snapshot.val()
+				const val=snapshot.val()				
 				//console.log('child_changed',snapshot.key,val,JSON.stringify(val).length)
 				this.global_players[snapshot.key]=val;
 				lobby.players_list_updated(this.global_players);
@@ -4918,7 +4868,10 @@ lobby={
 		this.bot_on=0;
 		
 		//подписываемся на изменения состояний пользователей
-		fbs.ref(room_name).on('value', snapshot => {lobby.players_list_updated(snapshot.val());});
+		fbs.ref(room_name).on('value', snapshot => {
+			//console.log('players_list_updated:',JSON.stringify(snapshot).length);
+			lobby.players_list_updated(snapshot.val());}
+		);
 		
 	},
 		
@@ -4950,6 +4903,8 @@ lobby={
 
 	players_list_updated(players) {
 	
+	
+		//console.log('DATA:',JSON.stringify(data).length);
 		//console.log(new Date(Date.now()).toLocaleTimeString());
 		//если мы в игре то пока не обновляем карточки
 		//if (state==='p'||state==='b')
@@ -5547,6 +5502,8 @@ lobby={
 		
 		//больше ни ждем ответ ни от кого
 		pending_player='';
+		
+		fbs.ref(room_name).off();
 		
 		//отписываемся от изменений состояний пользователей через 30 секунд
 		this.state_listener_timeout=setTimeout(()=>{
