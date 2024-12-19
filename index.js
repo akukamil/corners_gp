@@ -2201,6 +2201,54 @@ game = {
 
 	},	
 
+	async receive_move(move_data) {
+			
+		//my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move'})			
+			
+		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
+		if (game.state !== 'on')
+			return;		
+		
+		//защита от двойных ходов
+		if (my_turn === 1) return;
+		
+		//воспроизводим уведомление о том что соперник произвел ход
+		sound.play('receive_move');
+
+		//обозначаем кто ходит
+		my_turn = 1;	
+
+		//обозначаем что соперник сделал ход и следовательно подтвердил согласие на игру
+		this.opponent.opp_conf_play = 1;	
+		
+		//обновляем таймер
+		this.opponent.reset_timer();			
+
+		//считаем последовательность ходов
+		const moves = board_func.get_moves_path(move_data,g_board);
+
+		//плавно перемещаем шашку
+		await board_func.start_gentle_move(move_data, moves,g_board, objects.board, objects.checkers);
+
+		
+		if (my_role === 'master') {
+			made_moves++;
+			objects.cur_move_text.text="сделано ходов: "+made_moves;
+				
+			const result = board_func.get_board_state(g_board, made_moves);
+			
+			//бота нельзя блокировать
+			if (result === 'opp_left_after_30' && this.opponent.name === 'bot')	result = '';
+			
+			if (result !== '') {
+				this.stop(result);
+			}			
+		}
+		
+		//my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move_ok'})		
+	},
+	
+
 	async receive_move2(data) {
 				
 		const move_data={x1:+data[0],y1:+data[1],x2:+data[2],y2:+data[3]}
