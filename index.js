@@ -1900,18 +1900,23 @@ quiz={
 		if (bonuses_taken_num===2&&board_func.finished1(g_board)){
 			my_turn=0;			
 			objects.stop_bot_button.visible = false;
+				
 			
 			if (this.accepted_leader){				
 				await big_message.show('Конкурс завершен!', `сделано ходов: ${this.made_moves}`,false);	
 				sound.play('lose');				
 			}else{
 				if (this.made_moves<this.made_moves_leader){
+					
+					
 					fbs.ref(this.path+'/cur_leader').set(my_data.uid);
 					fbs.ref(this.path+'/moves').set(this.made_moves);
 					fbs.ref(this.path+'/moves_hist').set(this.moves_hist);
 					sound.play('win');
 					await big_message.show('Вы теперь лидер!', `сделано ходов: ${this.made_moves}`,false);
 					this.prv_quiz_read=0;
+					
+					
 					
 				}else{
 					
@@ -3746,6 +3751,7 @@ chat={
 	delete_message_mode:0,
 	games_to_chat:200,
 	payments:0,
+	processing:0,
 	
 	activate() {	
 
@@ -3854,11 +3860,23 @@ chat={
 	
 		//console.log('receive message',data)
 		if(data===undefined) return;
-		
+				
+		//ждем пока процессинг пройдет
+		for (let i=0;i<10;i++){			
+			if (this.processing)
+				await new Promise(resolve => setTimeout(resolve, 250));				
+			else
+				break;				
+		}
+		if (this.processing) return;
+				
 		//если это дубликат моего сообщения из-за таймстемпа
 		if (data.uid===my_data.uid)
-			if (objects.chat_records.find(obj => { return obj.msg.text===data.msg&&obj.index===data.index})) return;
+			if (objects.chat_records.find(obj => {return obj.msg.text===data.msg&&obj.index===data.index}))
+				return;			
 		
+		
+		this.processing=1;
 		
 		//выбираем номер сообщения
 		const new_rec=this.get_oldest_or_free_msg();
