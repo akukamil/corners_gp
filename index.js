@@ -1797,7 +1797,7 @@ quiz={
 		objects.opp_avatar_frame.texture=assets.leader_avatar_frame;
 		
 		//правила				
-		if (this.quiz_data.acc_leader){
+		if (this.quiz_data.accepted_leader){
 			objects.t_quiz_rules.text='';
 			objects.quiz_rules_bcg.texture=assets.quiz_complete;				
 		} else {
@@ -3750,6 +3750,7 @@ chat={
 	games_to_chat:200,
 	payments:0,
 	processing:0,
+	init_flag:0,
 	
 	activate() {	
 
@@ -3765,10 +3766,14 @@ chat={
 		objects.chat_rules.text='Правила чата!\n1. Будьте вежливы: Общайтесь с другими игроками с уважением. Избегайте угроз, грубых выражений, оскорблений, конфликтов.\n2. Отправлять сообщения в чат могут игроки сыгравшие более 200 онлайн партий.\n3. За нарушение правил игрок может попасть в черный список.'
 		if(my_data.blocked) objects.chat_rules.text='Вы не можете писать в чат, так как вы находитесь в черном списке';
 
+		if (!this.init_flag)
+			this.init();
+
 	},
 	
 	init(){
 		
+		this.init_flag=1;
 		this.last_record_end = 0;
 		objects.chat_msg_cont.y = objects.chat_msg_cont.sy;		
 		objects.bcg.interactive=true;
@@ -4810,9 +4815,6 @@ lobby={
 					objects.mini_cards[i].x=15+ix*190;
 				}
 			}		
-
-			//запускаем чат
-			chat.init();			
 
 			this.activated=true;
 		}
@@ -6623,7 +6625,7 @@ async function init_game_env(lang) {
 	fbs.ref("inbox/"+my_data.uid).onDisconnect().remove();
 	
 	//утвержденный лидер задачки (чтобы показывать кастомную карточку)
-	quiz.accepted_leader=await fbs_once(quiz.path+'/acc_leader');
+	quiz.accepted_leader=await fbs_once(quiz.path+'/accepted_leader');
 
 	//keep-alive сервис
 	setInterval(function()	{keep_alive()}, 40000);
