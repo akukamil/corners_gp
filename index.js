@@ -2248,7 +2248,6 @@ game = {
 		//my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move_ok'})		
 	},
 	
-
 	async receive_move2(data) {
 				
 		const move_data={x1:+data[0],y1:+data[1],x2:+data[2],y2:+data[3]}
@@ -4817,6 +4816,7 @@ lobby={
 			}		
 
 			this.activated=true;
+			
 		}
 		
 		anim2.add(objects.cards_cont,{alpha:[0, 1]}, true, 0.1,'linear');
@@ -5807,6 +5807,43 @@ lobby={
 		await this.close();
 		lobby.activate();
 
+	},
+
+	info_btn_down(){
+		
+		if (anim2.any_on()) {
+			sound.play('locked');
+			return
+		};
+		sound.play('click');
+		
+		if(!objects.info_cont.init){
+			
+			objects.info_records[0].set({uid:'bot',name:'Админ',msg:'Новое правило - рейтинг игроков, неактивных в течение 3 дней, будет снижен до 2000.',tm:1734959027520})
+			objects.info_records[0].scale_xy=1.2;
+			objects.info_records[0].y=145;
+			
+			objects.info_records[1].set({uid:'bot',name:'Админ',msg:'Новое правило - не авторизованым игрокам не достпуен рейтинг более 2000.',tm:1734959227520})
+			objects.info_records[1].scale_xy=1.2;
+			objects.info_records[1].y=235;
+			
+			objects.info_cont.init=1;
+		}
+		
+		anim2.add(objects.info_cont,{alpha:[0,1]}, true, 0.25,'linear');
+
+	},
+	
+	info_close_down(){
+		
+		if (anim2.any_on()) {
+			sound.play('locked');
+			return
+		};
+		sound.play('close');
+		
+		anim2.add(objects.info_cont,{alpha:[1,0]}, false, 0.25,'linear');
+		
 	}
 
 }
