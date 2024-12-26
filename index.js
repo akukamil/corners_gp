@@ -1670,14 +1670,14 @@ quiz={
 	prv_quiz_read:0,
 	quiz_data:0,
 	on:0,
-	path:'quiz5',
+	path:'quiz6',
 	board_loaded:0,
 	moves_hist:[],
 	init_board:[
 		[0,0,0,0,0,0,0,0],
-		[0,0,0,0,0,2,2,0],
-		[0,0,0,0,0,2,0,2],
-		[0,0,0,2,2,0,0,0],
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,0,0,0],
 		[0,0,0,0,0,0,0,0],
 		[0,0,0,0,1,1,1,1],
 		[0,0,0,0,1,1,1,1],
@@ -1685,8 +1685,11 @@ quiz={
 	],
 	
 	bonuses_points:[
-		{y:6,x:0},
-		{y:1,x:7}
+		{y:3,x:0},
+		{y:7,x:1},
+		{y:2,x:5},
+		{y:0,x:6},
+		{y:2,x:7},
 	],	
 	
 	activate(){
@@ -1897,7 +1900,7 @@ quiz={
 
 		
 		//проверка завершения
-		if (bonuses_taken_num===2&&board_func.finished1(g_board)){
+		if (bonuses_taken_num===this.bonuses_points.length&&board_func.finished1(g_board)){
 			my_turn=0;			
 			objects.stop_bot_button.visible = false;
 				
