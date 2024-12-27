@@ -1804,7 +1804,7 @@ quiz={
 			objects.t_quiz_rules.text='';
 			objects.quiz_rules_bcg.texture=assets.quiz_complete;				
 		} else {
-			objects.t_quiz_rules.text=`Собери звезды и переведи все шашки в новый дом быстрее всех. Победитель получит кастомную карточку. Подведение итогов 20.12.2024`;
+			objects.t_quiz_rules.text=`Собери звезды и переведи все шашки в новый дом быстрее всех. Победитель получит кастомную карточку. Подведение итогов 30.12.2024`;
 			objects.quiz_rules_bcg.texture=assets.quiz_rules_bcg;		
 		}
 		anim2.add(objects.quiz_rules_cont,{x:[-100, objects.quiz_rules_cont.sx]}, true, 0.25,'easeOutBack');	
