@@ -5823,7 +5823,7 @@ lobby={
 		
 		if(!objects.info_cont.init){
 			
-			objects.info_records[0].set({uid:'bot',name:'Админ',msg:'Новое правило - рейтинг игроков, неактивных более 3-х дней, будет снижен до 2000.',tm:1734959027520})
+			objects.info_records[0].set({uid:'bot',name:'Админ',msg:'Новое правило - рейтинг игроков, неактивных более 5 дней, будет снижен до 2000.',tm:1734959027520})
 			objects.info_records[0].scale_xy=1.2;
 			objects.info_records[0].y=145;
 			
@@ -6376,7 +6376,7 @@ async function check_admin_info(){
 			
 		if (last_game_tm&&cur_tm){
 			const days_passed=(cur_tm-last_game_tm)/3600000/24;
-			if (days_passed>3){
+			if (days_passed>5){
 				my_data.rating=2000;
 				fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating);
 				message.add('Ваш рейтинг округлен до 2000. Причина - отсутвие игр.',7000);
