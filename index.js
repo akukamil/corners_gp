@@ -1286,6 +1286,10 @@ online_game = {
 		if (game_result === NOSYNC)
 			return old_rating;
 		
+		//не авторизованым игрокам нельзя выиграть более 2000
+		if (my_data.rating>2000&&!my_data.auth_mode&&game_result === WIN)
+			return old_rating;	
+		
 		var Ea = 1 / (1 + Math.pow(10, ((opp_data.rating-my_data.rating)/400)));
 		if (game_result === WIN)
 			return Math.round(my_data.rating + 16 * (1 - Ea));
