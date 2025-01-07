@@ -3739,6 +3739,126 @@ req_dialog = {
 
 }
 
+my_ws={
+	
+	socket:0,
+	
+	child_added:{},
+	child_changed:{},
+	child_removed:{},
+	
+	get_resolvers:{},
+	get_req_id:0,
+	reconnecting:0,
+	reconnect_time:0,
+	connect_resolver:0,
+		
+	init(){		
+		if(this.socket.readyState===1) return;
+		return new Promise(resolve=>{
+			this.connect_resolver=resolve;
+			this.reconnect();
+		})
+	},
+	
+	reconnect(){
+		
+		this.reconnecting=0;
+
+		this.socket = new WebSocket("ws://213.171.26.138:8080");
+				
+		this.socket.onopen = () => {
+			//console.log('Connected to server!');
+			this.connect_resolver();
+			this.reconnect_time=0;
+			
+			//обновляем подписки
+			for (const path in this.child_added)				
+				this.socket.send(JSON.stringify({cmd:'child_added',path}))					
+			
+		};			
+		
+		this.socket.onmessage = event => {
+			
+			const msg=JSON.parse(event.data);
+			//console.log("Получено от сервера:", msg);
+			
+			if (msg.event==='child_added')	
+				this.child_added[msg.node]?.(msg);
+			
+			if (msg.event==='get')
+				if (this.get_resolvers[msg.req_id])
+					this.get_resolvers[msg.req_id](msg.data);
+
+		};
+		
+		this.socket.onclose = event => {			
+			//console.log('Socket closed:', event);
+			if(!this.reconnecting){
+				this.reconnecting=1;
+				this.reconnect_time=Math.min(60000,this.reconnect_time+5000);
+				console.log(`reconnecting in ${this.reconnect_time*0.001} seconds:`, event);
+				setTimeout(()=>{this.reconnect()},this.reconnect_time);				
+			}
+		};
+
+		this.socket.onerror = error => {
+			//console.error("WebSocket error:", error);
+		};
+		
+	},
+	
+	get(path,limit_last){		
+		return new Promise(resolve=>{
+			
+			const req_id=irnd(1,999999);
+						
+			const timeoutId = setTimeout(() => {
+				delete this.get_resolvers[req_id];
+				resolve(0);
+			}, 5000);			
+			
+			this.get_resolvers[req_id]=(data)=>{				
+				clearTimeout(timeoutId);
+				resolve(data);					
+			}
+			
+			/*
+			this.get_resolvers[req_id] = {
+				resolve: (data) => {
+					clearTimeout(timeoutId);
+					resolve(data);
+				}
+			};*/
+			
+			this.socket.send(JSON.stringify({cmd:'get',path,req_id,limit_last}))				
+		
+		})	
+	},
+	
+	ss_child_added(path,callback){
+		
+		this.socket.send(JSON.stringify({cmd:'child_added',path}))	
+		this.child_added[path]=callback;
+		
+	},
+
+	ss_child_changed(path,callback){
+		
+		this.socket.send(JSON.stringify({cmd:'child_changed',node:path}))	
+		this.child_changed[path]=callback;
+		
+	},
+	
+	ss_child_removed(path,callback){
+		
+		this.socket.send(JSON.stringify({cmd:'child_removed',node:path}))	
+		this.child_removed[path]=callback;
+		
+	}	
+		
+}
+
 chat={
 	
 	last_record_end : 0,
@@ -3756,13 +3876,14 @@ chat={
 	games_to_chat:200,
 	payments:0,
 	processing:0,
-	init_flag:0,
-	
+	remote_socket:0,
+	ss:[],
+		
 	activate() {	
 
 		anim2.add(objects.chat_cont,{alpha:[0, 1]}, true, 0.1,'linear');
 		//objects.bcg.texture=assets.lobby_bcg;
-		objects.chat_enter_button.visible=my_data.games>=this.games_to_chat;
+		objects.chat_enter_button.visible=true;//my_data.games>=this.games_to_chat;
 		
 		if(my_data.blocked)		
 			objects.chat_enter_button.texture=assets.chat_blocked_img;
@@ -3771,15 +3892,18 @@ chat={
 
 		objects.chat_rules.text='Правила чата!\n1. Будьте вежливы: Общайтесь с другими игроками с уважением. Избегайте угроз, грубых выражений, оскорблений, конфликтов.\n2. Отправлять сообщения в чат могут игроки сыгравшие более 200 онлайн партий.\n3. За нарушение правил игрок может попасть в черный список.'
 		if(my_data.blocked) objects.chat_rules.text='Вы не можете писать в чат, так как вы находитесь в черном списке';
-
-		if (!this.init_flag)
-			this.init();
-
+		
+		
+	},
+		
+	new_message(data){
+		
+		console.log('new_data',data);
+		
 	},
 	
-	init(){
-		
-		this.init_flag=1;
+	async init(){	
+			
 		this.last_record_end = 0;
 		objects.chat_msg_cont.y = objects.chat_msg_cont.sy;		
 		objects.bcg.interactive=true;
@@ -3787,16 +3911,26 @@ chat={
 		objects.bcg.pointerdown=this.pointer_down.bind(this);
 		objects.bcg.pointerup=this.pointer_up.bind(this);
 		objects.bcg.pointerupoutside=this.pointer_up.bind(this);
+		
 		for(let rec of objects.chat_records) {
 			rec.visible = false;			
 			rec.msg_id = -1;	
 			rec.tm=0;
 		}		
 		
-		//загружаем чат		
-		fbs.ref(chat_path).orderByChild('tm').limitToLast(20).once('value', snapshot => {chat.chat_load(snapshot.val());});		
-		
 		this.init_yandex_payments();
+
+		await my_ws.init();	
+		
+		//загружаем чат		
+		const chat_data=await my_ws.get('corners/chat',25);
+		
+		await this.chat_load(chat_data);
+		
+		//подписываемся на новые сообщения
+		my_ws.ss_child_added('corners/chat',chat.chat_updated.bind(chat))
+		
+		console.log('Чат загружен!')
 	},		
 
 	init_yandex_payments(){
@@ -3849,7 +3983,7 @@ chat={
 		
 	async chat_load(data) {
 		
-		if (data === null) return;
+		if (!data) return;
 		
 		//превращаем в массив
 		data = Object.keys(data).map((key) => data[key]);
@@ -3861,8 +3995,7 @@ chat={
 		for (let c of data)
 			await this.chat_updated(c,true);	
 		
-		//подписываемся на новые сообщения
-		fbs.ref(chat_path).on('child_changed', snapshot => {chat.chat_updated(snapshot.val());});
+
 	},	
 				
 	async chat_updated(data, first_load) {		
@@ -3878,12 +4011,7 @@ chat={
 				break;				
 		}
 		if (this.processing) return;
-				
-		//если это дубликат моего сообщения из-за таймстемпа
-		if (data.uid===my_data.uid)
-			if (objects.chat_records.find(obj => {return obj.msg.text===data.msg&&obj.index===data.index}))
-				return;			
-		
+					
 		
 		this.processing=1;
 		
@@ -4054,8 +4182,7 @@ chat={
 			sound.play('locked');
 			return
 		};
-		
-		
+				
 		//оплата разблокировки чата
 		if (my_data.blocked){	
 		
@@ -4084,8 +4211,7 @@ chat={
 				
 			return;
 		}
-		
-		
+				
 		sound.play('click');
 		
 		//убираем метки старых сообщений
@@ -4104,7 +4230,8 @@ chat={
 		const msg = await keyboard.read(70);		
 		if (msg) {			
 			const index=irnd(1,999);
-			fbs.ref(chat_path+'/'+index).set({uid:my_data.uid,name:my_data.name,msg, tm:firebase.database.ServerValue.TIMESTAMP,index});
+			my_ws.socket.send(JSON.stringify({cmd:'push',path:'corners/chat',val:{uid:my_data.uid,name:my_data.name,msg,tm:'TMS'}}))	
+			//fbs.ref(chat_path+'/'+index).set({uid:my_data.uid,name:my_data.name,msg, tm:firebase.database.ServerValue.TIMESTAMP,index});
 		}	
 		
 	},
@@ -6654,9 +6781,7 @@ async function init_game_env(lang) {
 	fbs.ref('players/'+my_data.uid+'/games').set(my_data.games);
 	fbs.ref('players/'+my_data.uid+'/auth_mode').set(my_data.auth_mode);
 	await fbs.ref('players/'+my_data.uid+'/tm').set(firebase.database.ServerValue.TIMESTAMP);
-	
-
-				
+					
 	if(!other_data?.first_log_tm)
 		fbs.ref('players/'+my_data.uid+'/first_log_tm').set(firebase.database.ServerValue.TIMESTAMP);
 		
@@ -6675,8 +6800,12 @@ async function init_game_env(lang) {
 	//keep-alive сервис
 	setInterval(function()	{keep_alive()}, 40000);
 
+	//ждем загрузки чата
+	await Promise.race([
+		chat.init(),
+		new Promise(resolve=> setTimeout(() => {console.log('sdfds');resolve()}, 5000))
+	]);
 
-	
 	//контроль за присутсвием
 	var connected_control = fbs.ref(".info/connected");
 	connected_control.on("value", (snap) => {
