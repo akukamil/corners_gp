@@ -6716,7 +6716,7 @@ async function init_game_env(lang) {
 	
 		for (let i=0;i<scyfi_logs.length;i++){		
 			objects.scyfi_log.text=scyfi_logs[i];
-			await new Promise(resolve=>setTimeout(resolve, irnd(100,700)));		
+			await new Promise(resolve=>setTimeout(resolve, irnd(300,700)));		
 		}
 	};
 	runScyfiLogs();
