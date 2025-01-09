@@ -5037,39 +5037,6 @@ lobby={
 
 	},
 	
-	change_room(new_room){
-				
-		//создаем заголовки
-		const room_desc=['КОМНАТА #','ROOM #'][LANG]+new_room.slice(6);
-		objects.t_room_name.text=room_desc;
-		
-		//отписываемся от изменений текущей комнаты
-		fbs.ref(room_name).off('value');
-		
-		//анимации разные
-		anim2.add(objects.cards_cont,{alpha:[0, 1]}, true, 0.1,'linear');
-		anim2.add(objects.lobby_footer_cont,{y:[450, objects.lobby_footer_cont.sy]}, true, 0.1,'linear');
-		anim2.add(objects.lobby_header_cont,{y:[-50, objects.lobby_header_cont.sy]}, true, 0.1,'linear');
-		objects.cards_cont.x=0;
-		
-		//отключаем все карточки
-		objects.mini_cards.forEach(c=>c.visible=false);
-		
-		room_name=new_room;
-		
-		set_state ({state : 'o'});
-		
-		//бота нету
-		this.bot_on=0;
-		
-		//подписываемся на изменения состояний пользователей
-		fbs.ref(room_name).on('value', snapshot => {
-			//console.log('players_list_updated:',JSON.stringify(snapshot).length);
-			lobby.players_list_updated(snapshot.val());}
-		);
-		
-	},
-		
 	pref_btn_down(){
 		
 		//если какая-то анимация
@@ -5698,7 +5665,7 @@ lobby={
 		//больше ни ждем ответ ни от кого
 		pending_player='';
 		
-		fbs.ref(room_name).off();
+		//fbs.ref(room_name).off();
 		
 		//отписываемся от изменений состояний пользователей через 30 секунд
 		this.state_listener_timeout=setTimeout(()=>{
