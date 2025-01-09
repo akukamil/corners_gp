@@ -3752,6 +3752,7 @@ my_ws={
 	reconnecting:0,
 	reconnect_time:0,
 	connect_resolver:0,
+	keep_alive_timer:0,
 		
 	init(){		
 		if(this.socket.readyState===1) return;
@@ -3776,6 +3777,11 @@ my_ws={
 			for (const path in this.child_added)				
 				this.socket.send(JSON.stringify({cmd:'child_added',path}))					
 			
+			clearInterval(this.keep_alive_timer)
+			this.keep_alive_timer=setInterval(()=>{
+				this.socket.send(1);
+			},45000);
+			
 		};			
 		
 		this.socket.onmessage = event => {
@@ -3792,7 +3798,8 @@ my_ws={
 
 		};
 		
-		this.socket.onclose = event => {			
+		this.socket.onclose = event => {
+			clearInterval(this.keep_alive_timer)
 			//console.log('Socket closed:', event);
 			if(!this.reconnecting){
 				this.reconnecting=1;
@@ -3805,6 +3812,11 @@ my_ws={
 		this.socket.onerror = error => {
 			//console.error("WebSocket error:", error);
 		};
+		
+	},
+	
+	keep_alive(){
+		
 		
 	},
 	
@@ -6850,7 +6862,7 @@ async function init_game_env(lang) {
 	
 	//загружаем лобби с включенным ботом
 	let room_to_go='states'+lobby.get_room_index_from_rating();
-	//room_to_go='states5';
+	room_to_go='states5';
 	lobby.activate(room_to_go,1);
 }
 
