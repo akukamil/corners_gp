@@ -3765,7 +3765,7 @@ my_ws={
 		
 		this.reconnecting=0;
 
-		this.socket = new WebSocket('wss://timewebmtgames.ru:8443');
+		this.socket = new WebSocket('wss://timewebmtgames.ru:8443/corners/'+my_data.uid);
 				
 		this.socket.onopen = () => {
 			//console.log('Connected to server!');
