@@ -6695,6 +6695,35 @@ async function init_game_env(lang) {
 		objects.id_loup.x=20*Math.sin(game_tick*8)+90;
 		objects.id_loup.y=20*Math.cos(game_tick*8)+150;
 	}
+	
+	
+
+	const runScyfiLogs=async () => {
+		const scyfi_logs=[
+			'загрузка ядра...',
+			'размещение VDSO кода...',
+			'инициализация логгеров...',
+			'оптимизация RAM...',
+			'криптографическая решетка...',
+			'загрузка бинарного кода...',
+			'подготовка пула MMU...',
+			'выделение стека POSIX...',
+			'верификация прав доступа...',
+			'проверка цифровых подписей..',
+			'создание потока HAL...',
+			'завершено.'
+		]
+	
+		for (let i=0;i<scyfi_logs.length;i++){		
+			objects.scyfi_log.text=scyfi_logs[i];
+			await new Promise(resolve=>setTimeout(resolve, irnd(100,700)));		
+		}
+	};
+	runScyfiLogs();
+
+
+	
+	
 
 	//это разные события
 	document.addEventListener("visibilitychange", vis_change);
@@ -6820,9 +6849,8 @@ async function init_game_env(lang) {
 	await check_admin_info();
 	
 	
+	//убираем лупу и контейнер	
 	anim2.add(objects.id_cont,{y:[objects.id_cont.sy, -200]}, false, 0.5,'easeInBack');	
-	
-	//убираем лупу
 	some_process.loup_anim = function(){};
 	objects.id_loup.visible=false;
 	
