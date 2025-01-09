@@ -6862,7 +6862,7 @@ async function init_game_env(lang) {
 	
 	//загружаем лобби с включенным ботом
 	let room_to_go='states'+lobby.get_room_index_from_rating();
-	room_to_go='states5';
+	//room_to_go='states5';
 	lobby.activate(room_to_go,1);
 }
 
