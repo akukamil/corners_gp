@@ -3994,14 +3994,12 @@ chat={
 		//покаываем несколько последних сообщений
 		for (let c of data)
 			await this.chat_updated(c,true);	
-		
-
 	},	
 				
 	async chat_updated(data, first_load) {		
 	
 		//console.log('chat_updated:',JSON.stringify(data).length);
-		if(data===undefined) return;
+		if(data===undefined||!data.msg||!data.name||!data.uid) return;
 				
 		//ждем пока процессинг пройдет
 		for (let i=0;i<10;i++){			
@@ -5789,8 +5787,10 @@ lobby={
 	async send_invite() {
 
 
-		if (!objects.invite_cont.ready||!objects.invite_cont.visible)
-			return;
+		if (!objects.invite_cont.ready||!objects.invite_cont.visible||objects.invite_button.texture===assets.invite_wait_img){
+			sound.play('locked');
+			return
+		};
 
 		if (anim2.any_on()){
 			sound.play('locked');
@@ -6696,8 +6696,6 @@ async function init_game_env(lang) {
 		objects.id_loup.y=20*Math.cos(game_tick*8)+150;
 	}
 	
-	
-
 	const runScyfiLogs=async () => {
 		const scyfi_logs=[
 			'загрузка ядра...',
@@ -6720,10 +6718,6 @@ async function init_game_env(lang) {
 		}
 	};
 	runScyfiLogs();
-
-
-	
-	
 
 	//это разные события
 	document.addEventListener("visibilitychange", vis_change);
