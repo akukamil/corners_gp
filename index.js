@@ -2847,14 +2847,7 @@ confirm_dialog = {
 
 keep_alive = function() {
 	
-	if (h_state === 1) {		
-		
-		//убираем из списка если прошло время с момента перехода в скрытое состояние		
-		let cur_ts = Date.now();	
-		let sec_passed = (cur_ts - hidden_state_start)/1000;		
-		if ( sec_passed > 100 )	fbs.ref(room_name+'/'+my_data.uid).remove();
-		return;		
-	}
+	if (document.hidden) return;
 
 	fbs.ref('players/'+my_data.uid+'/tm').set(firebase.database.ServerValue.TIMESTAMP);
 	fbs.ref('inbox/'+my_data.uid).onDisconnect().remove();
@@ -3532,13 +3525,14 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 
 }
 
-var kill_game = function() {
+function kill_game() {
 	
 	firebase.app().delete();
+	my_ws.kill();
 	document.body.innerHTML = 'CLIENT TURN OFF';
 }
 
-var process_new_message = function(msg) {
+function process_new_message(msg) {
 
 
 	//console.log('msg:',msg,JSON.stringify(msg).length);
@@ -3746,13 +3740,13 @@ my_ws={
 	child_added:{},
 	child_changed:{},
 	child_removed:{},
-	
+		
 	get_resolvers:{},
 	get_req_id:0,
 	reconnecting:0,
 	reconnect_time:0,
 	connect_resolver:0,
-	keep_alive_timer:0,
+	sleep:0,
 		
 	init(){		
 		if(this.socket.readyState===1) return;
@@ -3762,14 +3756,29 @@ my_ws={
 		})
 	},
 	
+	send_to_sleep(){		
+		if (this.socket.readyState===1){
+			this.sleep=1;	
+			this.socket.close(1000, "sleep");
+		}
+	},
+	
+	kill(){
+		
+		this.sleep=1;
+		this.socket.close(1000, "kill");
+		
+	},
+	
 	reconnect(){
 		
+		this.sleep=0;
 		this.reconnecting=0;
 
 		this.socket = new WebSocket('wss://timewebmtgames.ru:8443/corners/'+my_data.uid);
 				
 		this.socket.onopen = () => {
-			//console.log('Connected to server!');
+			console.log('Connected to server!');
 			this.connect_resolver();
 			this.reconnect_time=0;
 			
@@ -3781,7 +3790,6 @@ my_ws={
 			this.keep_alive_timer=setInterval(()=>{
 				this.socket.send(1);
 			},45000);
-			
 		};			
 		
 		this.socket.onmessage = event => {
@@ -3798,9 +3806,10 @@ my_ws={
 
 		};
 		
-		this.socket.onclose = event => {
+		this.socket.onclose = event => {			
 			clearInterval(this.keep_alive_timer)
-			//console.log('Socket closed:', event);
+			console.log('Socket closed:', event);
+			if(this.sleep) return;
 			if(!this.reconnecting){
 				this.reconnecting=1;
 				this.reconnect_time=Math.min(60000,this.reconnect_time+5000);
@@ -3812,11 +3821,6 @@ my_ws={
 		this.socket.onerror = error => {
 			//console.error("WebSocket error:", error);
 		};
-		
-	},
-	
-	keep_alive(){
-		
 		
 	},
 	
@@ -4934,6 +4938,7 @@ lobby={
 	fb_cache:{},
 	first_run:0,
 	bot_on:1,
+	on:0,
 	global_players:{},
 	state_listener_on:0,
 	state_listener_timeout:0,
@@ -4967,6 +4972,7 @@ lobby={
 		anim2.add(objects.lobby_footer_cont,{y:[450, objects.lobby_footer_cont.sy]}, true, 0.1,'linear');
 		anim2.add(objects.lobby_header_cont,{y:[-50, objects.lobby_header_cont.sy]}, true, 0.1,'linear');
 		objects.cards_cont.x=0;
+		this.on=1;
 		
 		//отключаем все карточки
 		for(let i=0;i<objects.mini_cards.length;i++)
@@ -5664,8 +5670,7 @@ lobby={
 		
 		//больше ни ждем ответ ни от кого
 		pending_player='';
-		
-		//fbs.ref(room_name).off();
+		this.on=0;
 		
 		//отписываемся от изменений состояний пользователей через 30 секунд
 		this.state_listener_timeout=setTimeout(()=>{
@@ -6272,16 +6277,47 @@ function set_state(params) {
 
 }
 
-function vis_change() {
-
-	if (document.hidden === true) {
-		hidden_state_start = Date.now();			
-		sound.on=0;
-	} else {
-		sound.on=pref.sound_on;	
-	}		
-	set_state({hidden : document.hidden});
+tabvis={
+	
+	inactive_timer:0,
+	sleep:0,
+	
+	change(){
 		
+		if (document.hidden){
+			
+			//start wait for
+			this.inactive_timer=setTimeout(()=>{this.send_to_sleep()},120000);
+			sound.on=0;
+			
+		}else{
+			
+			sound.on=pref.sound_on;	
+			if(this.sleep){		
+				console.log('Проснулись');
+				lobby.activate();
+				my_ws.reconnect();
+				this.sleep=0;
+			}
+			
+			clearTimeout(this.inactive_timer);			
+		}		
+		
+		set_state({hidden : document.hidden});
+		
+	},
+	
+	send_to_sleep(){		
+		
+		console.log('погрузились в сон')
+		this.sleep=1;
+		if (lobby.on){
+			fbs.ref(room_name+'/'+my_data.uid).remove();
+			lobby.close()
+		}		
+		my_ws.send_to_sleep();		
+	}
+	
 }
 
 language_dialog = {
@@ -6698,8 +6734,8 @@ async function init_game_env(lang) {
 	};
 	runScyfiLogs();
 
-	//это разные события
-	document.addEventListener("visibilitychange", vis_change);
+	//это событие когда меняется видимость приложения
+	document.addEventListener("visibilitychange", function(){tabvis.change()});
 	
 	//событие ролика мыши в карточном меню и нажатие кнопки
 	window.addEventListener("wheel", (event) => {chat.wheel_event(Math.sign(event.deltaY))});	
