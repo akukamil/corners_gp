@@ -6809,6 +6809,7 @@ async function init_game_env(lang) {
 	fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating);
 	fbs.ref('players/'+my_data.uid+'/games').set(my_data.games);
 	fbs.ref('players/'+my_data.uid+'/auth_mode').set(my_data.auth_mode);
+	fbs.ref('players/'+my_data.uid+'/session_start').set(firebase.database.ServerValue.TIMESTAMP);
 	await fbs.ref('players/'+my_data.uid+'/tm').set(firebase.database.ServerValue.TIMESTAMP);
 					
 	if(!other_data?.first_log_tm)
