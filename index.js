@@ -3776,6 +3776,18 @@ my_ws={
 		this.sleep=0;
 		this.reconnecting=0;
 
+		if (this.socket) {
+			if (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING) {
+				this.socket.close();
+			}
+
+			// Remove event handlers to avoid memory leaks
+			this.socket.onopen = null;
+			this.socket.onmessage = null;
+			this.socket.onclose = null;
+			this.socket.onerror = null;
+		}
+
 		this.socket = new WebSocket('wss://timewebmtgames.ru:8443/corners/'+my_data.uid);
 				
 		this.socket.onopen = () => {
