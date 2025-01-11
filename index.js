@@ -3747,6 +3747,7 @@ my_ws={
 	reconnect_time:0,
 	connect_resolver:0,
 	sleep:0,
+	keep_alive_timer:0,
 		
 	init(){		
 		if(this.socket.readyState===1) return;
@@ -6677,15 +6678,12 @@ async function init_game_env(lang) {
 
 	anim2.add(objects.id_cont,{y:[-200,objects.id_cont.sy]}, true, 0.5,'easeOutBack');
 
-	if (game_platform === 'YANDEX' && LANG === 0)
-		await auth1.init();
-	else
-		await auth2.init();
+	//авторизация
+	await auth2.init();
 	
 	//убираем ё
 	my_data.name=my_data.name.replace(/ё/g, 'е');
 	my_data.name=my_data.name.replace(/Ё/g, 'Е');
-
 
 	//инициируем файербейс
 	if (firebase.apps.length===0) {
@@ -6741,27 +6739,8 @@ async function init_game_env(lang) {
 	window.addEventListener("wheel", (event) => {chat.wheel_event(Math.sign(event.deltaY))});	
 	window.addEventListener('keydown',function(event){keyboard.keydown(event.key)});
 	
-	//конвертируем юид
-	let other_data;
-	if (my_data.uid2){
-		const new_data=await fbs_once('players/' + my_data.uid2);
-		if (new_data){
-			other_data=new_data;
-			
-			//удаляем старые данные если они остались вдруг
-			fbs.ref('players/'+my_data.uid).remove();
-			
-		}else{			
-			//копируем
-			const old_data=await fbs_once('players/' + my_data.uid);
-			fbs.ref('players/'+my_data.uid2).set(old_data);
-			other_data=old_data;
-		}
-		my_data.uid=my_data.uid2;
-	}else{
-		other_data=await fbs_once('players/' + my_data.uid);
-	}
-
+	//получаем данные
+	const other_data=await fbs_once('players/' + my_data.uid);
 
 	//сервисное сообщение
 	if(other_data && other_data.s_msg){
@@ -6856,8 +6835,7 @@ async function init_game_env(lang) {
 	
 	//сообщение от админа
 	await check_admin_info();
-	
-	
+		
 	//убираем лупу и контейнер	
 	anim2.add(objects.id_cont,{y:[objects.id_cont.sy, -200]}, false, 0.5,'easeInBack');	
 	some_process.loup_anim = function(){};
