@@ -3758,10 +3758,8 @@ my_ws={
 	},
 	
 	send_to_sleep(){		
-		if (this.socket.readyState===1){
-			this.sleep=1;	
-			this.socket.close(1000, "sleep");
-		}
+		this.sleep=1;	
+		this.socket.close(1000, "sleep");
 	},
 	
 	kill(){
@@ -3774,7 +3772,6 @@ my_ws={
 	reconnect(){
 		
 		this.sleep=0;
-		this.reconnecting=0;
 
 		if (this.socket) {
 			this.socket.onopen = null;
@@ -3817,14 +3814,13 @@ my_ws={
 		
 		this.socket.onclose = event => {			
 			clearInterval(this.keep_alive_timer)
-			console.log('Socket closed:', event);
-			/*if(this.sleep) return;
-			if(!this.reconnecting){
-				this.reconnecting=1;
-				this.reconnect_time=Math.min(60000,this.reconnect_time+5000);
-				console.log(`reconnecting in ${this.reconnect_time*0.001} seconds:`, event);
-				setTimeout(()=>{this.reconnect()},this.reconnect_time);				
-			}*/
+			console.log('Socket closed:', event.reason);
+			if(this.sleep) return;
+
+			this.reconnect_time=Math.min(60000,this.reconnect_time+5000);
+			console.log(`reconnecting in ${this.reconnect_time*0.001} seconds:`, event);
+			setTimeout(()=>{this.reconnect()},this.reconnect_time);				
+	
 		};
 
 		this.socket.onerror = error => {
