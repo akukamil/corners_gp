@@ -3777,13 +3777,11 @@ my_ws={
 		this.reconnecting=0;
 
 		if (this.socket) {
-			if (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING) {
-				this.socket.onopen = null;
-				this.socket.onmessage = null;
-				this.socket.onclose = null;
-				this.socket.onerror = null;	
-				this.socket.close();
-			}
+			this.socket.onopen = null;
+			this.socket.onmessage = null;
+			this.socket.onclose = null;
+			this.socket.onerror = null;	
+			this.socket.close();
 		}
 
 		this.socket = new WebSocket('wss://timewebmtgames.ru:8443/corners/'+my_data.uid);
