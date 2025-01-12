@@ -3818,13 +3818,13 @@ my_ws={
 		this.socket.onclose = event => {			
 			clearInterval(this.keep_alive_timer)
 			console.log('Socket closed:', event);
-			if(this.sleep) return;
+			/*if(this.sleep) return;
 			if(!this.reconnecting){
 				this.reconnecting=1;
 				this.reconnect_time=Math.min(60000,this.reconnect_time+5000);
 				console.log(`reconnecting in ${this.reconnect_time*0.001} seconds:`, event);
 				setTimeout(()=>{this.reconnect()},this.reconnect_time);				
-			}
+			}*/
 		};
 
 		this.socket.onerror = error => {
