@@ -3788,9 +3788,11 @@ my_ws={
 				
 		this.socket.onopen = () => {
 			console.log('Connected to server!');
-			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'onopen'});
+			this.socket.suid=irnd(10,999999);			
+			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'onopen',suid:this.socket.suid});
 			this.connect_resolver();
 			this.reconnect_time=0;
+
 			
 			//обновляем подписки
 			for (const path in this.child_added)				
@@ -3798,7 +3800,7 @@ my_ws={
 			
 			clearInterval(this.keep_alive_timer)
 			this.keep_alive_timer=setInterval(()=>{
-				fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'keep_alive'});
+				fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'keep_alive',suid:this.socket.suid});
 				this.socket.send(1);
 			},45000);
 		};			
@@ -3818,7 +3820,7 @@ my_ws={
 		};
 		
 		this.socket.onclose = event => {
-			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'onclose',reason:event.reason||'noreason',code:event.code||'nocode'});
+			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),suid:this.socket.suid,event:'onclose',reason:event.reason||'noreason',code:event.code||'nocode'});
 			clearInterval(this.keep_alive_timer)
 			console.log('Socket closed:', event.reason);
 			if(this.sleep) return;
@@ -3830,7 +3832,7 @@ my_ws={
 		};
 
 		this.socket.onerror = error => {
-			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now,event:'onerror'});
+			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now,event:'onerror',suid:this.socket.suid});
 			//console.error("WebSocket error:", error);
 		};
 		
