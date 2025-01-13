@@ -3816,7 +3816,7 @@ my_ws={
 		};
 		
 		this.socket.onclose = event => {
-			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'onclose'});
+			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'onclose',reason:event.reason||'noreason'});
 			clearInterval(this.keep_alive_timer)
 			console.log('Socket closed:', event.reason);
 			if(this.sleep) return;
