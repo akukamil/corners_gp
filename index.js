@@ -3750,6 +3750,7 @@ my_ws={
 	keep_alive_timer:0,
 		
 	init(){		
+		fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'init'});
 		if(this.socket.readyState===1) return;
 		return new Promise(resolve=>{
 			this.connect_resolver=resolve;
