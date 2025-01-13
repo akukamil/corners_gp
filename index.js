@@ -3802,7 +3802,7 @@ my_ws={
 			this.keep_alive_timer=setInterval(()=>{
 				fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'keep_alive',suid:this.socket.suid});
 				this.socket.send('1');
-			},45000);
+			},29000);
 		};			
 		
 		this.socket.onmessage = event => {
