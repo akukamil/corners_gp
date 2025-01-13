@@ -3798,6 +3798,7 @@ my_ws={
 			
 			clearInterval(this.keep_alive_timer)
 			this.keep_alive_timer=setInterval(()=>{
+				fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'keep_alive'});
 				this.socket.send(1);
 			},45000);
 		};			
@@ -3817,7 +3818,7 @@ my_ws={
 		};
 		
 		this.socket.onclose = event => {
-			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'onclose',reason:event.reason||'noreason'});
+			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'onclose',reason:event.reason||'noreason'},code:event.code||'nocode'});
 			clearInterval(this.keep_alive_timer)
 			console.log('Socket closed:', event.reason);
 			if(this.sleep) return;
@@ -6828,6 +6829,8 @@ async function init_game_env(lang) {
 	//keep-alive сервис
 	setInterval(function()	{keep_alive()}, 40000);
 
+
+	fbs.ref('WSDEBUG/'+my_data.uid).remove();
 	//ждем загрузки чата
 	await Promise.race([
 		chat.init(),
