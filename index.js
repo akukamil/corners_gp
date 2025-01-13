@@ -3757,7 +3757,8 @@ my_ws={
 		})
 	},
 	
-	send_to_sleep(){		
+	send_to_sleep(){	
+		fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now,event:'send_to_sleep'});
 		this.sleep=1;	
 		this.socket.close(1000, "sleep");
 	},
@@ -3781,10 +3782,12 @@ my_ws={
 			this.socket.close();
 		}
 
+		fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now,event:'reconnect'});
 		this.socket = new WebSocket('wss://timewebmtgames.ru:8443/corners/'+my_data.uid);
 				
 		this.socket.onopen = () => {
 			console.log('Connected to server!');
+			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now,event:'onopen'});
 			this.connect_resolver();
 			this.reconnect_time=0;
 			
@@ -3812,7 +3815,8 @@ my_ws={
 
 		};
 		
-		this.socket.onclose = event => {			
+		this.socket.onclose = event => {
+			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now,event:'onclose'});
 			clearInterval(this.keep_alive_timer)
 			console.log('Socket closed:', event.reason);
 			if(this.sleep) return;
@@ -3824,6 +3828,7 @@ my_ws={
 		};
 
 		this.socket.onerror = error => {
+			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now,event:'onerror'});
 			//console.error("WebSocket error:", error);
 		};
 		
