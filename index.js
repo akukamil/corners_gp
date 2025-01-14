@@ -3822,9 +3822,8 @@ my_ws={
 		this.socket.onclose = event => {
 			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),suid:this.socket.suid,event:'onclose',reason:event.reason||'noreason',code:event.code||'nocode'});
 			clearInterval(this.keep_alive_timer)
-			console.log('Socket closed:', event.reason);
+			if(event.reason==='not_alive') return;
 			if(this.sleep) return;
-
 			this.reconnect_time=Math.min(60000,this.reconnect_time+5000);
 			console.log(`reconnecting in ${this.reconnect_time*0.001} seconds:`, event);
 			setTimeout(()=>{this.reconnect()},this.reconnect_time);				
