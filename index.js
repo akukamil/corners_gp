@@ -3824,7 +3824,7 @@ my_ws={
 			clearInterval(this.keep_alive_timer)
 			if(event.reason==='not_alive') return;
 			if(this.sleep) return;
-			this.reconnect_time=Math.min(60000,this.reconnect_time+5000);
+			this.reconnect_time=Math.min(60000,this.reconnect_time+5000)+event.code===1006?60000:0;
 			console.log(`reconnecting in ${this.reconnect_time*0.001} seconds:`, event);
 			setTimeout(()=>{this.reconnect()},this.reconnect_time);				
 	
@@ -4585,7 +4585,7 @@ pref={
 		if(!this.check_time(my_data.nick_tm)) return;
 										
 		const name=await keyboard.read(15);
-		if (name.length>1){			
+		if (name.replace(/\s/g, '').length>3){			
 			this.name_changed=name;
 			objects.pref_name.set2(name,260);
 			objects.pref_info.text=['Нажмите ОК чтобы сохранить','Press OK to confirm'][LANG];
