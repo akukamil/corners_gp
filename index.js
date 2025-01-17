@@ -3829,7 +3829,7 @@ my_ws={
 			clearInterval(this.keep_alive_timer)
 			if(event.reason==='not_alive') return;
 			if(this.sleep) return;
-			this.reconnect_time=Math.min(60000,this.reconnect_time+5000)+event.code===1006?60000:0;
+			this.reconnect_time=Math.min(60000,this.reconnect_time+5000)+(event.code===1006?60000:0);
 			console.log(`reconnecting in ${this.reconnect_time*0.001} seconds:`, event);
 			setTimeout(()=>{this.reconnect()},this.reconnect_time);				
 	
