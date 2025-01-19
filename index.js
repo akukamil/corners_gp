@@ -3748,14 +3748,16 @@ my_ws={
 		
 	get_resolvers:{},
 	get_req_id:0,
-	reconnecting:0,
 	reconnect_time:0,
 	connect_resolver:0,
 	sleep:0,
-	keep_alive_timer:0,
+	keep_alive_timer:0,	
+	keep_alive_time:45000,
 		
 	init(){		
+		fbs.ref('WSDEBUG/'+my_data.uid).remove();
 		fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'init'});
+	
 		if(this.socket.readyState===1) return;
 		return new Promise(resolve=>{
 			this.connect_resolver=resolve;
@@ -3764,19 +3766,25 @@ my_ws={
 	},
 	
 	send_to_sleep(){	
+		
 		fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'send_to_sleep'});
+		
+		clearTimeout(this.keep_alive_timer);
 		this.sleep=1;	
-		this.socket.close(1000, "sleep");
+		this.socket.close(1000, 'sleep');
 	},
 	
 	kill(){
 		
+		clearTimeout(this.keep_alive_timer);
 		this.sleep=1;
-		this.socket.close(1000, "kill");
+		this.socket.close(1000, 'kill');
 		
 	},
 	
 	reconnect(){
+				
+		fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'reconnect'});
 		
 		this.sleep=0;
 
@@ -3788,30 +3796,23 @@ my_ws={
 			this.socket.close();
 		}
 
-		fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'reconnect'});
 		this.socket = new WebSocket('wss://timewebmtgames.ru:8443/corners/'+my_data.uid);
 				
 		this.socket.onopen = () => {
 			console.log('Connected to server!');
-			this.socket.suid=irnd(10,999999);			
-			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'onopen',suid:this.socket.suid});
 			this.connect_resolver();
 			this.reconnect_time=0;
-
 			
 			//обновляем подписки
 			for (const path in this.child_added)				
 				this.socket.send(JSON.stringify({cmd:'child_added',path}))					
 			
-			clearInterval(this.keep_alive_timer)
-			this.keep_alive_timer=setInterval(()=>{
-				fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'keep_alive',suid:this.socket.suid});
-				this.socket.send('1');
-			},29000);
+			this.reset_keep_alive('onopen');
 		};			
 		
 		this.socket.onmessage = event => {
 			
+			this.reset_keep_alive('onmessage');
 			const msg=JSON.parse(event.data);
 			//console.log("Получено от сервера:", msg);
 			
@@ -3824,21 +3825,41 @@ my_ws={
 
 		};
 		
-		this.socket.onclose = event => {
-			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),suid:this.socket.suid,event:'onclose',reason:event.reason||'noreason',code:event.code||'nocode'});
-			clearInterval(this.keep_alive_timer)
-			if(event.reason==='not_alive'||event.reason==='no_uid') return;
-			if(this.sleep) return;
+		this.socket.onclose = event => {		
+
+			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'close',code:event.code,reason:event.reason,type:event.type||'no_type'});
+		
+			clearTimeout(this.keep_alive_timer)
+			if (['not_alive','no_uid','kill','sleep'].includes(event.reason)) return;
+		
+			if (event.code===1006) this.keep_alive_time=20000;
+			
 			this.reconnect_time=Math.min(60000,this.reconnect_time+5000)+(event.code===1006?60000:0);
 			console.log(`reconnecting in ${this.reconnect_time*0.001} seconds:`, event);
 			setTimeout(()=>{this.reconnect()},this.reconnect_time);				
-	
 		};
 
 		this.socket.onerror = error => {
-			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now,event:'onerror',suid:this.socket.suid});
-			//console.error("WebSocket error:", error);
+			//fbs.ref('WSERRORS/'+my_data.uid).push({tm:Date.now(),event:'error'});
 		};
+		
+	},
+	
+	reset_keep_alive(reason){
+		console.log('reset_keep_alive',reason)
+		clearInterval(this.keep_alive_timer)
+		this.keep_alive_timer=setTimeout(()=>{
+			
+			try{
+				fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'keep_alive'});
+				this.socket.send('1');
+			}catch(e){
+				fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'keep_alive_error'});
+			}
+			
+			this.reset_keep_alive('timer');
+			
+		},this.keep_alive_time);
 		
 	},
 	
@@ -6081,35 +6102,6 @@ stickers = {
 
 	}
 
-}
-
-auth1 = {
-			
-	async init() {	
-			
-		if (game_platform === 'YANDEX') {
-						
-			try {await auth2.load_script('https://yandex.ru/games/sdk/v2')} catch (e) {alert(e)};									
-					
-			let _player;			
-			try {
-				window.ysdk = await YaGames.init({});			
-				_player = await window.ysdk.getPlayer();
-			} catch (e) { alert(e)};
-			
-			my_data.name=_player.getName();
-			const uid=_player.getUniqueID();
-			my_data.uid=uid.replace(/\//g, "Z");
-			my_data.uid2 = uid.replace(/[\/+=]/g, '');
-			my_data.orig_pic_url = _player.getPhoto('medium');					
-			my_data.auth_mode=_player.getMode()==='lite'?0:1;
-			my_data.name = my_data.name || auth2.get_random_name(my_data.uid);
-			
-			if (my_data.orig_pic_url === 'https://games-sdk.yandex.ru/games/api/sdk/v1/player/avatar/0/islands-retina-medium')
-				my_data.orig_pic_url = 'mavatar'+my_data.uid;	
-			return;
-		}				
-	}	
 }
 
 auth2 = {
