@@ -3839,7 +3839,7 @@ my_ws={
 			if (this.open_tm){
 				const working_time=Date.now()-this.open_tm;
 				this.reconnect_time=10000;
-				if (working_time<30000)					
+				if (working_time<this.keep_alive_time)					
 					this.keep_alive_time=Math.max(10000,this.keep_alive_time-5000);					
 			}else{
 				this.reconnect_time=Math.min(60000,Math.floor(this.reconnect_time*1.5));
