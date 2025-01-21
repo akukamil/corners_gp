@@ -6504,6 +6504,9 @@ main_loader={
 
 		//добавляем библиотеку аватаров
 		loader.add('multiavatar', git_src+'multiavatar.min.txt');	
+		
+		//добавляем смешные загрузки
+		loader.add('fun_logs', 'https://akukamil.github.io/common/fun_logs.txt');	
 	
 		loader.onProgress.add(ldr=>{
 			objects.loader_bar_mask.width =  240*ldr.progress*0.01;
@@ -6728,24 +6731,12 @@ async function init_game_env(lang) {
 		objects.id_loup.y=20*Math.cos(game_tick*8)+150;
 	}
 	
+	//смешные логи
 	const runScyfiLogs=async () => {
-		const scyfi_logs=[
-			'загрузка ядра...',
-			'размещение VDSO кода...',
-			'инициализация логгеров...',
-			'оптимизация RAM...',
-			'криптографическая решетка...',
-			'загрузка бинарного кода...',
-			'подготовка пула MMU...',
-			'выделение стека POSIX...',
-			'верификация прав доступа...',
-			'проверка цифровых подписей..',
-			'создание потока HAL...',
-			'завершено.'
-		]
-	
-		for (let i=0;i<scyfi_logs.length;i++){		
-			objects.scyfi_log.text=scyfi_logs[i];
+		const scyfi_logs=JSON.parse(assets.fun_logs);	
+		for (let i=0;i<10;i++){				
+			const log_index=irnd(0,scyfi_logs.length-1);
+			objects.scyfi_log.text=scyfi_logs[log_index];
 			await new Promise(resolve=>setTimeout(resolve, irnd(300,700)));		
 		}
 	};
