@@ -3748,11 +3748,12 @@ my_ws={
 		
 	get_resolvers:{},
 	get_req_id:0,
-	reconnect_time:0,
+	reconnect_time:5000,
 	connect_resolver:0,
 	sleep:0,
 	keep_alive_timer:0,	
 	keep_alive_time:45000,
+	open_tm:0,
 		
 	init(){		
 		fbs.ref('WSDEBUG/'+my_data.uid).remove();
@@ -3785,8 +3786,6 @@ my_ws={
 	reconnect(){
 				
 		fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'reconnect'});
-		
-		this.sleep=0;
 
 		if (this.socket) {
 			this.socket.onopen = null;
@@ -3795,13 +3794,16 @@ my_ws={
 			this.socket.onerror = null;	
 			this.socket.close();
 		}
-
+				
+		this.open_tm=0;
+		this.sleep=0;		
 		this.socket = new WebSocket('wss://timewebmtgames.ru:8443/corners/'+my_data.uid);
 				
 		this.socket.onopen = () => {
 			console.log('Connected to server!');
 			this.connect_resolver();
 			this.reconnect_time=0;
+			this.open_tm=Date.now();
 			
 			//обновляем подписки
 			for (const path in this.child_added)				
@@ -3825,16 +3827,24 @@ my_ws={
 
 		};
 		
-		this.socket.onclose = event => {		
+		this.socket.onclose = event => {	
+
+			clearTimeout(this.keep_alive_timer)		
 
 			fbs.ref('WSDEBUG/'+my_data.uid).push({tm:Date.now(),event:'close',code:event.code,reason:event.reason,type:event.type||'no_type'});
 		
-			clearTimeout(this.keep_alive_timer)
+			//не восстанавливаем соединения если закрыто по команде
 			if (['not_alive','no_uid','kill','sleep'].includes(event.reason)) return;
-		
-			if (event.code===1006) this.keep_alive_time=20000;
+					
+			if (this.open_tm){
+				const working_time=Date.now()-this.open_tm;
+				this.reconnect_time=10000;
+				if (working_time<30000)					
+					this.keep_alive_time=Math.max(10000,this.keep_alive_time-5000);					
+			}else{
+				this.reconnect_time=Math.min(60000,Math.floor(this.reconnect_time*1.5));
+			}			
 			
-			this.reconnect_time=Math.min(60000,this.reconnect_time+5000)+(event.code===1006?60000:0);
 			console.log(`reconnecting in ${this.reconnect_time*0.001} seconds:`, event);
 			setTimeout(()=>{this.reconnect()},this.reconnect_time);				
 		};
@@ -6218,7 +6228,7 @@ auth2 = {
 		
 		if (game_platform === 'VK') {
 			
-			await this.load_script('https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js')||await this.load_script('https://akukamil.github.io/durak/vkbridge.js');
+			await this.load_script('https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js')||await this.load_script('https://akukamil.github.io/common/vkbridge.js');
 	
 			let _player;			
 			try {
