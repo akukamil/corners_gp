@@ -1,5 +1,5 @@
 var M_WIDTH=800, M_HEIGHT=450;
-var app, assets={},fbs, client_id, objects={}, state="",chat_path,my_role="", game_tick=0, made_moves=0, game_id=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=0, h_state=0, game_platform="",git_src='', room_name = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process = {}, my_data={opp_id : ''},opp_data={}, my_games_api = {},game_name='corners';
+var app, assets={},fbs, client_id, objects={}, state="", my_role="", game_tick=0, made_moves=0, game_id=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=0, h_state=0, game_platform="",git_src='', room_name = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process = {}, my_data={opp_id : ''},opp_data={}, my_games_api = {},game_name='corners';
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 
 DESIGN_DATA={
@@ -1670,26 +1670,25 @@ quiz={
 	prv_quiz_read:0,
 	quiz_data:0,
 	on:0,
-	path:'quiz6',
+	path:'quiz7',
 	board_loaded:0,
 	moves_hist:[],
 	init_board:[
 		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,0,2,2],
+		[0,0,0,0,2,2,2,0],
+		[0,0,0,0,2,0,0,0],
 		[0,0,0,0,0,0,0,0],
-		[0,0,0,0,0,0,0,0],
-		[0,0,0,0,0,0,0,0],
-		[0,0,0,0,0,0,0,0],
-		[0,0,0,0,1,1,1,1],
-		[0,0,0,0,1,1,1,1],
+		[0,2,2,0,1,1,1,1],
+		[0,2,2,0,1,1,1,1],
 		[0,0,0,0,1,1,1,1]
 	],
 	
 	bonuses_points:[
-		{y:3,x:0},
-		{y:7,x:1},
-		{y:2,x:5},
+		{y:5,x:0},
+		{y:7,x:0},
 		{y:0,x:6},
-		{y:2,x:7},
+		{y:1,x:5},
 	],	
 	
 	activate(){
@@ -1804,7 +1803,7 @@ quiz={
 			objects.t_quiz_rules.text='';
 			objects.quiz_rules_bcg.texture=assets.quiz_complete;				
 		} else {
-			objects.t_quiz_rules.text=`Собери звезды и переведи все шашки в новый дом быстрее всех. Победитель получит кастомную карточку. Подведение итогов 30.12.2024`;
+			objects.t_quiz_rules.text=`Собери звезды и переведи все шашки в новый дом быстрее всех. Победитель получит кастомную карточку. Подведение итогов 15.02.2025`;
 			objects.quiz_rules_bcg.texture=assets.quiz_rules_bcg;		
 		}
 		anim2.add(objects.quiz_rules_cont,{x:[-100, objects.quiz_rules_cont.sx]}, true, 0.25,'easeOutBack');	
@@ -3927,12 +3926,7 @@ chat={
 			console.log('Игрок убит: ',player_data.uid);
 			this.kill_next_click=0;
 		}
-		
-		if(this.delete_message_mode){			
-			fbs.ref(`${chat_path}/${player_data.index}`).remove();
-			console.log(`сообщение ${player_data.index} удалено`)
-		}
-		
+			
 		
 		if(this.moderation_mode||this.block_next_click||this.kill_next_click||this.delete_message_mode) return;
 		
@@ -6595,9 +6589,6 @@ async function init_game_env(lang) {
 		
 	//устанавлием имена
 	objects.my_card_name.set2(my_data.name,150);
-				
-	//это путь к чату
-	chat_path='states_chat';
 	
 	//устанавливаем рейтинг в попап
 	objects.id_rating.text=objects.my_card_rating.text=my_data.rating;
