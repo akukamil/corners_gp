@@ -6218,7 +6218,9 @@ main_loader={
 		loader.add('loader_bcg',git_src+`res/common/loader_bcg_${['ru','en'][LANG]}_img.jpg`);
 		loader.add('loader_bar_frame',git_src+'res/common//loader_bar_frame_img.png');	
 		loader.add('loader_bar_bcg',git_src+'res/common/loader_bar_bcg_img.png');
-
+		
+		//добавляем основной загрузочный манифест
+		loader.add('main_load_list',git_src+'/load_list.txt');
 		
 		await new Promise(res=>loader.load(res))
 		
@@ -6299,12 +6301,13 @@ main_loader={
 			loader.add("sticker_texture_"+i, git_src+"stickers/"+i+".png");
 		
 		//добавляем из листа загрузки
+		const load_list=eval(assets.main_load_list);
 		for (var i = 0; i < load_list.length; i++)
 			if (load_list[i].class === "sprite" || load_list[i].class === "image" )
 				loader.add(load_list[i].name, git_src+'res/'+lang_pack + '/' + load_list[i].name + "." +  load_list[i].image_format);
 
 		//добавляем библиотеку аватаров
-		loader.add('multiavatar', git_src+'multiavatar.min.txt');	
+		loader.add('multiavatar', 'https://akukamil.github.io/common/multiavatar.min.txt');	
 		
 		//добавляем смешные загрузки
 		loader.add('fun_logs', 'https://akukamil.github.io/common/fun_logs.txt');	
@@ -6320,11 +6323,69 @@ main_loader={
 			assets[res_name]=res.texture||res.sound||res.data;			
 		}	
 		
+		
 		//Включаем библиотеку аватаров
 		const script = document.createElement('script');
 		script.textContent = assets.multiavatar;
 		document.head.appendChild(script);
-		
+					
+		//создаем спрайты и массивы спрайтов и запускаем первую часть кода
+		for (var i = 0; i < load_list.length; i++) {
+			const obj_class = load_list[i].class;
+			const obj_name = load_list[i].name;
+			console.log('Processing: ' + obj_name)
+
+			switch (obj_class) {
+			case "sprite":
+				objects[obj_name] = new PIXI.Sprite(assets[obj_name]);
+				eval(load_list[i].code0);
+				break;
+
+			case "block":
+				eval(load_list[i].code0);
+				break;
+
+			case "cont":
+				eval(load_list[i].code0);
+				break;
+
+			case "array":
+				var a_size=load_list[i].size;
+				objects[obj_name]=[];
+				for (var n=0;n<a_size;n++)
+					eval(load_list[i].code0);
+				break;
+			}
+		}
+
+		//обрабатываем вторую часть кода в объектах
+		for (var i = 0; i < load_list.length; i++) {
+			const obj_class = load_list[i].class;
+			const obj_name = load_list[i].name;
+			console.log('Processing: ' + obj_name)
+			
+			
+			switch (obj_class) {
+			case "sprite":
+				eval(load_list[i].code1);
+				break;
+
+			case "block":
+				eval(load_list[i].code1);
+				break;
+
+			case "cont":	
+				eval(load_list[i].code1);
+				break;
+
+			case "array":
+				var a_size=load_list[i].size;
+					for (var n=0;n<a_size;n++)
+						eval(load_list[i].code1);	;
+				break;
+			}
+		}
+			
 		anim2.add(objects.bcg,{alpha:[1,0]}, false, 0.5,'linear');
 		await anim2.add(objects.loader_cont,{alpha:[1,0]}, false, 0.5,'linear');
 		objects.bcg.texture=assets.bcg;	
@@ -6442,62 +6503,6 @@ async function init_game_env(lang) {
 	//идентификатор клиента
 	client_id = irnd(10,999999);
 
-    //создаем спрайты и массивы спрайтов и запускаем первую часть кода
-    for (var i = 0; i < load_list.length; i++) {
-        const obj_class = load_list[i].class;
-        const obj_name = load_list[i].name;
-		console.log('Processing: ' + obj_name)
-
-        switch (obj_class) {
-        case "sprite":
-            objects[obj_name] = new PIXI.Sprite(assets[obj_name]);
-            eval(load_list[i].code0);
-            break;
-
-        case "block":
-            eval(load_list[i].code0);
-            break;
-
-        case "cont":
-            eval(load_list[i].code0);
-            break;
-
-        case "array":
-			var a_size=load_list[i].size;
-			objects[obj_name]=[];
-			for (var n=0;n<a_size;n++)
-				eval(load_list[i].code0);
-            break;
-        }
-    }
-
-    //обрабатываем вторую часть кода в объектах
-    for (var i = 0; i < load_list.length; i++) {
-        const obj_class = load_list[i].class;
-        const obj_name = load_list[i].name;
-		console.log('Processing: ' + obj_name)
-		
-		
-        switch (obj_class) {
-        case "sprite":
-            eval(load_list[i].code1);
-            break;
-
-        case "block":
-            eval(load_list[i].code1);
-            break;
-
-        case "cont":	
-			eval(load_list[i].code1);
-            break;
-
-        case "array":
-			var a_size=load_list[i].size;
-				for (var n=0;n<a_size;n++)
-					eval(load_list[i].code1);	;
-            break;
-        }
-    }
 
 	anim2.add(objects.id_cont,{y:[-200,objects.id_cont.sy]}, true, 0.5,'easeOutBack');
 
