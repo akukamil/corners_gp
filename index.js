@@ -6220,7 +6220,7 @@ main_loader={
 		loader.add('loader_bar_bcg',git_src+'res/common/loader_bar_bcg_img.png');
 		
 		//добавляем основной загрузочный манифест
-		loader.add('main_load_list',git_src+'/load_list.txt');
+		loader.add('main_load_list',git_src+'load_list.txt');
 		
 		await new Promise(res=>loader.load(res))
 		
