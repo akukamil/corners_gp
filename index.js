@@ -1856,6 +1856,12 @@ quiz={
 		objects.bonuses.forEach(b=>b.visible=false);
 		objects.quiz_reload_btn.visible = false;
 		
+		objects.cur_move_text.visible=false;
+		objects.board_cont.visible=false;
+		objects.opp_card_cont.visible=false;
+		objects.my_card_cont.visible=false;
+		objects.selected_frame.visible=false;
+		
 	},
 	
 	make_new_quiz(){		
@@ -1936,7 +1942,7 @@ quiz={
 	
 	close(){
 		
-		
+		this.clear();
 	}	
 }
 
@@ -3733,6 +3739,7 @@ req_dialog = {
 
 chat={
 	
+	on:0,
 	last_record_end : 0,
 	drag : false,
 	data:[],
@@ -3753,6 +3760,7 @@ chat={
 		
 	activate() {	
 
+		this.on=1;
 		anim2.add(objects.chat_cont,{alpha:[0, 1]}, true, 0.1,'linear');
 		//objects.bcg.texture=assets.lobby_bcg;
 		objects.chat_enter_button.visible=my_data.games>=this.games_to_chat;
@@ -4111,6 +4119,7 @@ chat={
 		
 	close() {
 		
+		this.on=0;
 		anim2.add(objects.chat_cont,{alpha:[1, 0]}, false, 0.1,'linear');
 		if (objects.chat_keyboard_cont.visible)
 			keyboard.close();
@@ -6134,6 +6143,12 @@ tabvis={
 			fbs.ref(room_name+'/'+my_data.uid).remove();
 			lobby.close()
 		}		
+		
+		if(quiz.on)
+			quiz.close();
+		
+		if(chat.on)
+			chat.close();
 		my_ws.send_to_sleep();		
 	}
 	
