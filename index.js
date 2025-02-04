@@ -1825,6 +1825,7 @@ quiz={
 		board_func.update_board(g_board);		
 		
 		this.made_moves=0;
+		this.moves_hist=[];
 		objects.cur_move_text.text='Сделано ходов: '+this.made_moves;
 		
 		for (let i=0;i<this.bonuses_points.length;i++){		
@@ -1896,29 +1897,26 @@ quiz={
 		this.made_moves++;
 		objects.cur_move_text.text='Сделано ходов: '+this.made_moves;
 		objects.my_card_rating.text=this.getHodText(this.made_moves);	
-
+		
 		
 		//проверка завершения
 		if (bonuses_taken_num===this.bonuses_points.length&&board_func.finished1(g_board)){
 			my_turn=0;			
 			objects.stop_bot_button.visible = false;
-				
-			
+							
 			if (this.accepted_leader){				
 				await big_message.show('Конкурс завершен!', `сделано ходов: ${this.made_moves}`,false);	
 				sound.play('lose');				
 			}else{
-				if (this.made_moves<this.made_moves_leader){
-					
+				if (this.made_moves<this.made_moves_leader){					
 					
 					fbs.ref(this.path+'/cur_leader').set(my_data.uid);
 					fbs.ref(this.path+'/moves').set(this.made_moves);
 					fbs.ref(this.path+'/moves_hist').set(this.moves_hist);
+					fbs.ref(this.path+'/board').set(g_board);
 					sound.play('win');
 					await big_message.show('Вы теперь лидер!', `сделано ходов: ${this.made_moves}`,false);
 					this.prv_quiz_read=0;
-					
-					
 					
 				}else{
 					
