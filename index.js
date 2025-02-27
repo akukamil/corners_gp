@@ -1545,7 +1545,7 @@ online_game = {
 			
 			//контрольные концовки отправляем на виртуальную машину
 			if (my_data.rating>1800 || opp_data.rating>1800){
-				const data={uid:my_data.uid,player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration, rating: [old_rating,my_data.rating],client_id, ,tm:'TMS'}
+				const data={uid:my_data.uid,player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration, rating: [old_rating,my_data.rating],client_id,tm:'TMS'}
 				my_ws.safe_send({cmd:'log',logger:'corners_games',data});				
 			}						
 		}
