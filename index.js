@@ -1478,8 +1478,6 @@ online_game = {
 	update_my_rating_fbs(rating){
 		
 		fbs.ref('players/'+my_data.uid+'/rating').set(rating||my_data.rating);
-		//fbs.ref('pdata/'+my_data.uid+'/PUB/rating').set(rating||my_data.rating);
-		//fbs.ref('pdata/'+my_data.uid+'/rating').set(rating||my_data.rating);
 		
 	},
 		
@@ -1521,14 +1519,15 @@ online_game = {
 		let result_number = result_row[1];
 		let result_info = result_row[2][LANG];				
 		let old_rating = my_data.rating;
+		
+		
+		//обновляем даные на карточке		
 		my_data.rating = this.calc_new_rating (my_data.rating, result_number);
 		this.update_my_rating_fbs();
-		
-		//обновляем даные на карточке
 		objects.my_card_rating.text=my_data.rating;
 		
 		//если диалоги еще открыты
-		if (objects.stickers_cont.visible===true)
+		if (objects.stickers_cont.visible)
 			stickers.hide_panel();	
 						
 		//убираем элементы
@@ -1554,7 +1553,7 @@ online_game = {
 		if (result_number === DRAW || result_number === LOSE || result_number === WIN) {
 			
 			//записываем инфу о последних играх в LC
-			
+			this.update_last_opps(opp_data.uid);
 			
 			//увеличиваем количество игр
 			my_data.games++;
