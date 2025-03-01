@@ -1275,6 +1275,7 @@ online_game = {
 	prv_tick_time:0,
 	chat_incoming:1,
 	chat_active:1,
+	last_opponents:[],
 	
 	calc_new_rating(old_rating, game_result) {
 		
@@ -1341,6 +1342,26 @@ online_game = {
 		g_board =[[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
 		board_func.update_board(g_board);
 		
+		
+	},
+	
+	read_last_opps(){
+		
+		try {
+			const stored = localStorage.getItem('corners_lo');
+			this.last_opponents=stored ? JSON.parse(stored) : [];
+		} catch (error) {
+			console.error('Error parsing opponents from localStorage:', error);
+			this.last_opponents=[];
+		}
+	},
+	
+	update_last_opps(opp_id){
+		
+		this.last_opponents.push(opp_id);
+        if (this.last_opponents.length > 20)
+            this.last_opponents = this.last_opponents.slice(-20);        
+		localStorage.setItem('corners_lo', JSON.stringify(this.last_opponents));
 		
 	},
 	
@@ -1531,6 +1552,9 @@ online_game = {
 		
 		//если игра результативна то записываем дополнительные данные
 		if (result_number === DRAW || result_number === LOSE || result_number === WIN) {
+			
+			//записываем инфу о последних играх в LC
+			
 			
 			//увеличиваем количество игр
 			my_data.games++;
@@ -6626,12 +6650,12 @@ async function init_game_env(lang) {
 	fbs.ref('players/'+my_data.uid+'/auth_mode').set(my_data.auth_mode);
 	fbs.ref('players/'+my_data.uid+'/session_start').set(firebase.database.ServerValue.TIMESTAMP);
 	await fbs.ref('players/'+my_data.uid+'/tm').set(firebase.database.ServerValue.TIMESTAMP);
-					
+	
 	if(!other_data?.first_log_tm)
 		fbs.ref('players/'+my_data.uid+'/first_log_tm').set(firebase.database.ServerValue.TIMESTAMP);
-		
-	//устанавливаем мой статус в онлайн
-	//set_state({state : 'o'});
+	
+	//читаем последних соперников
+	online_game.read_last_opps();
 	
 	//сообщение для дубликатов
 	fbs.ref("inbox/"+my_data.uid).set({message:"CLIEND_ID",tm:Date.now(),client_id});
