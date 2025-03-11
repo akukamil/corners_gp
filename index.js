@@ -1539,7 +1539,10 @@ online_game = {
 			my_data.rating=old_rating;
 			auth_msg='Выбирайте разных соперников для получения рейтинга';		
 		}
-
+		
+		
+		//записываем рейтинг в базу
+		fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating);
 		
 		//обновляем даные на карточке
 		objects.my_card_rating.text=my_data.rating;
