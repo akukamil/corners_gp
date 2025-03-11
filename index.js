@@ -6529,7 +6529,6 @@ async function init_game_env(lang) {
 	const dw=M_WIDTH/document.body.clientWidth;
 	const dh=M_HEIGHT/document.body.clientHeight;
 	const resolution=Math.min(1.5,Math.max(dw,dh,1));	
-	PIXI.settings.=resolution;
 	const opts={width:M_WIDTH, height:M_HEIGHT,antialias:false,resolution,autoDensity:true};
 	app.stage = new PIXI.Container();
 	app.renderer = new PIXI.Renderer(opts);
