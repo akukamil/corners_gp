@@ -1,7 +1,7 @@
 var M_WIDTH=800, M_HEIGHT=450;
 var app ={stage:{},renderer:{}}, assets={},fbs,serv_tm_delta, client_id, objects={}, state="", my_role="", game_tick=0, made_moves=0, game_id=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=0, h_state=0, game_platform="",git_src='', room_name = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process = {}, my_data={opp_id : ''},opp_data={}, my_games_api = {},game_name='corners';
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
-
+const MAX_NO_AUTH_RATING=2000;
 DESIGN_DATA={
 	0:{name:'def',rating:0,games:0},
 	1:{name:'old',rating:0,games:0},
@@ -746,14 +746,12 @@ big_message = {
 	p_resolve : 0,
 	feedback_on : 0,	
 		
-	show(t1,t2, feedback_on) {
+	show(t1,t2,t3,feedback_on) {
 		
 		this.feedback_on = feedback_on;
 				
-		if (t2!==undefined || t2!=="")
-			objects.big_message_text2.text=t2;
-		else
-			objects.big_message_text2.text='**********';
+		objects.big_message_text2.text=t2||'**********';
+		objects.big_message_text3.text=t3||'';
 
 		objects.feedback_button.visible = feedback_on&&!my_data.blocked;
 		objects.big_message_text.text=t1;
@@ -1281,21 +1279,22 @@ online_game = {
 	
 	calc_new_rating(old_rating, game_result) {
 		
-		
 		if (game_result === NOSYNC)
 			return old_rating;
-		
-		//не авторизованым игрокам нельзя выиграть более 2000
-		if (my_data.rating>2000&&!my_data.auth_mode&&game_result === WIN)
-			return old_rating;	
-		
+				
+		let new_rating;
 		var Ea = 1 / (1 + Math.pow(10, ((opp_data.rating-my_data.rating)/400)));
 		if (game_result === WIN)
-			return Math.round(my_data.rating + 16 * (1 - Ea));
+			new_rating=Math.round(my_data.rating + 16 * (1 - Ea));
 		if (game_result === DRAW)
-			return Math.round(my_data.rating + 16 * (0.5 - Ea));
+			new_rating=Math.round(my_data.rating + 16 * (0.5 - Ea));
 		if (game_result === LOSE)
-			return Math.round(my_data.rating + 16 * (0 - Ea));
+			new_rating=Math.round(my_data.rating + 16 * (0 - Ea));
+		
+		//не авторизованым игрокам нельзя выиграть более MAX_NO_AUTH_RATING
+		if (new_rating>MAX_NO_AUTH_RATING&&!my_data.auth_mode) new_rating=MAX_NO_AUTH_RATING;				
+		
+		return new_rating;	
 		
 	},
 	
@@ -1565,8 +1564,7 @@ online_game = {
 		setTimeout(()=>{
 		fbs.ref('tables/'+game_id+'/board').set({uid:my_data.uid,fin:result,tm:Date.now()});			
 		},400)
-			
-		
+					
 		//если игра результативна то записываем дополнительные данные
 		if (result_number === DRAW || result_number === LOSE || result_number === WIN) {
 			
@@ -1594,12 +1592,13 @@ online_game = {
 		}	
 		
 		//сообщение об изменении рейтинга
-		let rating_info=`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`;
-		if (this.no_rating_game)
-			rating_info='Выбирайте разных соперников для получения рейтинга';
+		let info3='';
+		if(this.no_rating_game)
+			info3='Выбирайте разных соперников для получения рейтинга';		
+		if (my_data.rating>=MAX_NO_AUTH_RATING&&!my_data.auth_mode&&result_number===WIN)
+			info3=`Рейтинг более ${MAX_NO_AUTH_RATING} не доступен игрокам без авторизации(((`;
 		
-		
-		await big_message.show(result_info,rating_info,true)
+		await big_message.show(result_info,`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,info3,true)
 		
 	},
 		
@@ -1679,7 +1678,7 @@ bot_game = {
 		else
 			sound.play('win');		
 		
-		await big_message.show(result_info, ')))',true)
+		await big_message.show(result_info, ')))',0,true)
 		
 	},
 
@@ -1960,7 +1959,7 @@ quiz={
 			objects.stop_bot_button.visible = false;
 							
 			if (this.accepted_leader){				
-				await big_message.show('Конкурс завершен!', `сделано ходов: ${this.made_moves}`,false);	
+				await big_message.show('Конкурс завершен!', `сделано ходов: ${this.made_moves}`,0,false);	
 				sound.play('lose');				
 			}else{
 				if (this.made_moves<this.made_moves_leader){					
@@ -1970,15 +1969,15 @@ quiz={
 					fbs.ref(this.path+'/moves_hist').set(this.moves_hist);
 					fbs.ref(this.path+'/board').set(g_board);
 					sound.play('win');
-					await big_message.show('Вы теперь лидер!', `сделано ходов: ${this.made_moves}`,false);
+					await big_message.show('Вы теперь лидер!', `сделано ходов: ${this.made_moves}`,0,false);
 					this.prv_quiz_read=0;
 					
 				}else{
 					
 					if (this.made_moves===this.made_moves_leader)
-						await big_message.show('Вы не смогли обойти лидера!', `сделано ходов: ${this.made_moves}`,false);
+						await big_message.show('Вы не смогли обойти лидера!', `сделано ходов: ${this.made_moves}`,0,false);
 					else
-						await big_message.show('Вы проиграли лидеру!', `сделано ходов: ${this.made_moves}`,false);
+						await big_message.show('Вы проиграли лидеру!', `сделано ходов: ${this.made_moves}`,0,false);
 					
 					sound.play('lose');					
 				}				
@@ -2500,9 +2499,9 @@ game_watching={
 			
 			const name=players_cache.players[board_data.uid].name;		
 			if (res===WIN||res===LOSE)
-				await big_message.show([`Эта игра завершена\nПобедитель: ${winner_name}.`,'This game is over'][LANG],')))');
+				await big_message.show([`Эта игра завершена\nПобедитель: ${winner_name}.`,'This game is over'][LANG],')))',0,false);
 			else
-				await big_message.show(['Эта игра завершена.','This game is over'][LANG],')))');
+				await big_message.show(['Эта игра завершена.','This game is over'][LANG],')))',0,false);
 
 			
 			this.close();
@@ -4427,7 +4426,7 @@ pref={
 		
 	async check_leader_downtime(){
 		
-		if (my_data.rating<=2000) return;
+		if (my_data.rating<=MAX_NO_AUTH_RATING) return;
 				
 		//проверяем долгое отсутствие игру у рейтинговых игроков
 		my_data.last_game_tm=my_data.last_game_tm||await fbs_once(`players/${my_data.uid}/last_game_tm`);
@@ -4443,11 +4442,11 @@ pref={
 			const hours_to_confirm_rating=Math.max(168-hours_since_last_game,0);
 									
 			if (!hours_to_confirm_rating){
-				my_data.rating=2000;
+				my_data.rating=MAX_NO_AUTH_RATING;
 				my_data.last_game_tm=Date.now()+SERV_TM_DELTA;
 				fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating);
-				message.add('Ваш рейтинг снижен до 2000. Причина - отсутвие игр.',7000);
-				objects.pref_rating_conf_info.text='Ваш рейтинг снижен до 2000. Причина - отсутвие игр.';		
+				message.add(`Ваш рейтинг снижен до ${MAX_NO_AUTH_RATING}. Причина - отсутвие игр.`,7000);
+				objects.pref_rating_conf_info.text=`Ваш рейтинг снижен до ${MAX_NO_AUTH_RATING}. Причина - отсутвие игр.`;		
 			}else{
 				
 				objects.pref_rating_conf_info.text=`Подтвердите ваш рейтинг в течении ${hours_to_confirm_rating} часов!`;				
@@ -5745,9 +5744,9 @@ lobby={
 		lobby._opp_data={};
 		this.close_invite_dialog();
 		if(msg==='REJECT_ALL')
-			big_message.show(['Соперник пока не принимает приглашения.','The opponent refused to play.'][LANG],'---');
+			big_message.show(['Соперник пока не принимает приглашения.','The opponent refused to play.'][LANG],'---',0,false);
 		else
-			big_message.show(['Соперник отказался от игры. Повторить приглашение можно через 1 минуту.','The opponent refused to play. You can repeat the invitation in 1 minute'][LANG],'---');
+			big_message.show(['Соперник отказался от игры. Повторить приглашение можно через 1 минуту.','The opponent refused to play. You can repeat the invitation in 1 minute'][LANG],'---',0,false);
 
 	},
 
@@ -5876,7 +5875,7 @@ lobby={
 		
 		if(!objects.info_cont.init){
 			
-			objects.info_records[0].set({uid:'bot',name:'Админ',msg:'Новое правило - рейтинг игроков, неактивных более 7 дней, будет снижен до 2000.',tm:1734959027520})
+			objects.info_records[0].set({uid:'bot',name:'Админ',msg:`Новое правило - рейтинг игроков, неактивных более 7 дней, будет снижен до ${MAX_NO_AUTH_RATING}.`,tm:1734959027520})
 			objects.info_records[0].scale_xy=1.2;
 			objects.info_records[0].y=145;
 			
