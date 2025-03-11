@@ -1273,28 +1273,17 @@ online_game = {
 	prv_tick_time:0,
 	chat_incoming:1,
 	chat_active:1,
-	no_rating_game:0,
+	NO_RATING_GAME:0,
 	no_rating_msg_timer:0,
 	last_opponents:[],
 	
 	calc_new_rating(old_rating, game_result) {
 		
-		if (game_result === NOSYNC)
-			return old_rating;
+		if (game_result === NOSYNC)	return old_rating;
 				
-		let new_rating;
-		var Ea = 1 / (1 + Math.pow(10, ((opp_data.rating-my_data.rating)/400)));
-		if (game_result === WIN)
-			new_rating=Math.round(my_data.rating + 16 * (1 - Ea));
-		if (game_result === DRAW)
-			new_rating=Math.round(my_data.rating + 16 * (0.5 - Ea));
-		if (game_result === LOSE)
-			new_rating=Math.round(my_data.rating + 16 * (0 - Ea));
-		
-		//не авторизованым игрокам нельзя выиграть более MAX_NO_AUTH_RATING
-		if (new_rating>MAX_NO_AUTH_RATING&&!my_data.auth_mode) new_rating=MAX_NO_AUTH_RATING;				
-		
-		return new_rating;	
+		const Ea = 1 / (1 + Math.pow(10, ((opp_data.rating-my_data.rating)/400)));
+		const Sa = (game_result + 1) / 2;
+		return Math.round(my_data.rating + 16 * (Sa - Ea));
 		
 	},
 	
@@ -1323,9 +1312,8 @@ online_game = {
 
 		//сколько игрок играл с этим соперником		
 		const prv_plays=this.count_in_arr(this.last_opponents,opp_data.uid);
-		this.no_rating_game=(prv_plays>6&&my_data.rating>1700)?1:0;
-		
-		if (this.no_rating_game)
+		this.NO_RATING_GAME=(prv_plays>6&&my_data.rating>1700)?1:0;
+		if (this.NO_RATING_GAME)
 			this.no_rating_msg_timer=setTimeout(()=>{message.add('Выбирайте разных соперников для получения и подтверждения рейтинга')},5000);
 
 		//обновляем стол
@@ -1335,7 +1323,7 @@ online_game = {
 		//вычиcляем рейтинг при проигрыше и устанавливаем его в базу он потом изменится
 		const lose_rating = this.calc_new_rating(my_data.rating, LOSE);
 		if (lose_rating >100 && lose_rating<9999)
-			this.update_my_rating_fbs(lose_rating);
+			fbs.ref('players/'+my_data.uid+'/rating').set(lose_rating);
 		
 		//возможность чата
 		this.chat_out=1;
@@ -1356,7 +1344,7 @@ online_game = {
 	read_last_opps(){
 		
 		try {
-			const stored = localStorage.getItem('corners_lo');
+			const stored = localStorage.getItem(game_name+'_lo');
 			this.last_opponents=stored ? JSON.parse(stored) : [];
 		} catch (error) {
 			console.error('Error parsing opponents from localStorage:', error);
@@ -1369,7 +1357,7 @@ online_game = {
 		this.last_opponents.push(opp_id);
         if (this.last_opponents.length > 20)
             this.last_opponents = this.last_opponents.slice(-20);        
-		localStorage.setItem('corners_lo', JSON.stringify(this.last_opponents));
+		localStorage.setItem(game_name+'_lo', JSON.stringify(this.last_opponents));
 		
 	},
 	
@@ -1536,11 +1524,24 @@ online_game = {
 		let result_str = result_row[0];
 		let result_number = result_row[1];
 		let result_info = result_row[2][LANG];				
-		let old_rating = my_data.rating;
-				
-		//обновляем даные на карточке		
-		my_data.rating = this.no_rating_game?old_rating:this.calc_new_rating(my_data.rating, result_number);
-		this.update_my_rating_fbs();
+
+		//определяем новый рейтинг и сообщения
+		let auth_msg='';
+		const old_rating = my_data.rating;		
+		my_data.rating = this.calc_new_rating(my_data.rating, result_number);
+		let NO_AUTH_NO_RATING=0;
+		if (my_data.rating>MAX_NO_AUTH_RATING&&!my_data.auth_mode){
+			my_data.rating=MAX_NO_AUTH_RATING;
+			NO_AUTH_NO_RATING=1;		
+			auth_msg=`Рейтинг более ${MAX_NO_AUTH_RATING} не доступен игрокам без авторизации(((`;
+		}		
+		if (this.NO_RATING_GAME&&my_data.rating>old_rating) {
+			my_data.rating=old_rating;
+			auth_msg='Выбирайте разных соперников для получения рейтинга';		
+		}
+
+		
+		//обновляем даные на карточке
 		objects.my_card_rating.text=my_data.rating;
 		
 		//если диалоги еще открыты
@@ -1561,9 +1562,7 @@ online_game = {
 			sound.play('win');
 
 		//также фиксируем данные стола
-		setTimeout(()=>{
-		fbs.ref('tables/'+game_id+'/board').set({uid:my_data.uid,fin:result,tm:Date.now()});			
-		},400)
+		setTimeout(()=>{fbs.ref('tables/'+game_id+'/board').set({uid:my_data.uid,fin:result,tm:Date.now()})},400)
 					
 		//если игра результативна то записываем дополнительные данные
 		if (result_number === DRAW || result_number === LOSE || result_number === WIN) {
@@ -1574,31 +1573,23 @@ online_game = {
 			//увеличиваем количество игр
 			my_data.games++;
 			fbs.ref('players/'+my_data.uid+'/games').set(my_data.games);		
-	
-			//продолжительность игры
-			const duration = Math.floor((Date.now() - this.start_time)*0.001);
 
 			//записываем дату последней игры
-			if(!this.no_rating_game){
+			if(!this.NO_RATING_GAME){
 				fbs.ref('players/'+my_data.uid+'/last_game_tm').set(firebase.database.ServerValue.TIMESTAMP);				
 				my_data.last_game_tm=Date.now()+SERV_TM_DELTA;
 			}
 			
 			//контрольные концовки логируем на виртуальной машине
 			if (my_data.rating>1800 || opp_data.rating>1800){
+				const duration = Math.floor((Date.now() - this.start_time)*0.001);
 				const data={uid:my_data.uid,player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration, rating: [old_rating,my_data.rating],game_id,client_id,tm:'TMS'}
 				my_ws.safe_send({cmd:'log',logger:'corners_games',data});				
 			}						
 		}	
 		
 		//сообщение об изменении рейтинга
-		let info3='';
-		if(this.no_rating_game)
-			info3='Выбирайте разных соперников для получения рейтинга';		
-		if (my_data.rating>=MAX_NO_AUTH_RATING&&!my_data.auth_mode&&result_number===WIN)
-			info3=`Рейтинг более ${MAX_NO_AUTH_RATING} не доступен игрокам без авторизации(((`;
-		
-		await big_message.show(result_info,`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,info3,true)
+		await big_message.show(result_info,`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,auth_msg,true)
 		
 	},
 		
@@ -6135,7 +6126,7 @@ auth2 = {
 
 			my_data.name = my_data.uid = 'debug' + prompt('Отладка. Введите ID', 100);
 			my_data.orig_pic_url = 'mavatar'+my_data.uid;
-			my_data.auth_mode=1
+			my_data.auth_mode=0
 			return;
 		}		
 		
@@ -6744,6 +6735,7 @@ async function init_game_env(lang) {
 	//загружаем лобби с включенным ботом
 	let room_to_go='states'+lobby.get_room_index_from_rating();
 	//room_to_go='states5';
+	//my_data.rating=1999;
 	lobby.activate(room_to_go,1);
 }
 
