@@ -1324,7 +1324,7 @@ online_game = {
 
 		//сколько игрок играл с этим соперником		
 		const prv_plays=this.count_in_arr(this.last_opponents,opp_data.uid);
-		this.no_rating_game=prv_plays>6?1:0;
+		this.no_rating_game=(prv_plays>6&&my_data.rating>1700)?1:0;
 		
 		if (this.no_rating_game)
 			this.no_rating_msg_timer=setTimeout(()=>{message.add('Выбирайте разных соперников для получения и подтверждения рейтинга')},5000);
@@ -6532,6 +6532,7 @@ async function init_game_env(lang) {
 	const dw=M_WIDTH/document.body.clientWidth;
 	const dh=M_HEIGHT/document.body.clientHeight;
 	const resolution=Math.min(1.5,Math.max(dw,dh,1));	
+	PIXI.settings.FILTER_RESOLUTION=resolution;
 	const opts={width:M_WIDTH, height:M_HEIGHT,antialias:true,resolution,autoDensity:true};
 	app.stage = new PIXI.Container();
 	app.renderer = new PIXI.Renderer(opts);
