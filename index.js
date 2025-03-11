@@ -6526,14 +6526,11 @@ async function init_game_env(lang) {
 	document.body.innerHTML='<style>html,body {margin: 0;padding: 0;height: 100%;}body {display: flex;align-items:center;justify-content: center;background-color: rgba(41,41,41,1)}</style>';
 		
 
-
-
-
 	const dw=M_WIDTH/document.body.clientWidth;
 	const dh=M_HEIGHT/document.body.clientHeight;
-	const resolution=Math.min(1.5,Math.max(dw,dh,1));	
-	PIXI.settings.FILTER_RESOLUTION=resolution;
-	const opts={width:M_WIDTH, height:M_HEIGHT,antialias:true,resolution,autoDensity:true};
+	//const resolution=Math.min(1.5,Math.max(dw,dh,1));	
+	//PIXI.settings.=resolution;
+	const opts={width:M_WIDTH, height:M_HEIGHT,antialias:true};
 	app.stage = new PIXI.Container();
 	app.renderer = new PIXI.Renderer(opts);
 	const c=document.body.appendChild(app.renderer.view);
