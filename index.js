@@ -1,5 +1,5 @@
 var M_WIDTH=800, M_HEIGHT=450;
-var app, assets={},fbs,serv_tm_delta, client_id, objects={}, state="", my_role="", game_tick=0, made_moves=0, game_id=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=0, h_state=0, game_platform="",git_src='', room_name = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process = {}, my_data={opp_id : ''},opp_data={}, my_games_api = {},game_name='corners';
+var app ={stage:{},renderer:{}}, assets={},fbs,serv_tm_delta, client_id, objects={}, state="", my_role="", game_tick=0, made_moves=0, game_id=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=0, h_state=0, game_platform="",git_src='', room_name = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process = {}, my_data={opp_id : ''},opp_data={}, my_games_api = {},game_name='corners';
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 
 DESIGN_DATA={
@@ -6526,12 +6526,16 @@ async function init_game_env(lang) {
 	document.body.innerHTML='<style>html,body {margin: 0;padding: 0;height: 100%;}body {display: flex;align-items:center;justify-content: center;background-color: rgba(41,41,41,1)}</style>';
 		
 
+
+
+
 	const dw=M_WIDTH/document.body.clientWidth;
 	const dh=M_HEIGHT/document.body.clientHeight;
 	const resolution=Math.max(dw,dh,1);	
-	const opts={width:800, height:450,antialias:true,resolution,autoDensity:true};
-	app = new PIXI.Application(opts);
-	const c=document.body.appendChild(app.view);
+	const opts={width:M_WIDTH, height:M_HEIGHT,antialias:true,resolution,autoDensity:true};
+	app.stage = new PIXI.Container();
+	app.renderer = new PIXI.Renderer(opts);
+	const c=document.body.appendChild(app.renderer.view);
 	c.style['boxShadow'] = '0 0 15px #000000';
 				
 	//события изменения окна
@@ -6755,5 +6759,7 @@ function main_loop() {
 	
 	game_tick+=0.016666666;
 	anim2.process();
+	
+	app.renderer.render(app.stage);	
 	requestAnimationFrame(main_loop);
 }
