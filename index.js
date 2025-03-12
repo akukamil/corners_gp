@@ -1,7 +1,11 @@
 var M_WIDTH=800, M_HEIGHT=450;
 var app ={stage:{},renderer:{}}, assets={},fbs,serv_tm_delta, client_id, objects={}, state="", my_role="", game_tick=0, made_moves=0, game_id=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=0, h_state=0, game_platform="",git_src='', room_name = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process = {}, my_data={opp_id : ''},opp_data={}, my_games_api = {},game_name='corners';
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
-const MAX_NO_AUTH_RATING=2000;
+const MAX_NO_AUTH_RATING=1950;
+const NO_REP_RATING=1700;
+const MAX_NO_CONF_RATING=1950;
+const DAYS_TO_CONF_RATING=7;
+
 DESIGN_DATA={
 	0:{name:'def',rating:0,games:0},
 	1:{name:'old',rating:0,games:0},
@@ -4420,7 +4424,7 @@ pref={
 		
 	async check_leader_downtime(){
 		
-		if (my_data.rating<=MAX_NO_AUTH_RATING) return;
+		if (my_data.rating<=MAX_NO_CONF_RATING) return;
 				
 		//проверяем долгое отсутствие игру у рейтинговых игроков
 		my_data.last_game_tm=my_data.last_game_tm||await fbs_once(`players/${my_data.uid}/last_game_tm`);
@@ -4433,14 +4437,14 @@ pref={
 		if (my_data.last_game_tm&&serv_tm){
 			
 			const hours_since_last_game=Math.floor((serv_tm-my_data.last_game_tm)/3600000);
-			const hours_to_confirm_rating=Math.max(168-hours_since_last_game,0);
+			const hours_to_confirm_rating=Math.max(DAYS_TO_CONF_RATING*24-hours_since_last_game,0);
 									
 			if (!hours_to_confirm_rating){
-				my_data.rating=MAX_NO_AUTH_RATING;
+				my_data.rating=MAX_NO_CONF_RATING;
 				my_data.last_game_tm=Date.now()+SERV_TM_DELTA;
 				fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating);
-				message.add(`Ваш рейтинг снижен до ${MAX_NO_AUTH_RATING}. Причина - отсутвие игр.`,7000);
-				objects.pref_rating_conf_info.text=`Ваш рейтинг снижен до ${MAX_NO_AUTH_RATING}. Причина - отсутвие игр.`;		
+				message.add(`Ваш рейтинг снижен до ${MAX_NO_CONF_RATING}. Причина - отсутвие игр.`,7000);
+				objects.pref_rating_conf_info.text=`Ваш рейтинг снижен до ${MAX_NO_CONF_RATING}. Причина - отсутвие игр.`;		
 			}else{
 				
 				objects.pref_rating_conf_info.text=`Подтвердите ваш рейтинг в течении ${hours_to_confirm_rating} часов!`;				
@@ -5869,14 +5873,8 @@ lobby={
 		
 		if(!objects.info_cont.init){
 			
-			objects.info_records[0].set({uid:'bot',name:'Админ',msg:`Новое правило - рейтинг игроков, неактивных более 7 дней, будет снижен до ${MAX_NO_AUTH_RATING}.`,tm:1734959027520})
-			objects.info_records[0].scale_xy=1.2;
-			objects.info_records[0].y=145;
-			
-			objects.info_records[1].set({uid:'bot',name:'Админ',msg:'Для подтверждения рейтинга выбирайте разных соперников.',tm:1734959227520})
-			objects.info_records[1].scale_xy=1.2;
-			objects.info_records[1].y=235;
-			
+			objects.info_msg.text=`Новые правила:\n1.Для игроков с рейтингом выше ${NO_REP_RATING}, встречающих одного и того же соперника более 6 раз за последние 20 матчей, действует особое правило: рейтинг не будет увеличиваться при победах (однако может снижаться при поражениях), подтверждение рейтинга не будет засчитано. Эта мера поощряет разнообразие поединков и поддерживает честную соревновательную среду.\n2.Игроки с рейтингом выше ${MAX_NO_CONF_RATING} должны подтвердить свой рейтинг в течении ${DAYS_TO_CONF_RATING} дней сыграв минимум одну игру.`		
+
 			objects.info_cont.init=1;
 		}
 		
