@@ -1524,10 +1524,9 @@ online_game = {
 		clearTimeout(this.timer_id);
 		clearTimeout(this.no_rating_msg_timer);			
 		
-		let result_row = res_array.find( p => p[0] === result);
-		let result_str = result_row[0];
-		let result_number = result_row[1];
-		let result_info = result_row[2][LANG];				
+		const result_row = res_array.find( p => p[0] === result);
+		const result_number = result_row[1];
+		const result_info = result_row[2][LANG];				
 
 		//определяем новый рейтинг и сообщения
 		let auth_msg='';
@@ -1593,7 +1592,7 @@ online_game = {
 			//контрольные концовки логируем на виртуальной машине
 			if (my_data.rating>1800 || opp_data.rating>1800){
 				const duration = Math.floor((Date.now() - this.start_time)*0.001);
-				const data={uid:my_data.uid,player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result_str,duration, rating: [old_rating,my_data.rating],game_id,client_id,tm:'TMS'}
+				const data={uid:my_data.uid,player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result,duration, rating: [old_rating,my_data.rating],game_id,client_id,tm:'TMS'}
 				my_ws.safe_send({cmd:'log',logger:'corners_games',data});				
 			}						
 		}	
