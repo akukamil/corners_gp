@@ -1581,6 +1581,9 @@ online_game = {
 			my_data.games++;
 			fbs.ref('players/'+my_data.uid+'/games').set(my_data.games);		
 
+			//тестовые фишки
+			fbs.ref('LO/'+my_data.uid).set(this.last_opponents);
+
 			//записываем дату последней игры
 			if(!this.NO_RATING_GAME){
 				fbs.ref('players/'+my_data.uid+'/last_game_tm').set(firebase.database.ServerValue.TIMESTAMP);				
