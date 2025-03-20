@@ -293,7 +293,13 @@ class chat_record_class extends PIXI.Container {
 		//получаем pic_url из фб
 		this.avatar.set_texture(PIXI.Texture.WHITE);
 				
-		await this.update_avatar(msg_data.uid, this.avatar);
+		if (msg_data.uid==='admin'){
+			this.msg_bcg.tint=0x55ff55;
+			this.avatar.set_texture(assets.pc_icon);
+		}else{
+			this.msg_bcg.tint=0xffffff;
+			await this.update_avatar(msg_data.uid, this.avatar);
+		}	
 
 		this.uid=msg_data.uid;
 		this.tm = msg_data.tm;			
@@ -3896,10 +3902,13 @@ chat={
 		
 	},
 		
-	block_player(uid){
+	async block_player(uid){
 		
 		fbs.ref('blocked/'+uid).set(Date.now());
 		fbs.ref('inbox/'+uid).set({message:'CHAT_BLOCK',tm:Date.now()});
+		const name=await fbs_once(`players/${uid}/name`);
+		const msg=`Игрок ${name} занесен в черный список.`;
+		my_ws.socket.send(JSON.stringify({cmd:'push',path:`${game_name}/chat`,val:{uid:'admin',name:'Админ',msg,tm:'TMS'}}));
 		
 		//увеличиваем количество блокировок
 		fbs.ref('players/'+uid+'/block_num').transaction(val=> {return (val || 0) + 1});
@@ -6352,7 +6361,6 @@ main_loader={
 		objects.loader_cont.addChild(objects.loader_bar_bcg,objects.loader_bar_frame,objects.loader_bar_mask);
 		app.stage.addChild(objects.bcg,objects.loader_cont);
 		
-		
 	},
 	
 	async load2(){
@@ -6385,13 +6393,13 @@ main_loader={
 		
 		//добавляем текстуры стикеров
 		for (var i=0;i<16;i++)
-			loader.add("sticker_texture_"+i, git_src+"stickers/"+i+".png");
+			loader.add('sticker_texture_'+i, git_src+'stickers/'+i+'.png');
 		
 		//добавляем из листа загрузки
 		const load_list=eval(assets.main_load_list);
 		for (var i = 0; i < load_list.length; i++)
-			if (load_list[i].class === "sprite" || load_list[i].class === "image" )
-				loader.add(load_list[i].name, git_src+'res/'+lang_pack + '/' + load_list[i].name + "." +  load_list[i].image_format);
+			if (load_list[i].class ==='sprite'|| load_list[i].class ==='image')
+				loader.add(load_list[i].name, git_src+'res/'+lang_pack + '/' + load_list[i].name + '.' +  load_list[i].image_format);
 
 		//добавляем библиотеку аватаров
 		loader.add('multiavatar', 'https://akukamil.github.io/common/multiavatar.min.txt');	
