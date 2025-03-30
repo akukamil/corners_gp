@@ -763,7 +763,7 @@ big_message = {
 		objects.big_message_text2.text=t2||'**********';
 		objects.big_message_text3.text=t3||'';
 
-		objects.feedback_button.visible = feedback_on&&!my_data.blocked;
+		objects.feedback_button.visible = feedback_on&&!my_data.blocked&&(my_data.games>200);
 		objects.big_message_text.text=t1;
 		anim2.add(objects.big_message_cont,{y:[-180,objects.big_message_cont.sy]}, true, 0.6,'easeOutBack');		
 				
@@ -1544,7 +1544,7 @@ online_game = {
 			NO_AUTH_NO_RATING=1;		
 			auth_msg=`Рейтинг более ${MAX_NO_AUTH_RATING} не доступен игрокам без авторизации(((`;
 		}		
-		if (this.NO_RATING_GAME&&my_data.rating>old_rating) {
+		if (this.NO_RATING_GAME) {
 			my_data.rating=old_rating;
 			auth_msg='Выбирайте разных соперников для получения рейтинга';		
 		}
