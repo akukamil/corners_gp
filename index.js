@@ -1730,25 +1730,28 @@ quiz={
 	prv_quiz_read:0,
 	quiz_data:0,
 	on:0,
-	path:'quiz7',
+	path:'quiz8',
 	board_loaded:0,
 	moves_hist:[],
 	init_board:[
 		[0,0,0,0,0,0,0,0],
-		[0,0,0,0,0,0,2,2],
-		[0,0,0,0,2,2,2,0],
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,2,0,0,0],
 		[0,0,0,0,2,0,0,0],
 		[0,0,0,0,0,0,0,0],
-		[0,2,2,0,1,1,1,1],
-		[0,2,2,0,1,1,1,1],
+		[0,0,0,0,1,1,1,1],
+		[0,0,0,0,1,1,1,1],
 		[0,0,0,0,1,1,1,1]
 	],
 	
 	bonuses_points:[
-		{y:5,x:0},
-		{y:7,x:0},
-		{y:0,x:6},
-		{y:1,x:5},
+		{y:7,x:0,type:-2},
+		{y:6,x:0,type:-2},
+		{y:5,x:1,type:2},
+		{y:3,x:2,type:2},
+		{y:1,x:4,type:2},
+		{y:1,x:6,type:-2},
+		{y:0,x:7,type:-5}
 	],	
 	
 	activate(){
@@ -1863,7 +1866,7 @@ quiz={
 			objects.t_quiz_rules.text='';
 			objects.quiz_rules_bcg.texture=assets.quiz_complete;				
 		} else {
-			objects.t_quiz_rules.text=`Собери звезды и переведи все шашки в новый дом быстрее всех. Победитель получит кастомную карточку. Подведение итогов 15.02.2025`;
+			objects.t_quiz_rules.text=`Переведи все шашки в новый дом быстрее всех. Победитель получит кастомную карточку. Подведение итогов 15.04.2025`;
 			objects.quiz_rules_bcg.texture=assets.quiz_rules_bcg;		
 		}
 		anim2.add(objects.quiz_rules_cont,{x:[-100, objects.quiz_rules_cont.sx]}, true, 0.25,'easeOutBack');	
@@ -1893,16 +1896,28 @@ quiz={
 			const bonus=this.bonuses_points[i];
 			
 			//показываем точки взятия
-			objects.bonuses[i].x=bonus.x*50+objects.board.x+55;
-			objects.bonuses[i].y=bonus.y*50+objects.board.y+55;
-			objects.bonuses[i].visible=true;
-			objects.bonuses[i].texture=assets.bonus_star;	
-			objects.bonuses[i].angle=0;
-			objects.bonuses[i].alpha=1;
-			objects.bonuses[i].scale_xy=0.666;
-			objects.bonuses[i].ix=bonus.x;
-			objects.bonuses[i].iy=bonus.y;
-			objects.bonuses[i].taken=0;
+			const b=objects.bonuses[i];
+			b.x=bonus.x*50+objects.board.x+55;
+			b.y=bonus.y*50+objects.board.y+55;
+			b.visible=true;			
+			b.angle=0;
+			b.alpha=1;
+			b.width=50;
+			b.height=50;
+			b.ix=bonus.x;
+			b.iy=bonus.y;
+			b.taken=0;
+			b.type=bonus.type;
+			
+			if (bonus.type===-5)
+				b.texture=assets.point_minus_5;
+			if (bonus.type===-2)
+				b.texture=assets.point_minus_2;
+			if (bonus.type===2)
+				b.texture=assets.point_plus_2;
+			if (bonus.type===5)
+				b.texture=assets.point_plus_5;
+			
 		}	
 		
 	},
@@ -1955,6 +1970,7 @@ quiz={
 				if (intersect){
 					sound.play('bonus');
 					anim2.add(bonus,{scale_xy:[0.6666,2],angle:[0,40],alpha:[1,0]}, false, 0.5,'linear',false);
+					this.made_moves+=bonus.type;
 					bonus.taken=1;					
 				}
 			}			
@@ -1966,7 +1982,7 @@ quiz={
 		
 		
 		//проверка завершения
-		if (bonuses_taken_num===this.bonuses_points.length&&board_func.finished1(g_board)){
+		if (board_func.finished1(g_board)){
 			my_turn=0;			
 			objects.stop_bot_button.visible = false;
 							
