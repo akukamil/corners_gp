@@ -1773,7 +1773,7 @@ quiz={
 		objects.quiz_reload_btn.visible = true;
 
 		//показываем и заполняем мою карточку	
-		objects.my_card_name.set2(my_data.name,110);
+		objects.my_card_name.set2(my_data.name,150);
 		objects.my_card_rating.visible=true;
 		objects.my_avatar.texture=players_cache.players[my_data.uid].texture;	
 		anim2.add(objects.my_card_cont,{x:[-100, objects.my_card_cont.sx],alpha:[0,1]}, true, 0.5,'linear');	
@@ -1853,7 +1853,7 @@ quiz={
 		this.made_moves_leader=this.quiz_data.moves;
 				
 		//заполняем данные лидера
-		objects.opp_card_name.set2(cur_leader_data.name,110);
+		objects.opp_card_name.set2(cur_leader_data.name,150);
 		objects.opp_card_rating.text=this.getHodText(this.quiz_data.moves);		
 		objects.opp_avatar.texture=players_cache.players[this.quiz_data.cur_leader].texture;	
 		
@@ -2069,13 +2069,13 @@ game = {
 		this.move_processor=this.process_my_move;
 		
 		//показываем и заполняем мою карточку	
-		objects.my_card_name.set2(my_data.name,110);
+		objects.my_card_name.set2(my_data.name,150);
 		objects.my_card_rating.text=my_data.rating;
 		objects.my_card_rating.visible=true;
 		objects.my_avatar.texture=players_cache.players[my_data.uid].texture;	
 		anim2.add(objects.my_card_cont,{x:[-100, objects.my_card_cont.sx],alpha:[0,1]}, true, 0.5,'linear');	
 		
-		objects.opp_card_name.set2(opp_data.name,110);
+		objects.opp_card_name.set2(opp_data.name,150);
 		objects.opp_card_rating.text=opp_data.rating;
 		objects.opp_avatar_frame.texture=assets.avatar_frame;
 		objects.opp_avatar.texture=players_cache.players[opp_data.uid].texture;	
