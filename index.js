@@ -1730,7 +1730,7 @@ quiz={
 	prv_quiz_read:0,
 	quiz_data:0,
 	on:0,
-	path:'quiz8',
+	path:'quiz9',
 	board_loaded:0,
 	moves_hist:[],
 	init_board:[
@@ -1953,15 +1953,11 @@ quiz={
 		//делаем перемещение шашки
 		await board_func.start_gentle_move(move_data, moves, g_board);	
 				
-		let bonuses_taken_num=0;
 		for (let i=0;i<this.bonuses_points.length;i++){		
 			
 			const bonus=objects.bonuses[i];
 			
-			if (bonus.taken)
-				bonuses_taken_num++;
-			
-			if (bonus.visible){
+			if (!bonus.taken){
 				
 				const intersect=moves.find(m=>{
 					return m[0]===bonus.ix&&m[1]===bonus.iy
@@ -6543,7 +6539,7 @@ async function check_admin_info(){
 async function init_game_env(lang) {
 				
 	//git_src="https://akukamil.github.io/corners_gp/"
-	//git_src=""
+	git_src=""
 	
 	
 	await define_platform_and_language();
