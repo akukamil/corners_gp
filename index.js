@@ -1273,7 +1273,7 @@ board_func={
 
 online_game = {
 	
-	name : 'online',
+	on:0,
 	start_time : 0,
 	disconnect_time : 0,
 	me_conf_play : 0,
@@ -1286,6 +1286,8 @@ online_game = {
 	NO_RATING_GAME:0,
 	no_rating_msg_timer:0,
 	last_opponents:[],
+	my_moves_hist:[],
+	opp_moves_hist:[],
 	
 	calc_new_rating(old_rating, game_result) {
 		
@@ -1299,6 +1301,11 @@ online_game = {
 	
 	activate() {
 		
+		this.on=1;
+		
+		
+		this.my_moves_hist=[];
+		this.opp_moves_hist=[];
 		my_log.log_arr=[];
 		
 		//пока еще никто не подтвердил игру
@@ -1487,18 +1494,73 @@ online_game = {
 		message.add(['Соперник отключил чат','Chat disabled'][LANG]);
 	},
 		
+	process_my_move(move_data){
+		
+		if(!this.on) return;
+		
+		//переворачиваем данные о ходе так как оппоненту они должны попасть как ход шашками №2
+		move_data.x1=7-move_data.x1;
+		move_data.y1=7-move_data.y1;
+		move_data.x2=7-move_data.x2;
+		move_data.y2=7-move_data.y2;
+		
+		//сохраняем историю ходов
+		this.my_moves_hist.push(Object.values(move_data).join(''));		
+		
+		const move_data_short=move_data.x1.toString()+move_data.y1.toString()+move_data.x2.toString()+move_data.y2.toString();
+		//отправляем ход сопернику
+		//my_log.add({name:my_data.name,opp_name:opp_data.name,move_data,game_id,made_moves,connected,tm:Date.now(),info:'process_my_move'})
+		
+		//fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'MOVE',tm:Date.now(),data:{...move_data, board_state:0}});
+		
+		//новая версия
+		const t=((Date.now()-this.start_time||2323)*0.001).toFixed(1);
+		fbs.ref('inbox/'+opp_data.uid).set({s:my_data.uid.substring(0,8),m:'M',t,d:move_data_short});
+
+		//также фиксируем данные стола
+		const moves_made=my_role === 'slave'?made_moves+1:0;
+		fbs.ref('tables/'+game_id+'/board').set({uid:my_data.uid,f_str:board_func.brd_to_str(g_board,moves_made),tm:Date.now()});
+		
+	},		
+		
+	process_incoming_move(move_data){
+		
+		if(!this.on) return;
+		this.opp_moves_hist.push(Object.values(move_data).join(''));
+		
+	},
+	
+	validate_move(m_data){
+		
+		if (!this.on||my_role==='master') return 1;
+		
+		const my_moves_tot=this.my_moves_hist.length;	
+
+		if (my_moves_tot!==10) return 1;
+		
+		//переворачиваем данные о ходе
+		const move=[7-m_data.x1,7-m_data.y1,7-m_data.x2,7-m_data.y2].join('');
+		
+
+		for (let i=0;i<my_moves_tot;i++){
+			const opp_move=this.opp_moves_hist[i];
+			const my_move=this.my_moves_hist[i];
+			if (opp_move!==my_move)
+				return 1;			
+		}
+		
+		if (this.opp_moves_hist[my_moves_tot]!==move)
+			return 1;
+		
+		return 0		
+	},
+	
 	count_in_arr(arr,elem){
 		
 		let count = 0;
 		for (let i = 0; i < arr.length; i++)
 			if (arr[i] === elem) count++;		
 		return count;
-		
-	},
-		
-	update_my_rating_fbs(rating){
-		
-		fbs.ref('players/'+my_data.uid+'/rating').set(rating||my_data.rating);
 		
 	},
 		
@@ -1510,7 +1572,9 @@ online_game = {
 		
 	},
 		
-	async stop (result) {
+	async stop(result) {
+		
+		this.on=0;
 		
 		const res_array = [
 			['my_timeout',LOSE, ['Вы проиграли!\nУ вас закончилось время','You lose!\nOut of time!']],
@@ -1623,11 +1687,13 @@ online_game = {
 
 bot_game = {
 
-	name :'bot',
+	on:0,
 	me_conf_play : 0,
 	opp_conf_play : 0,
 
 	activate() {
+		
+		this.on=1;
 
 		//устанавливаем локальный и удаленный статус
 		set_state ({state : 'b'});
@@ -1662,6 +1728,7 @@ bot_game = {
 
 	async stop(result) {
 
+		this.on=0;
 
 		const res_array = [
 			['both_finished',DRAW, ['Ничья','Draw']],
@@ -1696,6 +1763,8 @@ bot_game = {
 
 	async make_move() {
 
+		if(!this.on) return;
+
 		await new Promise((resolve, reject) => setTimeout(resolve, 300));
 
 		let m_data={};
@@ -1704,7 +1773,7 @@ bot_game = {
 		else 
 			m_data=minimax_solver.minimax_3_single(g_board, made_moves);
 
-		game.receive_move(m_data);	
+		game.receive_move2(m_data);	
 
 	},
 	
@@ -1715,6 +1784,7 @@ bot_game = {
 	
 	clear() {
 		
+		this.on=0;
 		//выключаем элементы
 		objects.stop_bot_button.visible = false;
 		
@@ -2197,6 +2267,11 @@ game = {
 			//пытыемся получить последовательность ходов
 			const moves=board_func.get_moves_path(m_data,g_board);
 
+			//проверка
+			if (!online_game.validate_move(m_data)){				
+				message.add(["Нельзя повторять ходы","Invalid move"][LANG]);
+				return;
+			}
 
 			if (moves.length!==11)
 			{
@@ -2222,30 +2297,10 @@ game = {
 		//делаем перемещение шашки
 		await board_func.start_gentle_move(move_data, moves, g_board);	
 		
-		//начинаем процесс плавного перемещения шашки
-		if (state === 'b') {					
-			bot_game.make_move();
-		} else {
-			//переворачиваем данные о ходе так как оппоненту они должны попасть как ход шашками №2
-			move_data.x1=7-move_data.x1;
-			move_data.y1=7-move_data.y1;
-			move_data.x2=7-move_data.x2;
-			move_data.y2=7-move_data.y2;
-			const move_data_short=move_data.x1.toString()+move_data.y1.toString()+move_data.x2.toString()+move_data.y2.toString();
-			//отправляем ход сопернику
-			//my_log.add({name:my_data.name,opp_name:opp_data.name,move_data,game_id,made_moves,connected,tm:Date.now(),info:'process_my_move'})
-			
-			//fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'MOVE',tm:Date.now(),data:{...move_data, board_state:0}});
-			
-			//новая версия
-			const t=((Date.now()-online_game.start_time||2323)*0.001).toFixed(1);
-			fbs.ref('inbox/'+opp_data.uid).set({s:my_data.uid.substring(0,8),m:'M',t,d:move_data_short});
+		//сообщаем в игры о ходе
+		bot_game.make_move();
+		online_game.process_my_move(move_data);
 
-			//также фиксируем данные стола
-			const moves_made=my_role === 'slave'?made_moves+1:0;
-			fbs.ref('tables/'+game_id+'/board').set({uid:my_data.uid,f_str:board_func.brd_to_str(g_board,moves_made),tm:Date.now()});
-		
-		}
 		
 		if (my_role === 'slave') {			
 			made_moves++;
@@ -2279,53 +2334,6 @@ game = {
 
 	},	
 
-	async receive_move(move_data) {
-			
-		//my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move'})			
-			
-		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
-		if (game.state !== 'on')
-			return;		
-		
-		//защита от двойных ходов
-		if (my_turn === 1) return;
-		
-		//воспроизводим уведомление о том что соперник произвел ход
-		sound.play('receive_move');
-
-		//обозначаем кто ходит
-		my_turn = 1;	
-
-		//обозначаем что соперник сделал ход и следовательно подтвердил согласие на игру
-		this.opponent.opp_conf_play = 1;	
-		
-		//обновляем таймер
-		this.opponent.reset_timer();			
-
-		//считаем последовательность ходов
-		const moves = board_func.get_moves_path(move_data,g_board);
-
-		//плавно перемещаем шашку
-		await board_func.start_gentle_move(move_data, moves,g_board, objects.board, objects.checkers);
-
-		
-		if (my_role === 'master') {
-			made_moves++;
-			objects.cur_move_text.text="сделано ходов: "+made_moves;
-				
-			const result = board_func.get_board_state(g_board, made_moves);
-			
-			//бота нельзя блокировать
-			if (result === 'opp_left_after_30' && this.opponent.name === 'bot')	result = '';
-			
-			if (result !== '') {
-				this.stop(result);
-			}			
-		}
-		
-		//my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move_ok'})		
-	},
-	
 	async receive_move2(data) {
 				
 		const move_data={x1:+data[0],y1:+data[1],x2:+data[2],y2:+data[3]}
@@ -2354,7 +2362,9 @@ game = {
 
 		//плавно перемещаем шашку
 		await board_func.start_gentle_move(move_data, moves,g_board, objects.board, objects.checkers);
-
+		
+		//сообщаем в онлайн игру о ходе
+		online_game.process_incoming_move(move_data);
 		
 		if (my_role === 'master') {
 			made_moves++;
@@ -3417,7 +3427,9 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 		m_data.y1=7-m_data.y1;
 		m_data.x2=7-m_data.x2;
 		m_data.y2=7-m_data.y2;
-		return m_data;
+		
+		//короткая версия
+		return m_data.x1.toString()+m_data.y1.toString()+m_data.x2.toString()+m_data.y2.toString();
 
 	},
 
@@ -3520,7 +3532,8 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 
 		}
 
-		return m_data;
+		//короткая версия
+		return m_data.x1.toString()+m_data.y1.toString()+m_data.x2.toString()+m_data.y2.toString();
 	},
 
 	minimax_4_single(board) {
@@ -4975,32 +4988,8 @@ lobby={
 		this.players_list_updated(this.global_players);
 		
 		//включаем прослушивание если надо
-		if (!this.state_listener_on){
-			
-			//console.log('Подключаем прослушивание...');
-			fbs.ref(room_name).on('child_changed', snapshot => {	
-				const val=snapshot.val()				
-				//console.log('child_changed',snapshot.key,val,JSON.stringify(val).length)
-				this.global_players[snapshot.key]=val;
-				lobby.players_list_updated(this.global_players);
-			});
-			fbs.ref(room_name).on('child_added', snapshot => {			
-				const val=snapshot.val()
-				//console.log('child_added',snapshot.key,val,JSON.stringify(val).length)
-				this.global_players[snapshot.key]=val;
-				lobby.players_list_updated(this.global_players);
-			});
-			fbs.ref(room_name).on('child_removed', snapshot => {			
-				const val=snapshot.val()
-				//console.log('child_removed',snapshot.key,val,JSON.stringify(val).length)
-				delete this.global_players[snapshot.key];
-				lobby.players_list_updated(this.global_players);
-			});
-			
-			fbs.ref(room_name+'/'+my_data.uid).onDisconnect().remove();	
-			
-			this.state_listener_on=1;						
-		}
+		if (!this.state_listener_on)
+			this.connect();
 
 		set_state({state : 'o'});
 		
@@ -5641,11 +5630,43 @@ lobby={
 		
 		//отписываемся от изменений состояний пользователей через 30 секунд
 		this.state_listener_timeout=setTimeout(()=>{
-			fbs.ref(room_name).off();
-			this.state_listener_on=0;
-			//console.log('Отключаем прослушивание...');
+			this.disconnect();			
 		},30000);
 
+	},
+	
+	disconnect(){	
+		console.log('lobby disconnected');
+		fbs.ref(room_name).off();
+		this.state_listener_on=0;
+	},
+	
+	connect(){
+		
+		console.log('lobby connected');
+		fbs.ref(room_name).on('child_changed', snapshot => {	
+			const val=snapshot.val()				
+			//console.log('child_changed',snapshot.key,val,JSON.stringify(val).length)
+			this.global_players[snapshot.key]=val;
+			lobby.players_list_updated(this.global_players);
+		});
+		fbs.ref(room_name).on('child_added', snapshot => {			
+			const val=snapshot.val()
+			//console.log('child_added',snapshot.key,val,JSON.stringify(val).length)
+			this.global_players[snapshot.key]=val;
+			lobby.players_list_updated(this.global_players);
+		});
+		fbs.ref(room_name).on('child_removed', snapshot => {			
+			const val=snapshot.val()
+			//console.log('child_removed',snapshot.key,val,JSON.stringify(val).length)
+			delete this.global_players[snapshot.key];
+			lobby.players_list_updated(this.global_players);
+		});
+		
+		fbs.ref(room_name+'/'+my_data.uid).onDisconnect().remove();	
+		
+		this.state_listener_on=1;			
+		
 	},
 	
 	async inst_message(data){
@@ -6204,8 +6225,8 @@ function set_state(params) {
 	let small_opp_id='';
 	if (opp_data.uid!==undefined)
 		small_opp_id=opp_data.uid.substring(0,10);
-	
-	if(room_name)
+
+	if (room_name)
 		fbs.ref(room_name+'/'+my_data.uid).set({state:state, name:my_data.name, rating : my_data.rating, hidden:h_state, opp_id : small_opp_id, game_id});
 
 }
@@ -6218,7 +6239,7 @@ tabvis={
 	change(){
 		
 		if (document.hidden){
-			
+						
 			//start wait for
 			this.inactive_timer=setTimeout(()=>{this.send_to_sleep()},120000);
 			sound.on=0;
@@ -6227,8 +6248,8 @@ tabvis={
 			
 			sound.on=pref.sound_on;	
 			if(this.sleep){		
-				console.log('Проснулись');
-				lobby.activate();
+				//console.log('Проснулись');
+				//lobby.activate();
 				my_ws.reconnect('wakeup');
 				this.sleep=0;
 			}
@@ -6241,12 +6262,13 @@ tabvis={
 	},
 	
 	send_to_sleep(){		
+			
 		
-		console.log('погрузились в сон')
+		//console.log('погрузились в сон')
 		this.sleep=1;
 		if (lobby.on){
 			fbs.ref(room_name+'/'+my_data.uid).remove();
-			lobby.close()
+			lobby.disconnect();
 		}		
 		
 		if(quiz.on)
