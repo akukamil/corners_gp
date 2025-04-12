@@ -6640,16 +6640,13 @@ async function init_game_env(lang) {
 	//инициируем файербейс
 	if (firebase.apps.length===0) {
 		firebase.initializeApp({
-
-			apiKey: "AIzaSyBZnSsCdbCve-tYjiH9f5JbGUDaGKWy074",
-			authDomain: "m-game-27669.firebaseapp.com",
-			databaseURL: "https://m-game-27669-default-rtdb.firebaseio.com",
-			projectId: "m-game-27669",
-			storageBucket: "m-game-27669.appspot.com",
-			messagingSenderId: "571786945826",
-			appId: "1:571786945826:web:7e8bd49c963bbea117317b",
-			measurementId: "G-XFJD615P3L"		
-			
+			apiKey: "AIzaSyAg2CtOlr78RSHpoSJGxPFbGymgjU4yIqY",
+			authDomain: "corners-eu.firebaseapp.com",
+			databaseURL: "https://corners-eu-default-rtdb.europe-west1.firebasedatabase.app",
+			projectId: "corners-eu",
+			storageBucket: "corners-eu.firebasestorage.app",
+			messagingSenderId: "508429369691",
+			appId: "1:508429369691:web:5bcb4d55969c98d5875a7e"			
 		});
 	}	
 	//короткое образ
