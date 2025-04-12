@@ -2370,10 +2370,10 @@ game = {
 			made_moves++;
 			objects.cur_move_text.text="сделано ходов: "+made_moves;
 				
-			const result = board_func.get_board_state(g_board, made_moves);
+			let result = board_func.get_board_state(g_board, made_moves);
 			
 			//бота нельзя блокировать
-			if (result === 'opp_left_after_30' && this.opponent.name === 'bot')	result = '';
+			if (result === 'opp_left_after_30' && this.opponent === bot_game)	result = '';
 			
 			if (result !== '') {
 				this.stop(result);
