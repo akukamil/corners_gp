@@ -1445,7 +1445,7 @@ online_game = {
 			return;	
 		} 	
 		
-		if (!my_data.auth_mode&&my_data.games<200){
+		if (!my_data.auth_mode||my_data.games<200){
 			message.add('Чтобы писать в чат нужно авторизоваться или сыграть 200 онлайн игр');
 			sound.play('locked');
 			return;	
