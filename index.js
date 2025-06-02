@@ -2938,7 +2938,7 @@ confirm_dialog = {
 				
 		objects.confirm_msg.text=msg;
 		
-		anim2.add(objects.confirm_cont,{y:[450,objects.confirm_cont.sy]}, true, 0.6,'easeOutBack');		
+		anim2.add(objects.confirm_cont,{y:[450,objects.confirm_cont.sy]}, true, 0.3,'easeOutBack');		
 				
 		return new Promise(function(resolve, reject){					
 			confirm_dialog.p_resolve = resolve;	  		  
@@ -2969,7 +2969,7 @@ confirm_dialog = {
 	
 	close () {
 
-		anim2.add(objects.confirm_cont,{y:[objects.confirm_cont.sy,450]}, false, 0.4,'easeInBack')
+		anim2.add(objects.confirm_cont,{y:[objects.confirm_cont.sy,450]}, false, 0.3,'easeInBack')
 		
 	}
 
