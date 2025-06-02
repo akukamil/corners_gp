@@ -2962,7 +2962,8 @@ confirm_dialog = {
 	close_forced(){
 		
 		objects.confirm_cont.visible=false
-		this.p_resolve('111');	
+		if (typeof(this.p_resolve.then)==='function')
+			this.p_resolve('111');	
 		
 	},
 	
