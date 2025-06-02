@@ -1458,6 +1458,40 @@ online_game = {
 		if (msg) fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'CHAT',tm:Date.now(),data:msg});
 	},
 	
+	async draw_down(){
+		
+		if (anim2.any_on()||objects.confirm_cont.visible){
+			sound.play('locked');
+			return
+		}	
+				
+			
+		if (made_moves <5 ) {
+			message.add(['Нельзя предлагать ничью в начале игры','Can not draw in beginning'][LANG]);		
+			return;
+		}
+			
+		const res = await confirm_dialog.show(['Предложить ничью?','Offer a draw?'][LANG]);		
+		if (res === 'yes') {			
+			//отправляем предложение о ничье
+			fbs.ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"DRAWREQ",tm:Date.now()});
+		}
+		
+	},
+		
+	async draw_request(){
+		
+		const res=await confirm_dialog.show(['Согласны на ничью?','Agree to a draw?'][LANG]);
+		
+		if(res==='yes'){
+			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'DRAWOK',tm:Date.now()});
+			game.stop('draw');
+		}			
+		if(res==='no')
+			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'DRAWNO',tm:Date.now()});			
+		
+	},
+		
 	reset_timer() {
 			
 		//обовляем время разъединения
@@ -1585,6 +1619,7 @@ online_game = {
 			['timer_error' ,LOSE, ['Ошибка таймера!','Timer error!']],
 			['opp_giveup' ,WIN , ['Вы выиграли!\nСоперник сдался','You win!\nYour opponent has given up!']],
 			['both_finished',DRAW, ['Ничья','Draw!']],
+			['draw',DRAW, ['Ничья','Draw!']],
 			['my_finished_first',WIN , ['Вы выиграли!\nБыстрее соперника перевели свои шашки.','You win!\nYou finished faster than your opponent.']],
 			['opp_finished_first',LOSE, ['Вы проиграли!\nСоперник оказался быстрее вас.','You lose!\nOpponent was faster than you']],
 			['both_left_after_30',DRAW, ['Ничья\nНикто не успел вывести все шашки из дома.','Draw!\nNo one managed to get out of the house']],
@@ -2388,15 +2423,19 @@ game = {
 	async stop(result) {
 				
 		this.state = 'pending';
-				
+		
+		
+		confirm_dialog.close_forced()
+		
 		await this.opponent.stop(result);
 				
-		objects.cur_move_text.visible=false;
-		objects.board_cont.visible=false;
-		objects.opp_card_cont.visible=false;
-		objects.my_card_cont.visible=false;
-		objects.selected_frame.visible=false;
+		objects.cur_move_text.visible=false
+		objects.board_cont.visible=false
+		objects.opp_card_cont.visible=false
+		objects.my_card_cont.visible=false
+		objects.selected_frame.visible=false
 		//objects.checkers.forEach((c)=> {c.visible=false});
+		
 		
 		//рекламная пауза
 		ad.show();
@@ -2919,10 +2958,17 @@ confirm_dialog = {
 		this.p_resolve(res);	
 		
 	},
+
+	close_forced(){
+		
+		objects.confirm_cont.visible=false
+		this.p_resolve('111');	
+		
+	},
 	
 	close () {
-		
-		anim2.add(objects.confirm_cont,{y:[objects.confirm_cont.sy,450]}, false, 0.4,'easeInBack');		
+
+		anim2.add(objects.confirm_cont,{y:[objects.confirm_cont.sy,450]}, false, 0.4,'easeInBack')
 		
 	}
 
@@ -3677,6 +3723,19 @@ function process_new_message(msg) {
 			//получение сообщение с ходом игорка оптимизированный вариант
 			if (msg.m==='M')
 				game.receive_move2(msg.d);
+			
+			
+			//запрос на ничью
+			if (msg.message==='DRAWREQ')
+				online_game.draw_request();
+				
+			//соперник согласился на ничью
+			if (msg.message==='DRAWOK')
+				game.stop('draw');
+			
+			//отказ от ничьи
+			if (msg.message==='DRAWNO')
+				message.add(['Соперник отказался от ничьи','The opponent refused to draw'][LANG]);
 			
 			//получение сообщение с ходом игорка
 			if (msg.message==='CHAT')
@@ -5703,7 +5762,7 @@ lobby={
 		const tm=Date.now();
 		if (objects.inst_msg_cont.visible&&objects.inst_msg_cont.ready)
 			if (tm>objects.inst_msg_cont.tm+7000)
-				anim2.add(objects.inst_msg_cont,{alpha:[1, 0]},false,0.4,'linear');
+				anim2.add(objects.inst_msg_cont,{alpha:[1, 0]},false,0.4,'linear',false);
 
 	},
 	
@@ -5951,8 +6010,25 @@ lobby={
 
 stickers = {
 	
+	page:0,
+	hide_send_sticker:0,
 	promise_resolve_send :0,
 	promise_resolve_recive :0,
+	
+	click_commands:[
+		{x:272,y:72,w:83,h:83,f:()=>{stickers.send(0)}},
+		{x:360,y:72,w:83,h:83,f:()=>{stickers.send(1)}},
+		{x:447,y:72,w:83,h:83,f:()=>{stickers.send(2)}},
+		{x:272,y:156,w:83,h:83,f:()=>{stickers.send(3)}},
+		{x:360,y:156,w:83,h:83,f:()=>{stickers.send(4)}},
+		{x:447,y:156,w:83,h:83,f:()=>{stickers.send(5)}},
+		{x:272,y:241,w:83,h:83,f:()=>{stickers.send(6)}},
+		{x:360,y:241,w:83,h:83,f:()=>{stickers.send(7)}},
+		{x:447,y:241,w:83,h:83,f:()=>{stickers.send(8)}},		
+		{x:275,y:340,w:66,h:54,hl:1,f:()=>{stickers.switch_page(-1)}},
+		{x:368,y:340,w:66,h:54,hl:1,f:()=>{stickers.hide_panel()}},
+		{x:462,y:340,w:66,h:54,hl:1,f:()=>{stickers.switch_page(1)}}
+	],
 
 	show_panel() {
 
@@ -5973,7 +6049,7 @@ stickers = {
 			return;
 
 		//анимационное появление панели стикеров
-		anim2.add(objects.stickers_cont,{y:[450, objects.stickers_cont.sy]}, true, 0.5,'easeOutBack');
+		anim2.add(objects.stickers_cont,{y:[450, objects.stickers_cont.sy]}, true, 0.25,'easeOutBack');
 
 	},
 
@@ -5985,38 +6061,81 @@ stickers = {
 			return;
 
 		//анимационное появление панели стикеров
-		anim2.add(objects.stickers_cont,{y:[objects.stickers_cont.sy, -450]}, false, 0.5,'easeInBack');
+		anim2.add(objects.stickers_cont,{y:[objects.stickers_cont.sy, 450]}, false, 0.25,'easeInBack');
 
 	},
 
-	async send(id) {
-
-		if (objects.stickers_cont.ready===false)
+	switch_page(dir){
+		
+		
+		if (this.page+dir<0){
+			sound.play('locked')
 			return;
+		}		
+		
+		this.page+=dir;	
+
+		for (let i=0;i<9;i++)	
+			objects.sticker_icon[i].texture=assets['sticker_texture_'+(this.page*9+i)]
+	},
+
+	bcg_down(e){		
+	
+		if (anim2.any_on()){
+			sound.play('locked')
+			return
+		}
+				
+		const mx = e.data.global.x/app.stage.scale.x
+		const my = e.data.global.y/app.stage.scale.y
+		
+		for (let command of this.click_commands){
+			if (mx>command.x&&mx<command.x+command.w&&my>command.y&&my<command.y+command.h){
+				
+				if (command.hl){
+					objects.stickers_btn_hl.x=command.x-10-objects.stickers_cont.x;
+					objects.stickers_btn_hl.y=command.y-10-objects.stickers_cont.y;
+					anim2.add(objects.stickers_btn_hl,{alpha:[1, 0]}, false, 0.5,'linear',false);
+					
+				}
+						
+				command.f()
+				return;			
+			}					
+		}
+		
+	},
+
+	async send(id) {
+		
+		
+		//удаляем если идет ожидание
+		if (this.hide_send_sticker)
+			clearTimeout(this.hide_send_sticker)
+		
+		const sticket_id=id+this.page*9
+		
+		//показываем какой стикер мы отправили
+		objects.sent_sticker_area.texture=assets['sticker_texture_'+sticket_id];
+		anim2.add(objects.sent_sticker_area,{alpha:[0, 0.5]}, true, 0.5,'linear',false);
+		
+		this.hide_send_sticker=setTimeout(()=>{
+			anim2.add(objects.sent_sticker_area,{alpha:[0.5, 0]}, false, 0.5,'linear',false)
+			this.hide_send_sticker=0
+		},3000)		
+		
+
+		if (!opp_data?.uid){
+			return
+		}
 		
 		if (this.promise_resolve_send!==0)
 			this.promise_resolve_send("forced");
 
 		this.hide_panel();
 
-		fbs.ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"MSG",tm:Date.now(),data:id});
-		message.add(["Стикер отправлен сопернику","Sticker was sent"][LANG]);
-
-		//показываем какой стикер мы отправили
-		objects.sent_sticker_area.texture=assets['sticker_texture_'+id];
+		fbs.ref("inbox/"+opp_data.uid).set({sender:my_data.uid,message:"MSG",tm:Date.now(),data:sticket_id});
 		
-		await anim2.add(objects.sent_sticker_area,{alpha:[0, 0.5]}, true, 0.5,'linear');
-		
-		let res = await new Promise((resolve, reject) => {
-				stickers.promise_resolve_send = resolve;
-				setTimeout(resolve, 2000)
-			}
-		);
-		
-		if (res === "forced")
-			return;
-
-		await anim2.add(objects.sent_sticker_area,{alpha:[0.5, 0]}, false, 0.5,'linear');
 	},
 
 	async receive(id) {
@@ -6030,7 +6149,7 @@ stickers = {
 
 		objects.rec_sticker_area.texture=assets['sticker_texture_'+id];
 	
-		await anim2.add(objects.rec_sticker_area,{x:[-150, objects.rec_sticker_area.sx]}, true, 0.5,'easeOutBack');
+		await anim2.add(objects.rec_sticker_area,{x:[-150, objects.rec_sticker_area.sx]}, true, 0.5,'easeOutBack',false);
 
 		let res = await new Promise((resolve, reject) => {
 				stickers.promise_resolve_recive = resolve;
@@ -6041,7 +6160,7 @@ stickers = {
 		if (res === "forced")
 			return;
 
-		anim2.add(objects.rec_sticker_area,{x:[objects.rec_sticker_area.sx, -150]}, false, 0.5,'easeInBack');
+		anim2.add(objects.rec_sticker_area,{x:[objects.rec_sticker_area.sx, -150]}, false, 0.5,'easeInBack',false);
 
 	}
 
@@ -6436,8 +6555,8 @@ main_loader={
 		loader.add('bonus',git_src+'sounds/bonus.mp3');
 		
 		//добавляем текстуры стикеров
-		for (var i=0;i<16;i++)
-			loader.add('sticker_texture_'+i, git_src+'stickers/'+i+'.png');
+		for (var i=0;i<27;i++)
+			loader.add('sticker_texture_'+i, 'https://akukamil.github.io/common/stickers/'+i+'.png');
 		
 		//добавляем из листа загрузки
 		const load_list=eval(assets.main_load_list);
