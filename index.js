@@ -1446,7 +1446,7 @@ online_game = {
 		} 	
 		
 		if (!my_data.auth_mode&&my_data.games<200){
-			message.add('Чтобы писать в чат нужно авторизоваться или сыграть 200 онлайн игр');
+			message.add('Чтобы писать в чат нужно сыграть 200 онлайн игр');
 			sound.play('locked');	
 			return;	
 		} 
@@ -1837,28 +1837,27 @@ quiz={
 	prv_quiz_read:0,
 	quiz_data:0,
 	on:0,
-	path:'quiz9',
+	path:'quiz1',
 	board_loaded:0,
 	moves_hist:[],
 	init_board:[
 		[0,0,0,0,0,0,0,0],
 		[0,0,0,0,0,0,0,0],
-		[0,0,0,0,2,0,0,0],
-		[0,0,0,0,2,0,0,0],
 		[0,0,0,0,0,0,0,0],
-		[0,0,0,0,1,1,1,1],
-		[0,0,0,0,1,1,1,1],
-		[0,0,0,0,1,1,1,1]
+		[0,0,0,0,1,1,0,0],
+		[2,0,0,1,1,1,1,0],
+		[2,0,0,1,1,1,1,0],
+		[0,0,0,0,1,1,0,0],
+		[0,0,0,0,0,0,0,0]
 	],
 	
 	bonuses_points:[
-		{y:7,x:0,type:-2},
-		{y:6,x:0,type:-2},
-		{y:5,x:1,type:2},
-		{y:3,x:2,type:2},
-		{y:1,x:4,type:2},
+		{y:7,x:0,type:-5},
+		{y:6,x:1,type:-2},
+		{y:0,x:7,type:-5},
 		{y:1,x:6,type:-2},
-		{y:0,x:7,type:-5}
+		{y:7,x:7,type:-5},
+
 	],	
 	
 	activate(){
@@ -1973,7 +1972,7 @@ quiz={
 			objects.t_quiz_rules.text='';
 			objects.quiz_rules_bcg.texture=assets.quiz_complete;				
 		} else {
-			objects.t_quiz_rules.text=`Переведи все шашки в новый дом быстрее всех. Победитель получит кастомную карточку. Подведение итогов 15.04.2025`;
+			objects.t_quiz_rules.text=`Переведи все шашки в новый дом быстрее всех. Победитель получит кастомную карточку. Подведение итогов 01.07.2025`;
 			objects.quiz_rules_bcg.texture=assets.quiz_rules_bcg;		
 		}
 		anim2.add(objects.quiz_rules_cont,{x:[-100, objects.quiz_rules_cont.sx]}, true, 0.25,'easeOutBack');	
