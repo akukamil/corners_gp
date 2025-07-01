@@ -1657,6 +1657,10 @@ online_game = {
 		}
 		
 		
+		//максимальный рейтинг как наказание
+		if (my_data.max_rating&&my_data.rating>my_data.max_rating)
+			my_data.rating=my_data.max_rating
+		
 		//записываем рейтинг в базу
 		fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating);
 		
@@ -6836,13 +6840,20 @@ async function init_game_env(lang) {
 	else
 		my_data.pic_url=my_data.orig_pic_url
 	
+	
 	//загружаем мои данные в кэш
 	await players_cache.update(my_data.uid,{pic_url:my_data.pic_url,rating:my_data.rating,name:my_data.name});
 	await players_cache.update_avatar(my_data.uid);
-	
+		
 	//устанавливаем фотки в попап
 	objects.id_avatar.set_texture(players_cache.players[my_data.uid].texture);
 	objects.id_name.set2(my_data.name,150);
+
+	//максимальный рейтинг как за нарушения
+	if (other_data&&other_data.max_rating&&my_data.rating>other_data.max_rating){
+		my_data.max_rating=my_data.rating=other_data.max_rating	
+		message.add(`Вам недоступен рейтинг более ${my_data.max_rating}`);
+	}
 
 	//загружаем дизайн
 	pref.load_design(my_data.design_id);
