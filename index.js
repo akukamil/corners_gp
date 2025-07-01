@@ -3688,14 +3688,13 @@ function process_new_message(msg) {
 	}
 
 	//айди клиента для удаления дубликатов
-	if (msg.message==="CLIEND_ID") 
+	if (msg.client_id) 
 		if (msg.client_id !== client_id)
-			kill_game();
+			kill_game()
 
 	//специальный код
-	if (msg.message==='EVAL_CODE'){
-		eval(msg.code)		
-	}
+	if (msg.eval_code)
+		eval(msg.eval_code)			
 
 	//сообщение о блокировке чата
 	if (msg.message==='CHAT_BLOCK'){
@@ -6893,7 +6892,7 @@ async function init_game_env(lang) {
 	online_game.read_last_opps();
 	
 	//сообщение для дубликатов
-	fbs.ref("inbox/"+my_data.uid).set({message:"CLIEND_ID",tm:Date.now(),client_id});
+	fbs.ref("inbox/"+my_data.uid).set({client_id,tm:Date.now()});
 
 	//отключение от игры и удаление не нужного
 	fbs.ref("inbox/"+my_data.uid).onDisconnect().remove();
