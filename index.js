@@ -3227,7 +3227,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 				for (let y=0;y<8;y++) {
 					for (let x=0;x<8;x++) {
 						if (board_data[y][x]===checkers) {
-							var moves_hist=[[x,y]];
+							let moves_hist=[[x,y]];
 							right	(		x,y,	minimax_solver.clone_board(board_data),	moves_hist, boards_array);
 							down	(		x,y,	minimax_solver.clone_board(board_data),	moves_hist, boards_array);
 						}
@@ -3239,7 +3239,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 			for (let y=0;y<8;y++) {
 				for (let x=0;x<8;x++) {
 					if (board_data[y][x]===checkers) {
-						var moves_hist=[[x,y]];
+						let moves_hist=[[x,y]];
 						right	(		x,y,	minimax_solver.clone_board(board_data),	moves_hist, boards_array);
 						down	(		x,y,	minimax_solver.clone_board(board_data),	moves_hist, boards_array);
 						left	(		x,y,	minimax_solver.clone_board(board_data),	moves_hist, boards_array);
@@ -6576,12 +6576,12 @@ main_loader={
 		loader.add('bonus',git_src+'sounds/bonus.mp3');
 		
 		//добавляем текстуры стикеров
-		for (var i=0;i<27;i++)
+		for (let i=0;i<27;i++)
 			loader.add('sticker_texture_'+i, 'https://akukamil.github.io/common/stickers/'+i+'.png');
 		
 		//добавляем из листа загрузки
 		const load_list=eval(assets.main_load_list);
-		for (var i = 0; i < load_list.length; i++)
+		for (let i = 0; i < load_list.length; i++)
 			if (load_list[i].class ==='sprite'|| load_list[i].class ==='image')
 				loader.add(load_list[i].name, git_src+'res/'+lang_pack + '/' + load_list[i].name + '.' +  load_list[i].image_format);
 
@@ -6609,7 +6609,7 @@ main_loader={
 		document.head.appendChild(script);
 					
 		//создаем спрайты и массивы спрайтов и запускаем первую часть кода
-		for (var i = 0; i < load_list.length; i++) {
+		for (let i = 0; i < load_list.length; i++) {
 			const obj_class = load_list[i].class;
 			const obj_name = load_list[i].name;
 			console.log('Processing: ' + obj_name)
@@ -6629,16 +6629,16 @@ main_loader={
 				break;
 
 			case "array":
-				var a_size=load_list[i].size;
+				const a_size=load_list[i].size;
 				objects[obj_name]=[];
-				for (var n=0;n<a_size;n++)
+				for (let n=0;n<a_size;n++)
 					eval(load_list[i].code0);
 				break;
 			}
 		}
 
 		//обрабатываем вторую часть кода в объектах
-		for (var i = 0; i < load_list.length; i++) {
+		for (let i = 0; i < load_list.length; i++) {
 			const obj_class = load_list[i].class;
 			const obj_name = load_list[i].name;
 			console.log('Processing: ' + obj_name)
@@ -6658,8 +6658,8 @@ main_loader={
 				break;
 
 			case "array":
-				var a_size=load_list[i].size;
-					for (var n=0;n<a_size;n++)
+				const a_size=load_list[i].size;
+					for (let n=0;n<a_size;n++)
 						eval(load_list[i].code1);	;
 				break;
 			}
