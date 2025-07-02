@@ -139,9 +139,6 @@ class lb_player_card_class extends PIXI.Container{
 		super();
 
 		this.bcg=new PIXI.Sprite(assets.lb_player_card_bcg);
-		this.bcg.interactive=true;
-		this.bcg.pointerover=function(){this.tint=0x55ffff};
-		this.bcg.pointerout=function(){this.tint=0xffffff};
 		this.bcg.width = 370;
 		this.bcg.height = 70;
 
@@ -166,6 +163,8 @@ class lb_player_card_class extends PIXI.Container{
 		this.rating.x=298;
 		this.rating.tint=rgb_to_hex(255,242,204);
 		this.rating.y=22;
+		
+		this.pivot.y=35;
 
 		this.addChild(this.bcg,this.place, this.avatar, this.name, this.rating);
 	}
@@ -3910,6 +3909,12 @@ chat={
 		anim2.add(objects.chat_cont,{alpha:[0, 1]}, true, 0.1,'linear');
 		//objects.bcg.texture=assets.lobby_bcg;
 		objects.chat_enter_button.visible=my_data.games>=this.games_to_chat;
+				
+		objects.bcg.interactive=true;
+		objects.bcg.pointermove=this.pointer_move.bind(this);
+		objects.bcg.pointerdown=this.pointer_down.bind(this);
+		objects.bcg.pointerup=this.pointer_up.bind(this);
+		objects.bcg.pointerupoutside=this.pointer_up.bind(this);
 		
 		if(my_data.blocked)		
 			objects.chat_enter_button.texture=assets.chat_blocked_img;
@@ -3938,11 +3943,7 @@ chat={
 			
 		this.last_record_end = 0;
 		objects.chat_msg_cont.y = objects.chat_msg_cont.sy;		
-		objects.bcg.interactive=true;
-		objects.bcg.pointermove=this.pointer_move.bind(this);
-		objects.bcg.pointerdown=this.pointer_down.bind(this);
-		objects.bcg.pointerup=this.pointer_up.bind(this);
-		objects.bcg.pointerupoutside=this.pointer_up.bind(this);
+
 		
 		for(let rec of objects.chat_records) {
 			rec.visible = false;			
@@ -4349,9 +4350,14 @@ players_cache={
 
 lb={
 
-	cards_pos: [[370,10],[380,70],[390,130],[380,190],[360,250],[330,310],[290,370]],
 	last_update:0,
-
+	start_y:35,
+	drag : false,
+	touch_y:0,
+	drag_chat:false,
+	drag_sx:0,
+	drag_sy:-999,	
+	
 	show() {
 
 		objects.bcg.texture=assets.lb_bcg;
@@ -4365,11 +4371,11 @@ lb={
 		objects.lb_cards_cont.visible=true;
 		objects.lb_back_button.visible=true;
 
-		for (let i=0;i<7;i++) {
-			objects.lb_cards[i].x=this.cards_pos[i][0];
-			objects.lb_cards[i].y=this.cards_pos[i][1];
+		this.start_y=35
+		for (let i=0;i<17;i++) {
+			objects.lb_cards[i].y=this.start_y+i*63;
+			objects.lb_cards[i].x=-0.001*Math.pow(450-objects.lb_cards[i].y-320,2)+350+30
 			objects.lb_cards[i].place.text=(i+4)+".";
-
 		}
 
 		if (Date.now()-this.last_update>120000){
@@ -4377,9 +4383,40 @@ lb={
 			this.last_update=Date.now();
 		}
 
+		objects.bcg.interactive=true;
+		objects.bcg.pointermove=this.pointer_move.bind(this);
+		objects.bcg.pointerdown=this.pointer_down.bind(this);
+		objects.bcg.pointerup=this.pointer_up.bind(this);
+		objects.bcg.pointerupoutside=this.pointer_up.bind(this);
+
 
 	},
+	pointer_move(e){		
+	
+		if (!this.drag_chat) return;
+		const my = e.data.global.y/app.stage.scale.y;
+		
+		const dy=my-this.drag_sy;		
+		this.drag_sy=my;
+		
+		this.shift(dy);
 
+	},
+	
+	pointer_down(e){
+		
+		this.drag_sy=e.data.global.y/app.stage.scale.y;
+		this.drag_chat=true;	
+
+	},
+	
+	pointer_up(){
+		
+		this.drag_chat=false;
+		
+	},
+	
+	
 	close() {
 
 		objects.bcg.texture=assets.bcg;
@@ -4389,6 +4426,27 @@ lb={
 		objects.lb_cards_cont.visible=false;
 		objects.lb_back_button.visible=false;
 
+	},
+
+	shift(dy){
+		
+		this.start_y+=dy
+		if (this.start_y>35)
+			this.start_y=35
+		
+		if (this.start_y<-595)
+			this.start_y=-595
+		for (let i=0;i<17;i++) {
+			objects.lb_cards[i].y=this.start_y+i*63;
+			objects.lb_cards[i].x=-0.001*Math.pow(450-objects.lb_cards[i].y-320,2)+350+30
+		}
+		
+	},
+
+	wheel_event(d){
+		
+		this.shift(-d*20)
+		
 	},
 
 	back_button_down() {
@@ -4416,7 +4474,7 @@ lb={
 			2:{t_name:objects.lb_3_name,t_rating:objects.lb_3_rating,avatar:objects.lb_3_avatar},			
 		}
 		
-		for (let i=0;i<7;i++){	
+		for (let i=0;i<17;i++){	
 			top[i+3]={};
 			top[i+3].t_name=objects.lb_cards[i].name;
 			top[i+3].t_rating=objects.lb_cards[i].rating;
@@ -6813,8 +6871,8 @@ async function init_game_env(lang) {
 	document.addEventListener("visibilitychange", function(){tabvis.change()});
 	
 	//событие ролика мыши в карточном меню и нажатие кнопки
-	window.addEventListener("wheel", (event) => {chat.wheel_event(Math.sign(event.deltaY))});	
-	window.addEventListener('keydown',function(event){keyboard.keydown(event.key)});
+	window.addEventListener("wheel", event=> {chat.wheel_event(Math.sign(event.deltaY));lb.wheel_event(Math.sign(event.deltaY))});	
+	window.addEventListener('keydown',event=>{keyboard.keydown(event.key)});
 	
 	//получаем данные
 	const other_data=await fbs_once('players/' + my_data.uid);
