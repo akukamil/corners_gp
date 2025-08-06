@@ -1708,7 +1708,7 @@ online_game = {
 			//контрольные концовки логируем на виртуальной машине
 			if (my_data.rating>1800 || opp_data.rating>1800){
 				const duration = Math.floor((Date.now() - this.start_time)*0.001);
-				const data={uid:my_data.uid,player1:objects.my_card_name.text,player2:objects.opp_card_name.text, res:result_number,fin_type:result,duration, rating: [old_rating,my_data.rating],game_id,client_id,tm:'TMS'}
+				const data={uid:my_data.uid,p1:objects.my_card_name.text,p2:objects.opp_card_name.text,res:result_number,f:result,d:duration,games:my_data.games,r:[old_rating,my_data.rating],g:game_id,cid:client_id,tm:'TMS'}
 				my_ws.safe_send({cmd:'log',logger:'corners_games',data});				
 			}						
 		}	
@@ -6378,7 +6378,7 @@ auth2 = {
 
 			my_data.name = my_data.uid = 'debug' + prompt('Отладка. Введите ID', 100);
 			my_data.orig_pic_url = 'mavatar'+my_data.uid;
-			my_data.auth_mode=0
+			my_data.auth_mode=1
 			return;
 		}		
 		
@@ -6928,7 +6928,7 @@ async function init_game_env(lang) {
 	fbs.ref("inbox/"+my_data.uid).set({sender:"-",message:"-",tm:"-",data:{x1:0,y1:0,x2:0,y2:0,board_state:0}});
 
 	//подписываемся на новые сообщения
-	fbs.ref("inbox/"+my_data.uid).on('value', (snapshot) => { process_new_message(snapshot.val());});
+	fbs.ref("inbox/"+my_data.uid).on('value', s => {process_new_message(s.val())});
 
 	//обновляем данные в файербейс так как могли поменяться имя или фото
 	fbs.ref('players/'+my_data.uid+'/name').set(my_data.name);
