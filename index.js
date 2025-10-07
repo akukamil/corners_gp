@@ -5041,7 +5041,7 @@ pref={
 
 		if(my_data.design_id!==this.selected_design.id){
 			my_data.design_id=this.selected_design.id;
-			fbs.ref('players/'+my_data.uid+'/design_id').set(my_data.design_id);
+			safe_ls('corners_design_id',my_data.design_id)
 			this.load_design(my_data.design_id);
 		}
 
