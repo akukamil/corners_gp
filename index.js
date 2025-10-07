@@ -789,7 +789,7 @@ big_msg = {
 
 	},
 
-	async feedback_down() {
+	async fb_btn_down() {
 
 		if (anim2.any_on()){
 			sound.play('locked');
