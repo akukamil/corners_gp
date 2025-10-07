@@ -2496,16 +2496,17 @@ game = {
 		objects.selected_frame.visible=false
 		//objects.checkers.forEach((c)=> {c.visible=false});
 
+		//стираем данные оппонента
+		opp_data.uid=''
 
+		//соперника больше нет
+		this.opponent = ''
+		
 		//рекламная пауза
 		ad.show();
 		await new Promise((resolve, reject) => setTimeout(resolve, 2000));
 		
-		//стираем данные оппонента
-		opp_data.uid=""
 
-		//соперника больше нет
-		this.opponent = ""
 
 		//устанавливаем статус в базе данных а если мы не видны то установливаем только скрытое состояние
 		set_state ({state : 'o'})
@@ -3918,7 +3919,7 @@ req_dialog = {
 		anim2.add(objects.req_btn_hl,{alpha:[0,1]}, false, 0.25,'ease3peaks',false);
 
 		//устанавливаем окончательные данные оппонента
-		opp_data = req_dialog._opp_data;
+		opp_data = JSON.parse(JSON.stringify(req_dialog._opp_data))
 
 		anim2.add(objects.req_cont,{y:[objects.req_cont.sy, -260]}, false, 0.5,'easeInBack');
 
