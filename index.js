@@ -811,7 +811,7 @@ big_msg = {
 
 	},
 
-	close() {
+	ok_btn_down() {
 
 		if (anim2.any_on()){
 			sound.play('locked');
@@ -820,8 +820,15 @@ big_msg = {
 
 		sound.play('click');
 
+		this.close('close')
+		lobby.activate()
+	},
+	
+	close(reason){
+		
 		anim2.add(objects.big_msg_cont,{y:[objects.big_msg_cont.sy,450]}, false, 0.4,'easeInBack');
-		this.p_resolve("close");
+		this.p_resolve(reason);
+		
 	}
 
 }
@@ -1909,7 +1916,7 @@ online_game = {
 		pref.change_crystals(crystals)
 				
 		//сообщение об изменении рейтинга
-		await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,t3:auth_msg,fb:1,energy:this.energy_collected,crystals})
+		return await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,t3:auth_msg,fb:1,energy:this.energy_collected,crystals})
 
 	},
 
@@ -1982,10 +1989,10 @@ bot_game = {
 		let result_info = res_array.find( p => p[0] === result)[2][LANG];
 
 		//выключаем элементы
-		objects.stop_bot_button.visible = false;
+		objects.stop_bot_button.visible = false
 
 		//отключаем взаимодейтсвие с доской
-		objects.board.pointerdown = function() {};
+		objects.board.pointerdown = function() {}
 
 		//воспроизводим звук
 		if (result_number === DRAW || result_number === LOSE)
@@ -1993,7 +2000,7 @@ bot_game = {
 		else
 			sound.play('win');
 
-		await big_msg.show({t1:result_info, t2:')))',t3:'',fb:1})
+		return await big_msg.show({t1:result_info, t2:')))',t3:'',fb:1})
 
 	},
 
@@ -2212,6 +2219,9 @@ game = {
 
 		//если открыт чат то закрываем его
 		if (objects.chat_cont.visible) chat.close()
+			
+		//закрываем болшое сообщение
+		if (objects.big_msg_cont.visible) big_msg.close('forced')
 			
 		//если слепая игра
 		if (bg.on) bg.close()
@@ -2474,11 +2484,10 @@ game = {
 
 	async stop(result) {
 
-		this.state = 'pending'
-
 		confirm_dialog.close_forced()
 
-		await this.opponent.stop(result)
+		const res=await this.opponent.stop(result)
+		if (res==='forced') return
 
 		objects.cur_move_text.visible=false
 		objects.board_cont.visible=false
@@ -2491,19 +2500,15 @@ game = {
 		//рекламная пауза
 		ad.show();
 		await new Promise((resolve, reject) => setTimeout(resolve, 2000));
-
-		this.state = 'off';
-		//показыаем основное меню
-		lobby.activate();
-
+		
 		//стираем данные оппонента
-		opp_data.uid="";
+		opp_data.uid=""
 
 		//соперника больше нет
-		this.opponent = "";
+		this.opponent = ""
 
 		//устанавливаем статус в базе данных а если мы не видны то установливаем только скрытое состояние
-		set_state ({state : 'o'});
+		set_state ({state : 'o'})
 	}
 
 }
@@ -2984,11 +2989,11 @@ confirm_dialog = {
 			return;
 		}
 
-		sound.play("confirm_dlg");
+		sound.play("confirm_dlg")
 
-		objects.confirm_msg.text=msg;
+		objects.confirm_msg.text=msg
 
-		anim2.add(objects.confirm_cont,{y:[450,objects.confirm_cont.sy]}, true, 0.3,'easeOutBack');
+		anim2.add(objects.confirm_cont,{y:[450,objects.confirm_cont.sy]}, true, 0.3,'easeOutBack')
 
 		return new Promise(function(resolve, reject){
 			confirm_dialog.p_resolve = resolve;
@@ -3902,7 +3907,7 @@ req_dialog = {
 
 	accept_btn_down() {
 
-		if (anim2.any_on()||!objects.req_cont.visible||online_game.on || objects.big_msg_cont.visible  || game.state === 'pending') {
+		if (anim2.any_on()||!objects.req_cont.visible||online_game.on) {
 			sound.play('locked');
 			return;
 		}
