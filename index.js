@@ -807,7 +807,7 @@ big_msg = {
 			await fbs.ref('fb/'+opp_data.uid+'/'+fb_id).set([msg, firebase.database.ServerValue.TIMESTAMP, my_data.name]);
 		}
 
-		this.p_resolve('close');
+		this.close('close');
 
 	},
 
