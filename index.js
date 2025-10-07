@@ -821,7 +821,6 @@ big_msg = {
 		sound.play('click');
 
 		this.close('close')
-		lobby.activate()
 	},
 	
 	close(reason){
@@ -1916,7 +1915,7 @@ online_game = {
 		pref.change_crystals(crystals)
 				
 		//сообщение об изменении рейтинга
-		return await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,t3:auth_msg,fb:1,energy:this.energy_collected,crystals})
+		await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,t3:auth_msg,fb:1,energy:this.energy_collected,crystals})
 
 	},
 
@@ -1971,7 +1970,7 @@ bot_game = {
 
 	async stop(result) {
 
-		this.on=0;
+		this.on=0
 
 		const res_array = [
 			['both_finished',DRAW, ['Ничья','Draw']],
@@ -2000,7 +1999,7 @@ bot_game = {
 		else
 			sound.play('win');
 
-		return await big_msg.show({t1:result_info, t2:')))',t3:'',fb:1})
+		await big_msg.show({t1:result_info, t2:')))',t3:'',fb:1})
 
 	},
 
@@ -2185,7 +2184,7 @@ game = {
 
 	opponent : '',
 	selected_checker : 0,
-	state : 0,
+	state : 'off',
 	move_processor:0,
 
 	activate(params={}) {
@@ -2219,9 +2218,6 @@ game = {
 
 		//если открыт чат то закрываем его
 		if (objects.chat_cont.visible) chat.close()
-			
-		//закрываем болшое сообщение
-		if (objects.big_msg_cont.visible) big_msg.close('forced')
 			
 		//если слепая игра
 		if (bg.on) bg.close()
@@ -2484,6 +2480,9 @@ game = {
 
 	async stop(result) {
 
+		//игра закончена, показываем биг мсг
+		this.state='big_msg'
+		
 		confirm_dialog.close_forced()
 
 		const res=await this.opponent.stop(result)
@@ -2501,12 +2500,18 @@ game = {
 
 		//соперника больше нет
 		this.opponent = ''
-		
+
+		//игра закончена, показываем биг мсг
+		this.state='ad'
+
 		//рекламная пауза
 		ad.show();
 		await new Promise((resolve, reject) => setTimeout(resolve, 2000));
 		
-
+		//игра закончена, показываем биг мсг
+		this.state='off'
+		
+		lobby.activate()
 
 		//устанавливаем статус в базе данных а если мы не видны то установливаем только скрытое состояние
 		set_state ({state : 'o'})
@@ -3908,7 +3913,7 @@ req_dialog = {
 
 	accept_btn_down() {
 
-		if (anim2.any_on()||!objects.req_cont.visible||online_game.on) {
+		if (anim2.any_on()||!objects.req_cont.visible||online_game.on||game.state!=='off') {
 			sound.play('locked');
 			return;
 		}
