@@ -857,6 +857,31 @@ brd_func={
 		
 	},
 
+	show_home_area(brd,line_style={width:1.8,alpha:0.65,color:0x55ff99,cap:PIXI.LINE_CAP.ROUND}){
+
+		objects.home_cfg.clear()
+		objects.home_cfg.lineStyle(line_style)
+		
+		for (let y=0;y<8;y++){
+			for (let x=1;x<8;x++){
+				if (g_board[y][x]!==g_board[y][x-1]){
+					objects.home_cfg.moveTo(40+x*50,40+y*50)
+					objects.home_cfg.lineTo(40+x*50,40+(y+1)*50)
+				}
+			}
+		}
+		for (let x=0;x<8;x++){
+			for (let y=1;y<8;y++){			
+				if (g_board[y][x]!==g_board[y-1][x]){
+					objects.home_cfg.moveTo(40+x*50,40+y*50)
+					objects.home_cfg.lineTo(40+(x+1)*50,40+y*50)
+				}
+			}
+		}
+		
+		
+	},
+	
 	update_board(board) {
 
 		this.target_point=0;
@@ -1476,10 +1501,11 @@ online_game = {
 		if (params.brd_cfg){
 			g_board=brd_func.brd_cfg_to_brd(params.brd_cfg)
 			brd_func2.init_brd_cfg=brd_func.brd_cfg_to_brd(params.brd_cfg)
+			brd_func.show_home_area(g_board)
 		}
 		else
 			g_board=brd_func.get_def_brd()
-		
+
 		brd_func.update_board(g_board)
 
 		//сколько скопили энергии
@@ -2220,6 +2246,7 @@ game = {
 
 		//устанаваем текстуру
 		objects.board.texture=pref.board_texture
+		objects.home_cfg.clear()
 
 		if (this.opponent!=='') this.opponent.clear()
 
@@ -7190,8 +7217,8 @@ function main_loop() {
 	for (let key in some_process)
 		some_process[key]();
 
-	game_tick+=0.016666666;
-	anim2.process();
+	game_tick+=0.016666666
+	anim2.process()
 
 	app.renderer.render(app.stage);
 	requestAnimationFrame(main_loop);
