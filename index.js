@@ -2036,7 +2036,7 @@ bot_game = {
 
 bg={
 
-	sec_to_start:999,
+	sec_to_start:999999,
 	timer:0,
 	pending:0,
 	on:0,
@@ -2047,6 +2047,8 @@ bg={
 		this.on=1
 		anim2.add(objects.bg_cont,{alpha:[0,1]}, true, 0.25,'linear')
 		objects.bg_start_btn.texture=assets.bg_start_btn
+		objects.bg_timer.text='XX:XX'
+		objects.bg_players_online.text='-'
 
 	},
 	
@@ -2103,14 +2105,22 @@ bg={
 	},
 	
 	draw_sec_to_start(){
+		
+		
 	
 		if (this.sec_to_start<0) this.sec_to_start=0
+		if (this.sec_to_start===999999){
+			objects.bg_timer.text='XX:XX'
+			return
+		}
 		
-		const minutes = Math.floor(this.sec_to_start/60)
-		const remainingSeconds = this.sec_to_start % 60
-		const formattedMinutes = String(minutes)
-		const formattedSeconds = String(remainingSeconds).padStart(2, '0')		
-		objects.bg_timer.text=formattedMinutes+":"+formattedSeconds	
+		
+		const hours = Math.floor(this.sec_to_start / 3600);
+		const minutes = Math.floor((this.sec_to_start % 3600) / 60);
+		const secs = Math.floor(this.sec_to_start % 60);
+
+		const time_str=[hours.toString().padStart(2, '0'),minutes.toString().padStart(2, '0'),secs.toString().padStart(2, '0')].join(':')
+		objects.bg_timer.text=time_str
 			
 	},
 	
@@ -2119,8 +2129,10 @@ bg={
 		if (online_game.on) return
 
 		if (data.bgame&&this.pending){
+			
+			
+			this.close()
 
-			this.pending=0
 			//устанаваем окончательные данные оппонента
 			opp_data.uid=data.opp_uid
 			await players_cache.update(data.opp_uid)
@@ -2130,8 +2142,6 @@ bg={
 			game_id=data.gid
 			game.activate({opp:online_game,role,brd_cfg:data.brd_cfg,bgame:1})
 			my_ws.safe_send({cmd:'remove',path:'bg/p/'+my_data.uid})
-			this.close()
-			clearInterval(this.timer)
 
 		}
 
@@ -6175,7 +6185,19 @@ lobby={
 
 	bg_btn_down(){
 		
-		if (!this.bg_on) return
+		if (anim2.any_on()) {
+			sound.play('locked')
+			return
+		}
+		
+		if (my_data.games<200){
+			message.add('Нужно сыграть 200 онлайн игр чтобы участвовать в конкурсе!');
+			sound.play('locked')
+			return
+		}
+		
+
+		sound.play('click');
 
 		this.close()
 		bg.activate()
