@@ -2544,7 +2544,7 @@ game_watching={
 		objects.gw_master_chip.visible=true;
 		objects.gw_slave_chip.visible=true;
 
-		const main_data=fbs_once('tables/'+this.game_id)
+		const main_data=await fbs_once('tables/'+this.game_id)
 
 		//определяем индексы карточек
 		const master_ind=+(card_data.uid2===main_data.master)+1
