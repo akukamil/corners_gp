@@ -1490,6 +1490,8 @@ online_game = {
 
 		//устанавливаем локальный и удаленный статус
 		set_state({state : 'p'})
+		
+		game.state='online'
 
 		//устанавливаем начальное расположение шашек
 		if(this.blind_game_flag)
@@ -1989,6 +1991,8 @@ bot_game = {
 		if (my_data.rating>=2000)
 			g_board = [[0,0,0,0,0,0,0,0],[0,0,0,0,2,2,0,0],[0,0,2,2,2,2,0,0],[0,0,2,2,0,0,0,0],[0,2,2,0,0,0,0,0],[0,2,2,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
 
+		game.state='bot'
+		
 		brd_func_src=brd_func
 		brd_func.update_board(g_board);
 
@@ -2230,8 +2234,6 @@ game = {
 		objects.bcg.texture=assets.bcg;
 		anim2.add(objects.bcg,{alpha:[0,1]}, true, 0.5,'linear')
 
-		this.state = 'on'
-
 		if (my_role==='master') {
 			my_turn=1
 			message.add(['Ваши шашки в нижнем правом углу. Последний ход за соперником','Ready to play. The last move for the opponent'][LANG])
@@ -2472,7 +2474,7 @@ game = {
 		//my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move'})
 
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
-		if (game.state !== 'on') return;
+		if (!['online','bot'].includes(game.state)) return;
 
 		//защита от двойных ходов
 		if (my_turn === 1) return;
@@ -3950,7 +3952,7 @@ req_dialog = {
 
 	accept_btn_down() {
 
-		if (anim2.any_on()||!objects.req_cont.visible||online_game.on||game.state!=='off') {
+		if (anim2.any_on()||game.state==='online'||game.state==='big_msg'||game.state==='ad') {
 			sound.play('locked');
 			return;
 		}
