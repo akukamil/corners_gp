@@ -1,5 +1,5 @@
 var M_WIDTH=800, M_HEIGHT=450;
-var app ={stage:{},renderer:{}}, assets={}, SERVER_TM=0,fbs,client_id, objects={}, state="", my_role="", game_tick=0, made_moves=0, game_id=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=0, h_state=0, game_platform="",git_src='', room_name = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process = {}, my_data={opp_id : ''},opp_data={}, my_games_api = {},game_name='corners';
+var app ={stage:{},renderer:{}}, assets={}, SERVER_TM=0,fbs,client_id, objects={}, state="", my_role="", game_tick=0, made_moves=0, game_id=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=0, h_state=0, game_platform="",git_src='', room_name = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process = {}, my_data={opp_id : ''},opp_data={}, game_name='corners';
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 const MAX_NO_AUTH_RATING=1950;
 const MAX_NO_REP_RATING=1910;
@@ -2950,7 +2950,6 @@ keyboard={
 
 ad={
 
-
 	show() {
 
 		if (game_platform==="YANDEX") {
@@ -2970,17 +2969,11 @@ ad={
 			.catch(error => console.log(error));
 		}
 
-		if (game_platform==="MY_GAMES") {
-
-			my_games_api.showAds({interstitial:true});
-		}
-
 		if (game_platform==='GOOGLE_PLAY') {
 			if (typeof Android !== 'undefined') {
 				Android.showAdFromJs();
 			}
 		}
-
 
 	},
 
@@ -4058,12 +4051,10 @@ chat={
 			rec.tm=0;
 		}
 
-		this.init_yandex_payments();
-
-		await my_ws.init();
+		this.init_yandex_payments()		
 
 		//загружаем чат
-		const chat_data=await my_ws.get('chat',25);
+		const chat_data=await my_ws.get('chat',25)
 
 		await this.chat_load(chat_data);
 
@@ -6061,17 +6052,24 @@ lobby={
 		objects.inst_msg_cont.tm=Date.now();
 	},
 
-	get_room_index_from_rating(){
+	get_room_to_go(){
+		
+		//московское время и ночная комната
+		if (SERVER_TM){
+			const msk_hour=+new Date(SERVER_TM).toLocaleString('en-US', {timeZone: 'Europe/Moscow',hour:'numeric',hour12: false})
+			if (msk_hour>=0&&msk_hour<6)
+				return 'statesNIGHT'		
+		}	
+		
 		//номер комнаты в зависимости от рейтинга игрока
 		const rooms_bins=[0,1366,1437,1580,9999];
-		let room_to_go='state1';
 		for (let i=1;i<rooms_bins.length;i++){
 			const f=rooms_bins[i-1];
 			const t=rooms_bins[i];
 			if (my_data.rating>f&&my_data.rating<=t)
-				return i;
+				return 'states'+i
 		}
-		return 1;
+		return 'states1'
 
 	},
 
@@ -6569,6 +6567,13 @@ auth2 = {
 
 	},
 
+	replace_bad_letter(s){
+		
+		//убираем ё и Ё
+		return s.replace(/ё/g, 'е').replace(/Ё/g, 'Е')
+		
+	},
+
 	async init() {
 
 		if (game_platform === 'YANDEX') {
@@ -6582,10 +6587,11 @@ auth2 = {
 				_player = await window.ysdk.getPlayer();
 			} catch (e) { alert(e)};
 
-			my_data.uid = _player.getUniqueID().replace(/[\/+=]/g, '');
-			my_data.name = _player.getName();
-			my_data.orig_pic_url = _player.getPhoto('medium');
-			my_data.auth_mode=_player.getMode()==='lite'?0:1;
+			my_data.uid = _player.getUniqueID().replace(/[\/+=]/g, '')
+			my_data.name = _player.getName()
+			my_data.name=this.replace_bad_letter(my_data.name)
+			my_data.orig_pic_url = _player.getPhoto('medium')
+			my_data.auth_mode=+_player.isAuthorized()
 
 			if (my_data.orig_pic_url === 'https://games-sdk.yandex.ru/games/api/sdk/v1/player/avatar/0/islands-retina-medium')
 				my_data.orig_pic_url = 'mavatar'+my_data.uid;
@@ -6606,10 +6612,11 @@ auth2 = {
 				_player = await vkBridge.send('VKWebAppGetUserInfo');
 			} catch (e) {alert(e)};
 
-			my_data.name=_player.first_name + ' ' + _player.last_name;
-			my_data.uid='vk'+_player.id;
-			my_data.orig_pic_url=_player.photo_100;
-			my_data.auth_mode=1;
+			my_data.name=_player.first_name + ' ' + _player.last_name
+			my_data.name=this.replace_bad_letter(my_data.name)
+			my_data.uid='vk'+_player.id
+			my_data.orig_pic_url=_player.photo_100
+			my_data.auth_mode=1
 			return;
 		}
 
@@ -7102,11 +7109,7 @@ async function init_game_env(lang) {
 	anim2.add(objects.id_cont,{y:[-200,objects.id_cont.sy]}, true, 0.5,'easeOutBack');
 
 	//авторизация
-	await auth2.init();
-
-	//убираем ё
-	my_data.name=my_data.name.replace(/ё/g, 'е');
-	my_data.name=my_data.name.replace(/Ё/g, 'Е');
+	await auth2.init()
 
 	//инициируем файербейс
 	if (firebase.apps.length===0) {
@@ -7125,8 +7128,8 @@ async function init_game_env(lang) {
 
 	//анимация лупы
 	some_process.loup_anim=function() {
-		objects.id_loup.x=20*Math.sin(game_tick*8)+90;
-		objects.id_loup.y=20*Math.cos(game_tick*8)+150;
+		objects.id_loup.x=20*Math.sin(game_tick*8)+90
+		objects.id_loup.y=20*Math.cos(game_tick*8)+150
 	}
 
 	//смешные логи
@@ -7150,7 +7153,8 @@ async function init_game_env(lang) {
 
 	//загрузка сокета
 	await auth2.load_script('https://akukamil.github.io/common/my_ws.js')
-
+	await my_ws.init();
+	
 	//получаем данные
 	const other_data=await fbs_once('players/' + my_data.uid)
 
@@ -7178,7 +7182,8 @@ async function init_game_env(lang) {
 	else
 		my_data.pic_url=my_data.orig_pic_url
 
-	SERVER_TM=await fbs_once('tm') 
+	//получаем серверное время
+	SERVER_TM=await my_ws.get_tms() || await fbs_once('tm') 
 
 	//загружаем мои данные в кэш
 	await players_cache.update(my_data.uid,{pic_url:my_data.pic_url,rating:my_data.rating,name:my_data.name});
@@ -7207,13 +7212,11 @@ async function init_game_env(lang) {
 	//устанавливаем рейтинг в попап
 	objects.id_rating.text=objects.my_card_rating.text=my_data.rating;
 
-	//обновляем почтовый ящик
-	fbs.ref("inbox/"+my_data.uid).set({sender:"-",message:"-",tm:"-",data:{x1:0,y1:0,x2:0,y2:0,board_state:0}});
 
 	//подписываемся на новые сообщения
+	fbs.ref('inbox/'+my_data.uid).set({tm:Date.now()})
 	fbs.ref("inbox/"+my_data.uid).on('value', s => {process_new_message(s.val())});
-	
-	
+		
 	//обновляем данные в файербейс так как могли поменяться имя или фото	
 	await fbs.ref('players/'+my_data.uid).set({
 		name:my_data.name,
@@ -7229,18 +7232,11 @@ async function init_game_env(lang) {
 		session_start:firebase.database.ServerValue.TIMESTAMP
 	})	
 	
-
-	if(!other_data?.first_log_tm)
-		fbs.ref('players/'+my_data.uid+'/first_log_tm').set(firebase.database.ServerValue.TIMESTAMP);
-
 	//читаем последних соперников
 	online_game.read_last_opps()
 
 	//сообщение для дубликатов
-	fbs.ref("inbox/"+my_data.uid).set({client_id,tm:Date.now()})
-
-	//отключение от игры и удаление не нужного
-	fbs.ref("inbox/"+my_data.uid).onDisconnect().remove();
+	fbs.ref('inbox/'+my_data.uid).set({client_id,tm:Date.now()})
 
 	//keep-alive сервис
 	setInterval(function()	{keep_alive()}, 40000);
@@ -7261,8 +7257,7 @@ async function init_game_env(lang) {
 	});
 
 	//одноразовое сообщение от админа
-	if (other_data?.eval_code)
-		eval(other_data?.eval_code)
+	if (other_data?.eval_code) eval(other_data?.eval_code)
 
 	//убираем лупу и контейнер
 	anim2.add(objects.id_cont,{y:[objects.id_cont.sy, -200]}, false, 0.5,'easeInBack');
@@ -7270,13 +7265,13 @@ async function init_game_env(lang) {
 	objects.id_loup.visible=false;
 
 	//загружаем лобби с включенным ботом
-	let room_to_go='states'+lobby.get_room_index_from_rating();
-	//room_to_go='states5';
+	room_name=lobby.get_room_to_go()
+	//room_name='states5';
 	
 	//отображаем лидеров вчерашнего дня
 	top3.activate()
 	
-	lobby.activate(room_to_go,1);
+	lobby.activate(room_name,1);
 }
 
 function main_loop() {
