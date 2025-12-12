@@ -2962,7 +2962,7 @@ ad={
 			})
 		}
 
-		if (game_platform==="VK") {
+		if (game_platform==='VK' || game_platform==='OK') {
 
 			vkBridge.send("VKWebAppShowNativeAds", {ad_format:"interstitial"})
 			.then(data => console.log(data.result))
@@ -4320,7 +4320,7 @@ chat={
 				})
 			}
 
-			if (game_platform==='VK') {
+			if (game_platform==='VK'||game_platform==='OK') {
 
 				vkBridge.send('VKWebAppShowOrderBox', { type: 'item', item: 'unblock'+block_num}).then(data =>{
 					this.unblock_chat();
@@ -6596,7 +6596,7 @@ auth2 = {
 			return;
 		}
 
-		if (game_platform === 'VK') {
+		if (game_platform === 'VK' || game_platform==='OK') {
 
 			await this.load_script('https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js')||await this.load_script('https://akukamil.github.io/common/vkbridge.js');
 
@@ -6608,7 +6608,7 @@ auth2 = {
 
 			my_data.name=_player.first_name + ' ' + _player.last_name
 			my_data.name=this.replace_bad_letter(my_data.name)
-			my_data.uid='vk'+_player.id
+			my_data.uid=game_platform.toLowerCase()+_player.id
 			my_data.orig_pic_url=_player.photo_100
 			my_data.auth_mode=1
 			return;
@@ -6812,7 +6812,14 @@ async function define_platform_and_language() {
 		return;
 	}
 
-	if (s.includes('vk.com')||s.includes('vk.ru')||s.includes('vk_app_id')||s.includes('ok.ru')) {
+	if (s.includes('ok.ru')) {
+
+		game_platform = 'OK';
+		LANG = 0;
+		return;
+	}
+
+	if (s.includes('vk.com')||s.includes('vk.ru')||s.includes('vk_app_id')) {
 
 		game_platform = 'VK';
 		LANG = 0;
