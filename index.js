@@ -5208,7 +5208,7 @@ pin_panel={
 
 		//выход в дефолтную комнату
 		if (this.t_pin==='9999'){
-			this.t_pin=lobby.get_room_to_go()
+			lobby.perm_room=''
 		}else{
 
 			//проверяем наличие комнаты
@@ -5221,15 +5221,16 @@ pin_panel={
 				objects.pin_panel_msg.text='Такой комнаты не существует'
 				anim2.add(objects.pin_panel_msg,{alpha:[0, 1]}, true, 0.15,'easeTwiceBlink')
 				return;
+			}else{
+				lobby.perm_room='states'+this.t_pin
 			}
 		}
 
 		//удаляемся из текущей комнаты
 		fbs.ref(ROOM_NAME+'/'+my_data.uid).remove();
-		const new_room_name='states'+this.t_pin;
 		this.close();
 		pref.close();
-		lobby.activate(new_room_name,0);
+		lobby.activate();
 	},
 
 	close_button_down(){
@@ -5271,11 +5272,11 @@ lobby={
 	bot_on:1,
 	on:0,
 	global_players:{},
-	process_timer:0,
 	state_listener_on:0,
 	state_listener_timeout:0,
+	perm_room:'',
 
-	activate(room_to_go,bot_on) {
+	activate() {
 
 		//первый запуск лобби
 		if (!this.activated){
@@ -5310,20 +5311,15 @@ lobby={
 		for(let i=0;i<objects.mini_cards.length;i++)
 			objects.mini_cards[i].visible=false
 
-		//процессинг
-		clearInterval(this.process_timer)
-		this.process_timer=setInterval(()=>{lobby.process(),250})
-
 		//добавляем карточку бота если надо
-		if (bot_on!==undefined) this.bot_on=bot_on
 		this.starting_card=0
-		if (this.bot_on){
+		if (!this.perm_room){
 			this.starting_card=1
 			this.add_card_ai()
 		}
 				
 		//определяем комнату
-		room_to_go=this.get_room_to_go()
+		const room_to_go=this.perm_room||this.get_room_to_go()
 		if (ROOM_NAME!==room_to_go)
 			this.change_room(room_to_go)
 
@@ -5384,7 +5380,7 @@ lobby={
 			if (player.s)
 				player.state=player.s
 			if (player.h)
-				player.hidden=player.hidden
+				player.hidden=player.h||player.hidden //нужно изменить потом
 			if (player.g)
 				player.game_id=player.g
 		}
@@ -5953,17 +5949,9 @@ lobby={
 
 	async close() {
 
-		if (objects.invite_cont.visible)
-			this.close_invite_dialog()
-
-		if (objects.td_cont.visible)
-			this.close_table_dialog()
-
-		//процессинг
-		clearInterval(this.process_timer)
-
-		if (objects.pref_cont.visible)
-			pref.close()		
+		if (objects.invite_cont.visible) this.close_invite_dialog()
+		if (objects.td_cont.visible) this.close_table_dialog()
+		if (objects.pref_cont.visible) pref.close()		
 
 		//плавно все убираем
 		anim2.add(objects.cards_cont,{alpha:[1, 0]}, false, 0.1,'linear')
@@ -5971,8 +5959,8 @@ lobby={
 		anim2.add(objects.lobby_header_cont,{y:[objects.lobby_header_cont.y,-50]}, false, 0.2,'linear')
 
 		//больше ни ждем ответ ни от кого
-		pending_player='';
-		this.on=0;
+		pending_player=''
+		this.on=0
 
 		//отписываемся от изменений состояний пользователей через 30 секунд
 		this.state_listener_timeout=setTimeout(()=>{
@@ -5981,38 +5969,34 @@ lobby={
 
 	},
 
-	disconnect(){		
+	disconnect(){
 		console.log('lobby disconnected')
 		this.global_players={}
-		if(ROOM_NAME)
-			fbs.ref(ROOM_NAME).off()
+		if(ROOM_NAME) fbs.ref(ROOM_NAME).off()
 		this.state_listener_on=0
 	},
 
 	connect(){
 
 		console.log('lobby connected');
-		fbs.ref(ROOM_NAME).on('child_changed', snapshot => {
-			const val=snapshot.val()
-			//console.log('child_changed',snapshot.key,val,JSON.stringify(val).length)
-			this.global_players[snapshot.key]=val;
-			lobby.players_list_updated(this.global_players);
+		fbs.ref(ROOM_NAME).on('child_changed', s => {
+			const val=s.val()
+			this.global_players[s.key]=val
+			lobby.players_list_updated(this.global_players)
 		});
-		fbs.ref(ROOM_NAME).on('child_added', snapshot => {
-			const val=snapshot.val()
-			//console.log('child_added',snapshot.key,val,JSON.stringify(val).length)
-			this.global_players[snapshot.key]=val;
-			lobby.players_list_updated(this.global_players);
+		fbs.ref(ROOM_NAME).on('child_added', s => {
+			const val=s.val()
+			this.global_players[s.key]=val
+			lobby.players_list_updated(this.global_players)
 		});
-		fbs.ref(ROOM_NAME).on('child_removed', snapshot => {
-			const val=snapshot.val()
-			//console.log('child_removed',snapshot.key,val,JSON.stringify(val).length)
-			delete this.global_players[snapshot.key];
-			lobby.players_list_updated(this.global_players);
+		fbs.ref(ROOM_NAME).on('child_removed', s => {
+			const val=s.val()
+			delete this.global_players[s.key]
+			lobby.players_list_updated(this.global_players)
 		});
 
-		fbs.ref(ROOM_NAME+'/'+my_data.uid).onDisconnect().remove();
-		this.state_listener_on=1;
+		fbs.ref(ROOM_NAME+'/'+my_data.uid).onDisconnect().remove()
+		this.state_listener_on=1
 
 	},
 	
@@ -6034,16 +6018,22 @@ lobby={
 	async inst_message(data){
 
 		//когда ничего не видно не принимаем сообщения
-		if(!objects.cards_cont.visible) return;
+		if(!objects.cards_cont.visible) return
 
-		await players_cache.update(data.uid);
-		await players_cache.update_avatar(data.uid);
+		await players_cache.update(data.uid)
+		await players_cache.update_avatar(data.uid)
 
-		sound.play('inst_msg');
-		anim2.add(objects.inst_msg_cont,{alpha:[0, 1]},true,0.4,'linear',false);
-		objects.inst_msg_avatar.texture=players_cache.players[data.uid].texture||PIXI.Texture.WHITE;
-		objects.inst_msg_text.set2(data.msg,290);
-		objects.inst_msg_cont.tm=Date.now();
+		sound.play('inst_msg')
+		anim2.add(objects.inst_msg_cont,{alpha:[0, 1]},true,0.4,'linear',false)
+		objects.inst_msg_avatar.texture=players_cache.players[data.uid].texture||PIXI.Texture.WHITE
+		objects.inst_msg_text.set2(data.msg,290)
+		objects.inst_msg_cont.tm=Date.now()
+		
+		clearTimeout(objects.inst_msg_cont.close_timer)
+		objects.inst_msg_cont.close_timer=setTimeout(()=>{
+			anim2.add(objects.inst_msg_cont,{alpha:[1, 0]},false,0.4,'linear',false)
+		},7000)
+		
 	},
 
 	get_room_to_go(){
@@ -6064,15 +6054,6 @@ lobby={
 				return 'states'+i
 		}
 		return 'states1'
-
-	},
-
-	process(){
-
-		const tm=Date.now();
-		if (objects.inst_msg_cont.visible&&objects.inst_msg_cont.ready)
-			if (tm>objects.inst_msg_cont.tm+7000)
-				anim2.add(objects.inst_msg_cont,{alpha:[1, 0]},false,0.4,'linear',false)
 
 	},
 
@@ -6727,7 +6708,7 @@ function set_state(params) {
 		small_opp_id=opp_data.uid.substring(0,10);
 
 	if (ROOM_NAME)
-		fbs.ref(ROOM_NAME+'/'+my_data.uid).set({state:state, name:my_data.name, rating : my_data.rating, hidden:h_state, opp_id : small_opp_id, game_id});
+		fbs.ref(ROOM_NAME+'/'+my_data.uid).set({s:state, n:my_data.name, r:my_data.rating, h:h_state, opp_id : small_opp_id, g:game_id});
 
 }
 
@@ -6739,41 +6720,31 @@ tabvis={
 	change(){
 
 		if (document.hidden){
-
-			//start wait for
-			this.inactive_timer=setTimeout(()=>{this.send_to_sleep()},120000);
-			sound.on=0;
-
+			this.inactive_timer=setTimeout(()=>{this.send_to_sleep()},120000)
+			sound.on=0
 		}else{
 
 			sound.on=pref.sound_on;
 			if(this.sleep){
-				//console.log('Проснулись');
-				//lobby.activate();
-				my_ws.reconnect('wakeup');
-				this.sleep=0;
+				if (lobby.on) lobby.activate()
+				my_ws.reconnect('wakeup')
+				this.sleep=0
 			}
 
 			clearTimeout(this.inactive_timer);
 		}
 
-		set_state({hidden : document.hidden});
+		set_state({hidden:document.hidden});
 
 	},
 
 	send_to_sleep(){
 
-
-		//console.log('погрузились в сон')
-		this.sleep=1;
-		if (lobby.on){
-			fbs.ref(ROOM_NAME+'/'+my_data.uid).remove();
-			lobby.disconnect();
-		}
-
-		if(chat.on)
-			chat.close();
-		my_ws.send_to_sleep();
+		this.sleep=1
+		lobby.disconnect()		
+		fbs.ref(ROOM_NAME+'/'+my_data.uid).remove()
+		if(chat.on) chat.close()
+		my_ws.send_to_sleep()
 	}
 
 }
@@ -7269,7 +7240,8 @@ async function init_game_env(lang) {
 	//отображаем лидеров вчерашнего дня
 	top3.activate()
 	
-	lobby.activate(ROOM_NAME,1)
+	//lobby.perm_room='statesNIGHT'
+	lobby.activate()
 }
 
 function main_loop() {
