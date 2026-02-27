@@ -2972,14 +2972,14 @@ ad={
 				const timeoutId = setTimeout(() => {res(1)}, 5000)
 				vkBridge.send("VKWebAppShowNativeAds", { ad_format: "interstitial" })
 					.then(data => {
-						clearTimeout(timeoutId); 
-						resolve(data);
+						clearTimeout(timeoutId);
+						res(1)
 				})
 				.catch(error => {
-						clearTimeout(timeoutId);
-						res(0);
-				});
-			});
+						clearTimeout(timeoutId)
+						res(0)
+				})
+			})
 		}
 
 		if (game_platform==='GOOGLE_PLAY') {
