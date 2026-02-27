@@ -2968,7 +2968,7 @@ ad={
 
 		if (game_platform==='VK' || game_platform==='OK') {
 
-			return new Promise(res => {
+			await new Promise(res => {
 				const timeoutId = setTimeout(() => {res(1)}, 5000)
 				vkBridge.send("VKWebAppShowNativeAds", { ad_format: "interstitial" })
 					.then(data => {
