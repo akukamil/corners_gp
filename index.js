@@ -2977,7 +2977,7 @@ ad={
 				})
 				.catch(error => {
 						clearTimeout(timeoutId);
-						reject(error);
+						res(0);
 				});
 			});
 		}
