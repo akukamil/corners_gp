@@ -2950,23 +2950,36 @@ keyboard={
 
 ad={
 
-	show() {
+	async show() {
+
+		PIXI.sound.muteAll()
 
 		if (game_platform==="YANDEX") {
-			//показываем рекламу
-			window.ysdk.adv.showFullscreenAdv({
-			  callbacks: {
-				onClose: function() {},
-				onError: function() {}
-						}
+			await new Promise(res=>{
+				const timeout=setTimeout(()=>{res()},5000)
+				window.ysdk.adv.showFullscreenAdv({
+				callbacks: {
+					onClose: function() {res();clearTimeout(timeout)},
+					onError: function() {res();clearTimeout(timeout)}
+					}
+				})
 			})
 		}
 
 		if (game_platform==='VK' || game_platform==='OK') {
 
-			vkBridge.send("VKWebAppShowNativeAds", {ad_format:"interstitial"})
-			.then(data => console.log(data.result))
-			.catch(error => console.log(error));
+			return new Promise(res => {
+				const timeoutId = setTimeout(() => {res(1)}, 5000)
+				vkBridge.send("VKWebAppShowNativeAds", { ad_format: "interstitial" })
+					.then(data => {
+						clearTimeout(timeoutId); 
+						resolve(data);
+				})
+				.catch(error => {
+						clearTimeout(timeoutId);
+						reject(error);
+				});
+			});
 		}
 
 		if (game_platform==='GOOGLE_PLAY') {
@@ -2974,6 +2987,9 @@ ad={
 				Android.showAdFromJs();
 			}
 		}
+		
+		PIXI.sound.unmuteAll()
+		
 
 	},
 
@@ -6721,10 +6737,11 @@ tabvis={
 
 		if (document.hidden){
 			this.inactive_timer=setTimeout(()=>{this.send_to_sleep()},120000)
-			sound.on=0
+			PIXI.sound.muteAll()
 		}else{
-
-			sound.on=pref.sound_on;
+			
+			PIXI.sound.unmuteAll()
+			//sound.on=pref.sound_on;
 			if(this.sleep){
 				if (lobby.on) lobby.activate()
 				my_ws.reconnect('wakeup')
