@@ -7037,6 +7037,9 @@ async function init_game_env(lang) {
 	await define_platform_and_language();
 	console.log(game_platform, LANG);
 
+	//авторизация
+	await auth2.init()
+
 	document.body.innerHTML='<style>html,body {margin: 0;padding: 0;height: 100%;}body {display: flex;align-items:center;justify-content: center;background-color: rgba(41,41,41,1)}</style>';
 
 
@@ -7098,8 +7101,7 @@ async function init_game_env(lang) {
 
 	anim2.add(objects.id_cont,{y:[-200,objects.id_cont.sy]}, true, 0.5,'easeOutBack');
 
-	//авторизация
-	await auth2.init()
+
 
 	//инициируем файербейс
 	if (firebase.apps.length===0) {
