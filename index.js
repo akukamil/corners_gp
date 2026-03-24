@@ -6499,7 +6499,7 @@ stickers = {
 
 		objects.rec_sticker_area.texture=assets['sticker_texture_'+id];
 
-		await anim3.add(objects.rec_sticker_area,{x:[-150, objects.rec_sticker_area.sx]}, true, 0.5,'easeOutBack',false);
+		await anim3.add(objects.rec_sticker_area,{x:[-150, objects.rec_sticker_area.sx,'easeOutBack']}, true, 0.5,false);
 
 		let res = await new Promise((resolve, reject) => {
 				stickers.promise_resolve_recive = resolve;
@@ -6510,7 +6510,7 @@ stickers = {
 		if (res === "forced")
 			return;
 
-		anim3.add(objects.rec_sticker_area,{x:[objects.rec_sticker_area.sx, -150]}, false, 0.5,'easeInBack',false);
+		anim3.add(objects.rec_sticker_area,{x:[objects.rec_sticker_area.sx, -150,'easeInBack']}, false, 0.5,false);
 
 	}
 
