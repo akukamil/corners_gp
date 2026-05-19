@@ -4490,7 +4490,7 @@ players_cache={
 		if (this.loading[uid]) return
 
 
-		while(Object.keys(this.loading).length>5){
+		while(Object.keys(this.loading).length>6){
 			console.log('Много загрузок, ждем...')
 			await new Promise(r => setTimeout(r, hf.randIntInc(400,800)));
 		}
