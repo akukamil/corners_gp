@@ -5,7 +5,7 @@ const MAX_NO_AUTH_RATING=1950;
 const MAX_NO_REP_RATING=1910;
 const MAX_NO_CONF_RATING=1950;
 const DAYS_TO_CONF_RATING=7;
-const COM_URL='https://akukamil.github.io/common'
+const COM_URL='https://akukamil.github.io/com'
 let brd_func_src=0;
 let TM={s:0,ms:0}
 
@@ -92,14 +92,14 @@ class player_mini_card_class extends PIXI.Container {
 		this.avatar_frame.width=this.avatar_frame.height=81.48;
 
 		this.name="";
-		this.name_text=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 22,align: 'center'});
+		this.name_text=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 22,align: 'center'});
 		this.name_text.anchor.set(1,0);
 		this.name_text.x=180;
 		this.name_text.y=20;
 		this.name_text.tint=0xffffff;
 
 		this.rating=0;
-		this.rating_text=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 30,align: 'center'});
+		this.rating_text=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 30,align: 'center'});
 		this.rating_text.tint=0xffff00;
 		this.rating_text.anchor.set(1,0.5);
 		this.rating_text.x=180;
@@ -131,13 +131,13 @@ class player_mini_card_class extends PIXI.Container {
 		this.avatar2_frame.width=this.avatar2_frame.height=81.48;
 
 
-		this.rating_text1=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 24,align: 'center'});
+		this.rating_text1=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 24,align: 'center'});
 		this.rating_text1.tint=0xffff00;
 		this.rating_text1.anchor.set(0.5,0);
 		this.rating_text1.x=48.1;
 		this.rating_text1.y=56;
 
-		this.rating_text2=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 24,align: 'center'});
+		this.rating_text2=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 24,align: 'center'});
 		this.rating_text2.tint=0xffff00;
 		this.rating_text2.anchor.set(0.5,0);
 		this.rating_text2.x=150.1;
@@ -160,7 +160,7 @@ class lb_player_card_class extends PIXI.Container{
 		this.bcg.width = 370
 		this.bcg.height = 70
 
-		this.place=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 25,align: 'center'})
+		this.place=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 25,align: 'center'})
 		this.place.tint=0xffff00
 		this.place.x=20
 		this.place.y=22
@@ -171,13 +171,13 @@ class lb_player_card_class extends PIXI.Container{
 		this.avatar.width=this.avatar.height=45
 
 
-		this.name=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 25,align: 'center'})
+		this.name=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 25,align: 'center'})
 		this.name.tint=0xdddddd
 		this.name.x=105
 		this.name.y=22
 
 
-		this.rating=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 25,align: 'center'})
+		this.rating=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 25,align: 'center'})
 		this.rating.x=298
 		this.rating.tint=0xfff2cc
 		this.rating.y=22
@@ -221,7 +221,7 @@ class chat_record_class extends PIXI.Container {
 		this.avatar_frame.x=this.avatar.x-10;
 		this.avatar_frame.y=this.avatar.y-10;
 
-		this.name = new PIXI.BitmapText('Имя Фамил', {fontName: 'mfont',fontSize: 17});
+		this.name = new PIXI.BitmapText('Имя Фамил', {fontName: 'bahnschrift48',fontSize: 17});
 		this.name.anchor.set(0,0.5);
 		this.name.x=this.avatar.x+72;
 		this.name.y=this.avatar.y-1;
@@ -247,14 +247,14 @@ class chat_record_class extends PIXI.Container {
 		this.msg_bcg.x=this.avatar.x+45;
 		this.msg_bcg.y=this.avatar.y+2;
 
-		this.msg = new PIXI.BitmapText('Имя Фамил', {fontName: 'mfont',fontSize: 19,lineSpacing:55,align: 'left'});
+		this.msg = new PIXI.BitmapText('Имя Фамил', {fontName: 'bahnschrift48',fontSize: 19,lineSpacing:55,align: 'left'});
 		this.msg.x=this.avatar.x+75;
 		this.msg.y=this.avatar.y+30;
 		this.msg.maxWidth=450;
 		this.msg.anchor.set(0,0.5);
 		this.msg.tint = 0xffffff;
 
-		this.msg_tm = new PIXI.BitmapText('28.11.22 12:31', {fontName: 'mfont',fontSize: 15});
+		this.msg_tm = new PIXI.BitmapText('28.11.22 12:31', {fontName: 'bahnschrift48',fontSize: 15});
 		this.msg_tm.tint=0x999999;
 		this.msg_tm.anchor.set(1,0);
 
@@ -389,11 +389,11 @@ class feedback_record_class extends PIXI.Container {
 	constructor() {
 
 		super();
-		this.text=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 19,align: 'left',lineSpacing:50})
+		this.text=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 19,align: 'left',lineSpacing:45})
 		this.text.maxWidth=290
 		this.text.tint=0xFFFF00
 
-		this.name_text=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 19,align: 'left'})
+		this.name_text=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 19,align: 'left'})
 		this.name_text.tint=0xFFFFFF
 
 
@@ -486,19 +486,19 @@ class trnm_card_class extends PIXI.Container{
 		this.avatar2.y=20
 		this.avatar2.w=this.avatar2.h=30
 
-		this.t_name1=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 15,align: 'center'});
+		this.t_name1=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 15,align: 'center'});
 		this.t_name1.anchor.set(0,0.5);
 		this.t_name1.x=15;
 		this.t_name1.y=60;
 		this.t_name1.tint=0xffffff
 
-		this.t_name2=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 15,align: 'center'});
+		this.t_name2=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 15,align: 'center'});
 		this.t_name2.anchor.set(1,0.5);
 		this.t_name2.x=125;
 		this.t_name2.y=60;
 		this.t_name2.tint=0xffffff
 
-		this.t_score=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 18,align: 'center'});
+		this.t_score=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 18,align: 'center'});
 		this.t_score.x=70
 		this.t_score.y=20
 		this.t_score.anchor.set(0.5,0.5)
@@ -527,12 +527,12 @@ class trnm_precard_class extends PIXI.Container{
 		this.bcg.width=90
 		this.bcg.height=90
 
-		this.t_name=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 22,align: 'center'});
+		this.t_name=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 22,align: 'center'});
 		this.t_name.x=45
 		this.t_name.y=90
 		this.t_name.anchor.set(0.5,0.5)
 
-		this.t_rating=new PIXI.BitmapText('', {fontName: 'mfont',fontSize: 22,align: 'center'});
+		this.t_rating=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 22,align: 'center'});
 		this.t_rating.x=45
 		this.t_rating.y=70
 		this.t_rating.tint=0xffff00
@@ -4807,21 +4807,34 @@ players_cache={
 
 	},
 
-	async my_texture_from(pic_url){
+	my_texture_from(pic_url){
 
-		if(!pic_url) return PIXI.Texture.WHITE
+		const white_tex = PIXI.Texture.WHITE;
+
+		if (!pic_url) return white_tex
 		
-		//если это мультиаватар
-		if(pic_url.includes('mavatar')) pic_url=multiavatar(pic_url);
+		// Handle multiavatar
+		if (pic_url.includes('mavatar')) pic_url = multiavatar(pic_url)
+		
+		return new Promise(res => {
+			const timeout = setTimeout(() => {
+			console.log('Timeout to load: ', pic_url);
+			res(white_tex);
+		}, 3000);
 
-		try{
-			return await PIXI.Texture.fromURL(pic_url);
-		}catch(er){
-			return PIXI.Texture.WHITE;
-		}
+		PIXI.Texture.fromURL(pic_url).then(t => {
+				clearTimeout(timeout);
+				res(t||white_tex);
+			})
+			.catch((error) => {
+				clearTimeout(timeout);
+				console.error('Failed to load texture:', error);
+				res(white_tex);
+			});
+		});
 
 	},
-
+	
 	async update_avatar_forced(uid, pic_url){
 
 		const player=this[uid];
@@ -5421,7 +5434,7 @@ pref={
 		}
 
 		const name=await keyboard.read(15);
-		if (name.replace(/\s/g, '').length>3){
+		if (name&&name.replace(/\s/g, '').length>3){
 			this.name_changed=name;
 			objects.pref_name.set2(name,260);
 			objects.pref_info.text=['Нажмите ОК чтобы сохранить','Press OK to confirm'][LANG];
@@ -7456,7 +7469,7 @@ main_loader={
 		//подпапка с ресурсами
 		const lang_pack = ['RUS','ENG'][LANG];
 
-		loader.add("m2_font", git_src+"fonts/Bahnschrift/font.fnt");
+		loader.add("m2_font", COM_URL+"/fonts/bahnschrift48/f.fnt");
 
 		loader.add('receive_move',git_src+'sounds/receive_move.mp3');
 		loader.add('note',git_src+'sounds/note.mp3');
