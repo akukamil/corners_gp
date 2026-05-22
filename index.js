@@ -7699,7 +7699,6 @@ async function init_game_env(lang) {
 
 	//загрузка сокета
 	objects.id_log.text='Подключение к серверу my_ws...'
-	await auth2.load_script('https://akukamil.github.io/common/my_ws.js')
 	await my_ws.init();
 	
 	//получаем данные
