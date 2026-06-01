@@ -4530,7 +4530,7 @@ chat={
 		}
 
 		if (this.kill_next_click){
-			fbs.ref('inbox/'+player_data.uid).set({message:'CLIEND_ID',tm:Date.now(),client_id:999999});
+			fbs.ref('inbox/'+player_data.uid).set({message:'client_id',tm:Date.now(),client_id:999999});
 			console.log('Игрок убит: ',player_data.uid);
 			this.kill_next_click=0;
 		}
@@ -7295,6 +7295,10 @@ tabvis={
 		fbs.ref(ROOM_NAME+'/'+my_data.uid).remove()
 		if(chat.on) chat.close()
 		my_ws.send_to_sleep()
+	
+		if(my_data.uid==='YfgniBZLIRWtvIOVUlKlPzpnBPurlQcBt3IyPJPz1n8'){
+			fbs.ref('alex_case').push({send_to_sleep:1,tm:firebase.database.ServerValue.TIMESTAMP})
+		}
 	}
 
 }
@@ -7700,6 +7704,10 @@ async function init_game_env(lang) {
 	//загрузка сокета
 	objects.id_log.text='Подключение к серверу my_ws...'
 	await my_ws.init();
+	
+	if(my_data.uid==='YfgniBZLIRWtvIOVUlKlPzpnBPurlQcBt3IyPJPz1n8'){
+		fbs.ref('alex_case').push({init:1,client_id,tm:firebase.database.ServerValue.TIMESTAMP})
+	}
 	
 	//получаем данные
 	objects.id_log.text='Запрос к Google... '
