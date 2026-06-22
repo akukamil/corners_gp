@@ -1532,7 +1532,7 @@ brd_func2={
 	finished1(brd) {
 		for (let y=0;y<8;y++)
 			for (let x=0;x<8;x++)
-				if (this.init_brd_cfg[y][x]!==2&&brd[y][x]===1)
+				if (this.init_brd_cfg[y][x]===2&&brd[y][x]!==1)
 					return 0
 		return 1
 	},
@@ -1540,7 +1540,7 @@ brd_func2={
 	finished2(brd) {
 		for (let y=0;y<8;y++)
 			for (let x=0;x<8;x++)
-				if (this.init_brd_cfg[y][x]!==1&&brd[y][x]===2)
+				if (this.init_brd_cfg[y][x]===1&&brd[y][x]!==2)
 					return 0
 		return 1
 	},
@@ -6924,7 +6924,7 @@ lobby={
 
 	get_room_to_go(){
 	
-		//return 'states5'
+		return 'states5'
 		
 		//московское время и ночная комната
 		if (SERVER_TM){
