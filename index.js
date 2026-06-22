@@ -1,12 +1,12 @@
 var M_WIDTH=800, M_HEIGHT=450;
-var app ={stage:{},renderer:{}}, assets={}, SERVER_TM=0,fbs,client_id, objects={}, state="", my_role="", game_tick=0, made_moves=0, game_id=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=0, h_state=0, game_platform="",git_src='', ROOM_NAME = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process = {}, my_data={opp_id : ''},opp_data={}, game_name='corners';
+var app ={stage:{},renderer:{}}, assets={}, SERVER_TM=0,fbs,client_id, objects={}, state="", my_role="", game_tick=0, made_moves=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=0, h_state=0, game_platform="",git_src='', ROOM_NAME = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process={}, my_data={opp_id : ''},opp_data={}, game_name='corners';
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 const MAX_NO_AUTH_RATING=1950;
 const MAX_NO_REP_RATING=1910;
 const MAX_NO_CONF_RATING=1950;
 const DAYS_TO_CONF_RATING=7;
 const COM_URL='https://akukamil.github.io/com'
-let brd_func_src=0;
+
 let TM={s:0,ms:0}
 
 hf={
@@ -92,14 +92,14 @@ class player_mini_card_class extends PIXI.Container {
 		this.avatar_frame.width=this.avatar_frame.height=81.48;
 
 		this.name="";
-		this.name_text=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 22,align: 'center'});
+		this.name_text=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 22,align: 'center'});
 		this.name_text.anchor.set(1,0);
 		this.name_text.x=180;
 		this.name_text.y=20;
 		this.name_text.tint=0xffffff;
 
 		this.rating=0;
-		this.rating_text=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 30,align: 'center'});
+		this.rating_text=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 30,align: 'center'});
 		this.rating_text.tint=0xffff00;
 		this.rating_text.anchor.set(1,0.5);
 		this.rating_text.x=180;
@@ -131,13 +131,13 @@ class player_mini_card_class extends PIXI.Container {
 		this.avatar2_frame.width=this.avatar2_frame.height=81.48;
 
 
-		this.rating_text1=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 24,align: 'center'});
+		this.rating_text1=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 24,align: 'center'});
 		this.rating_text1.tint=0xffff00;
 		this.rating_text1.anchor.set(0.5,0);
 		this.rating_text1.x=48.1;
 		this.rating_text1.y=56;
 
-		this.rating_text2=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 24,align: 'center'});
+		this.rating_text2=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 24,align: 'center'});
 		this.rating_text2.tint=0xffff00;
 		this.rating_text2.anchor.set(0.5,0);
 		this.rating_text2.x=150.1;
@@ -160,7 +160,7 @@ class lb_player_card_class extends PIXI.Container{
 		this.bcg.width = 370
 		this.bcg.height = 70
 
-		this.place=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 25,align: 'center'})
+		this.place=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 25,align: 'center'})
 		this.place.tint=0xffff00
 		this.place.x=20
 		this.place.y=22
@@ -171,13 +171,13 @@ class lb_player_card_class extends PIXI.Container{
 		this.avatar.width=this.avatar.height=45
 
 
-		this.name=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 25,align: 'center'})
+		this.name=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 25,align: 'center'})
 		this.name.tint=0xdddddd
 		this.name.x=105
 		this.name.y=22
 
 
-		this.rating=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 25,align: 'center'})
+		this.rating=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 25,align: 'center'})
 		this.rating.x=298
 		this.rating.tint=0xfff2cc
 		this.rating.y=22
@@ -221,7 +221,7 @@ class chat_record_class extends PIXI.Container {
 		this.avatar_frame.x=this.avatar.x-10;
 		this.avatar_frame.y=this.avatar.y-10;
 
-		this.name = new PIXI.BitmapText('Имя Фамил', {fontName: 'bahnschrift48',fontSize: 17});
+		this.name = new PIXI.BitmapText('Имя Фамил', {fontName: 'bahnschrift48s',fontSize: 17});
 		this.name.anchor.set(0,0.5);
 		this.name.x=this.avatar.x+72;
 		this.name.y=this.avatar.y-1;
@@ -247,14 +247,14 @@ class chat_record_class extends PIXI.Container {
 		this.msg_bcg.x=this.avatar.x+45;
 		this.msg_bcg.y=this.avatar.y+2;
 
-		this.msg = new PIXI.BitmapText('Имя Фамил', {fontName: 'bahnschrift48',fontSize: 19,lineSpacing:55,align: 'left'});
+		this.msg = new PIXI.BitmapText('Имя Фамил', {fontName: 'bahnschrift48s',fontSize: 19,lineSpacing:48,align: 'left'});
 		this.msg.x=this.avatar.x+75;
 		this.msg.y=this.avatar.y+30;
 		this.msg.maxWidth=450;
 		this.msg.anchor.set(0,0.5);
 		this.msg.tint = 0xffffff;
 
-		this.msg_tm = new PIXI.BitmapText('28.11.22 12:31', {fontName: 'bahnschrift48',fontSize: 15});
+		this.msg_tm = new PIXI.BitmapText('28.11.22 12:31', {fontName: 'bahnschrift48s',fontSize: 15});
 		this.msg_tm.tint=0x999999;
 		this.msg_tm.anchor.set(1,0);
 
@@ -389,11 +389,11 @@ class feedback_record_class extends PIXI.Container {
 	constructor() {
 
 		super();
-		this.text=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 19,align: 'left',lineSpacing:45})
+		this.text=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 19,align: 'left',lineSpacing:45})
 		this.text.maxWidth=290
 		this.text.tint=0xFFFF00
 
-		this.name_text=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 19,align: 'left'})
+		this.name_text=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 19,align: 'left'})
 		this.name_text.tint=0xFFFFFF
 
 
@@ -473,6 +473,9 @@ class trnm_card_class extends PIXI.Container{
 		this.bcg=new PIXI.Sprite(assets.trnm_card_bcg)
 		this.bcg.width=140
 		this.bcg.height=80
+		this.bcg.interactive=true
+		const t=this
+		this.bcg.pointerdown=function(){trnm.card_down(t)}
 
 		//аватар первого игрока
 		this.avatar1=new PIXI.Graphics();
@@ -486,19 +489,19 @@ class trnm_card_class extends PIXI.Container{
 		this.avatar2.y=20
 		this.avatar2.w=this.avatar2.h=30
 
-		this.t_name1=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 15,align: 'center'});
+		this.t_name1=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 15,align: 'center'});
 		this.t_name1.anchor.set(0,0.5);
 		this.t_name1.x=15;
 		this.t_name1.y=60;
 		this.t_name1.tint=0xffffff
 
-		this.t_name2=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 15,align: 'center'});
+		this.t_name2=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 15,align: 'center'});
 		this.t_name2.anchor.set(1,0.5);
 		this.t_name2.x=125;
 		this.t_name2.y=60;
 		this.t_name2.tint=0xffffff
 
-		this.t_score=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 18,align: 'center'});
+		this.t_score=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 18,align: 'center'});
 		this.t_score.x=70
 		this.t_score.y=20
 		this.t_score.anchor.set(0.5,0.5)
@@ -527,12 +530,12 @@ class trnm_precard_class extends PIXI.Container{
 		this.bcg.width=90
 		this.bcg.height=90
 
-		this.t_name=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 22,align: 'center'});
+		this.t_name=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 22,align: 'center'});
 		this.t_name.x=45
 		this.t_name.y=90
 		this.t_name.anchor.set(0.5,0.5)
 
-		this.t_rating=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 22,align: 'center'});
+		this.t_rating=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 22,align: 'center'});
 		this.t_rating.x=45
 		this.t_rating.y=70
 		this.t_rating.tint=0xffff00
@@ -1458,21 +1461,51 @@ brd_func={
 
 brd_func2={
 	
+	boards_cfg:[
+	   [[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,1,1,1,1],
+		[0,0,0,0,1,1,1,1],
+		[0,0,0,0,1,1,1,1]],
+	   [[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,1,1,1],
+		[0,0,0,0,0,1,1,1],
+		[0,0,0,0,0,1,1,1]],
+	   [[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,0,0,1],
+		[0,0,0,0,0,0,1,1],
+		[0,0,0,0,0,1,1,1],
+		[0,0,0,0,1,1,1,1]]
+	],
+	
 	init_brd_cfg:[],
 	
-	get_def_brd(){
-		this.init_brd_cfg=[
-			[2,2,2,2,2,2,2,2],
-			[0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0],
-			[1,1,1,1,1,1,1,1]
-		]
-			
-		return JSON.parse(JSON.stringify(this.init_brd_cfg))
+	set_brd_cfg(id){
+		
+		this.init_brd_cfg=this.boards_cfg[id]
+		
+	},
+	
+	get_start_brd(){
+		
+		const b=JSON.parse(JSON.stringify(this.init_brd_cfg))
+		
+		for (let y=0;y<8;y++)
+			for (let x=0;x<8;x++)
+				if (b[y][x])
+					b[7-y][7-x]=2
+					
+		return b
 	},
 	
 	count_finished1(brd) {
@@ -1527,35 +1560,28 @@ brd_func2={
 	
 	get_brd_state(brd, made_moves) {
 
-		let w1=this.finished1(brd);
-		let w2=this.finished2(brd);
-		if (w1 === 1 && w2 === 1)
-			return 'both_finished'
-		if (w1 === 1)
-			return 'my_finished_first'
-		if (w2 === 1)
-			return 'opp_finished_first'
+		const w1=this.finished1(brd);
+		const w2=this.finished2(brd);
+		if (w1===1 && w2===1) return 'both_finished'
+		if (w1===1) return 'my_finished_first'
+		if (w2===1) return 'opp_finished_first'
 
-		let any1home30 = this.any1home(brd)*(made_moves >= 30);
-		let any2home30 = this.any2home(brd)*(made_moves >= 30);
+		const any1home30 = this.any1home(brd)*(made_moves >= 30);
+		const any2home30 = this.any2home(brd)*(made_moves >= 30);
 
-		if (any1home30 === 1 && any2home30 === 1)
-			return 'both_left_after_30'
-		if (any1home30 === 1)
-			return 'my_left_after_30'
-		if (any2home30 === 1)
-			return 'opp_left_after_30'
-
+		if (any1home30 === 1 && any2home30 === 1) return 'both_left_after_30'
+		if (any1home30 === 1) return 'my_left_after_30'
+		if (any2home30 === 1) return 'opp_left_after_30'
 
 		//это случай если игра дошла до 80 хода
 		if (made_moves >= 80) {
+			
+			const fin1=this.count_finished1(brd)
+			const fin2=this.count_finished2(brd)
 
-			let fin1=this.count_finished1(brd);
-			let fin2=this.count_finished2(brd);
-
-			if (fin1	>	fin2)	return 'my_more_fin_after_80';
-			if (fin1	<	fin2)	return 'opp_more_fin_after_80';
-			if (fin1	===	fin2)	return 'same_fin_after_80';
+			if (fin1>fin2) return 'my_more_fin_after_80'
+			if (fin1<fin2) return 'opp_more_fin_after_80'
+			if (fin1===fin2) return 'same_fin_after_80'
 		}
 
 		return '';
@@ -1582,7 +1608,8 @@ online_game = {
 	my_moves_hist:[],
 	opp_moves_hist:[],
 	energy_collected:0,
-	blind_game_flag:0,
+	trnm:0,
+	gid:0,
 	
 	calc_new_rating(old_rating, game_result) {
 
@@ -1601,13 +1628,16 @@ online_game = {
 		this.my_moves_hist=[]
 		this.opp_moves_hist=[]
 		my_log.log_arr=[]
+		
+		//фиксируем номер игры
+		this.gid=params.gid
 
-		//пока еще никто не подтвердил игру
-		this.me_conf_play = 0
-		this.opp_conf_play = 0
+		//пока еще никто не подтвердил игру (кроме случая турнира)
+		this.me_conf_play = params.t||0
+		this.opp_conf_play = params.t||0
 
-		//слепая конкурсная игра
-		this.blind_game_flag=params.bgame
+		//турнирная игра
+		this.trnm=params.t
 
 		//счетчик времени
 		this.prv_tick_time=Date.now()
@@ -1631,8 +1661,10 @@ online_game = {
 			this.no_rating_msg_timer=setTimeout(()=>{pmsg.add({t:'Выбирайте разных соперников для получения и подтверждения рейтинга'})},5000)
 
 		//обновляем стол
-		fbs.ref('tables/'+game_id+'/master').set(my_data.uid)
-		fbs.ref('tables/'+game_id+'/slave').set(opp_data.uid)
+		if (params.role==='slave'){
+			fbs.ref('tables/'+this.gid+'/master').set(opp_data.uid)			
+			fbs.ref('tables/'+this.gid+'/slave').set(my_data.uid)			
+		}
 
 		//вычиcляем рейтинг при проигрыше и устанавливаем его в базу он потом изменится
 		const lose_rating = this.calc_new_rating(my_data.rating, LOSE)
@@ -1646,32 +1678,15 @@ online_game = {
 		objects.send_message_button.alpha=my_data.blocked?0.3:1
 
 		//устанавливаем локальный и удаленный статус
-		set_state({state : 'p'})
+		set_state({state:'p'})
 		
 		game.state='online'
 
 		//устанавливаем начальное расположение шашек
-		if(this.blind_game_flag)
-			brd_func_src=brd_func2
-		else
-			brd_func_src=brd_func
-		
-		//определяем конфигурацию шашек
-		if (params.brd_cfg){
-			g_board=brd_func.brd_cfg_to_brd(params.brd_cfg)
-			brd_func2.init_brd_cfg=brd_func.brd_cfg_to_brd(params.brd_cfg)
-			brd_func.show_home_area(g_board)
-		}
-		else
-			g_board=brd_func.get_def_brd()
-
+		brd_func2.set_brd_cfg(params.brd_cfg||0)
+		g_board=brd_func2.get_start_brd()
 		brd_func.update_board(g_board)
 
-		//сколько скопили энергии
-		this.energy_collected=0
-
-		if (params.bonuses)
-			this.add_bonuses(params.bonuses)
 
 	},
 
@@ -1903,18 +1918,14 @@ online_game = {
 		this.my_moves_hist.push(Object.values(move_data).join(''));
 
 		const move_data_short=move_data.x1.toString()+move_data.y1.toString()+move_data.x2.toString()+move_data.y2.toString();
-		//отправляем ход сопернику
-		//my_log.add({name:my_data.name,opp_name:opp_data.name,move_data,game_id,made_moves,connected,tm:Date.now(),info:'process_my_move'})
-
-		//fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'MOVE',tm:Date.now(),data:{...move_data, board_state:0}});
 
 		//новая версия
 		const t=((Date.now()-this.start_time||2323)*0.001).toFixed(1);
 		fbs.ref('inbox/'+opp_data.uid).set({s:my_data.uid.substring(0,8),m:'M',t,d:move_data_short});
 
 		//также фиксируем данные стола
-		const moves_made=my_role === 'slave'?made_moves+1:0;
-		fbs.ref('tables/'+game_id+'/board').set({uid:my_data.uid,f_str:brd_func.brd_to_str(g_board,moves_made),tm:Date.now()});
+		const moves_made=my_role==='slave'?made_moves+1:0;
+		fbs.ref('tables/'+this.gid+'/board').set({uid:my_data.uid,f_str:brd_func.brd_to_str(g_board,moves_made),tm:firebase.database.ServerValue.TIMESTAMP});
 
 	},
 
@@ -1979,14 +1990,6 @@ online_game = {
 
 	},
 
-	async forced_inbox_check(game_id,opp_name){
-
-		let c_data=await fbs.ref('inbox/'+my_data.uid).once('value');
-		c_data=c_data.val();
-		fbs.ref('BAD_CASE2').push({name:my_data.name,opp_name,game_id,info:'forced_inbox_check',tm:Date.now(),inbox:c_data});
-
-	},
-
 	async stop(result) {
 
 		this.on=0
@@ -2017,7 +2020,7 @@ online_game = {
 		clearTimeout(this.timer_id);
 		clearTimeout(this.no_rating_msg_timer);
 
-		const result_row = res_array.find( p => p[0] === result);
+		const result_row = res_array.find(p => p[0] === result);
 		const result_number = result_row[1];
 		const result_info = result_row[2][LANG]
 
@@ -2035,7 +2038,6 @@ online_game = {
 			my_data.rating=old_rating;
 			auth_msg='Выбирайте разных соперников для получения рейтинга';
 		}
-
 
 		//максимальный рейтинг как наказание
 		if (my_data.max_rating&&my_data.rating>my_data.max_rating)
@@ -2063,9 +2065,13 @@ online_game = {
 			sound.play('lose');
 		else
 			sound.play('win');
+		
+		//если это турнир
+		if (this.trnm)
+			trnm.process_game_end(result_number)
 
 		//также фиксируем данные стола
-		setTimeout(()=>{fbs.ref('tables/'+game_id+'/board').set({uid:my_data.uid,fin:result,tm:Date.now()})},400)
+		setTimeout(()=>{fbs.ref('tables/'+this.gid+'/board').set({uid:my_data.uid,fin:result,tm:firebase.database.ServerValue.TIMESTAMP})},400)
 
 		//если игра результативна то записываем дополнительные данные
 		if (result_number === DRAW || result_number === LOSE || result_number === WIN) {
@@ -2150,7 +2156,8 @@ bot_game = {
 
 		game.state='bot'
 		
-		brd_func_src=brd_func
+		//brd_func_src=brd_func
+		brd_func2.set_brd_cfg(0)
 		brd_func.update_board(g_board);
 
 	},
@@ -2194,7 +2201,7 @@ bot_game = {
 
 		if(!this.on) return;
 
-		await new Promise((resolve, reject) => setTimeout(resolve, 300));
+		await new Promise(r=>setTimeout(r,300))
 
 		let m_data={};
 		if (made_moves < 30)
@@ -2223,39 +2230,62 @@ bot_game = {
 
 trnm={
 
-	table_id:0,
 	TRNM_CONF:0,
 	rounds_cards:[],
 	state:'',
 	players_data_received:0,
 	listeners:{players:0,state:0},
 	cached_trnm_data:{tables:{},players:[]},
+	reg_btn_state:0,
+	reg_process_on:0,
+	sec_to_start:0,
+	sec_to_start_timer:0,	
+	winner_uid:0,
+	info3_close_timer:0,
+
+	send_info3(t){
+	
+		clearTimeout(this.info3_close_timer)
+		objects.trnm_info3.text=t
+		anim3.add(objects.trnm_info3_cont,{y:[450, objects.trnm_info3_cont.sy,'linear']}, true, 0.25);
+		
+		this.info3_close_timer=setTimeout(()=>{
+			anim3.add(objects.trnm_info3_cont,{y:[objects.trnm_info3_cont.y, 450,'linear']}, false, 0.25);
+		},6000)
+		
+	},
 	
 	async activate(){
 
+		this.on=1
 		anim3.add(objects.trnm_cont, {alpha: [0, 1, 'linear']}, true, 0.25)
 
-		objects.trnm_precards.forEach(c=>c.visible=false);
-		objects.trnm_cards.forEach(c=>c.visible=false);
-
-		objects.trnm_info.text='Загрузка...'
+		objects.trnm_precards.forEach(c=>c.visible=false)
+		objects.trnm_cards.forEach(c=>c.visible=false)
+		
+		objects.trnm_reg_btn.visible=false
+		
+		objects.trnm_info1.text='Загрузка данных...'
+		objects.trnm_info2.text='...'
 		
 		//заносим в кэш столы
 		this.cached_trnm_data.tables=await fbs_once("trnm/tables")
 		
+		//обновляем игроков
 		await new Promise(res=>{
 			fbs.ref("trnm/players").on('value', s => {
 				this.cached_trnm_data.players=s.val()
 				this.players_updated(s.val())
 				res()
-			})			
+			})
 		})
-					
-		fbs.ref("trnm/state_data").on('value', s => {
-			this.state_updated(s.val())
+
+		fbs.ref('trnm/state_data').on('value', s => {
+			this.state_changed(s.val())
 		})
 		
-		fbs.ref("trnm/tables").on('child_changed', s => {
+		fbs.ref('trnm/tables').on('child_changed', s => {
+			console.log('table_changed: ',s.key,s.val())
 			this.cached_trnm_data.tables[s.key]=s.val()
 			this.tables_updated({[s.key]:s.val()})
 		})
@@ -2273,24 +2303,44 @@ trnm={
 		this.cached_trnm_data.players=d
 		console.log('players_updated:', d)
 		
-		const num_of_player=this.cached_trnm_data.players.filter(p=>p!==undefined).length
-		const start_x=(M_WIDTH-num_of_player*90)*0.5
+		const num_of_players=this.cached_trnm_data.players.filter(p=>p!==undefined).length
+		sound.play('trnm_event')
 		
-		let i=0
-		for (const player of this.cached_trnm_data.players){
-			if (!player) continue
-			const precard=objects.trnm_precards[i]
-			precard.visible=true
-			precard.x=start_x+i*90
-			precard.y=225
-			precard.uid=player.uid
+		let rows=[]
+		let start_y=0
+		if (num_of_players>5){
+			const row1=Math.floor(num_of_players*0.5)
+			rows=[row1,num_of_players-row1]
+			start_y=120
+		}else{
+			rows=[num_of_players]
+			start_y=190
+		}
+		
+		let i=0		
+		for (let r=0;r<rows.length;r++){
+			
+			const icons_in_row=rows[r];
+			const start_x=(M_WIDTH-icons_in_row*90)*0.5
+			
+			for (let i2=0;i2<icons_in_row;i2++){
+				
+				const player=this.cached_trnm_data.players[i]
+				if (!player) continue
+				
+				const precard=objects.trnm_precards[i]
+				precard.visible=true
+				precard.x=start_x+i2*90
+				precard.y=start_y+r*110
+				precard.uid=player.uid
 
-			const pdata=players_cache.get_pdata(player.uid)
-			if (pdata)
-				precard.set(pdata)
-			else
-				players_cache.update(player.uid)
-			i++
+				const pdata=players_cache.get_pdata(player.uid)
+				if (pdata)
+					precard.set(pdata)
+				else
+					players_cache.update(player.uid)
+				i++
+			}		
 		}
 	},
 
@@ -2300,53 +2350,173 @@ trnm={
 
 	},
 		
-	async state_updated(state_data){
+	async state_changed(state_data){
 		
 		const state=state_data.state		
 		this.state=state
-		
-		objects.trnm_info.text=state
-		
+		this.winner_uid=0
+		sound.play('trnm_event')
+
 		if (state==='reg'){
-			objects.trnm_cards.forEach(c=>c.visible=false);
+			objects.trnm_reg_btn.visible=true
+			objects.trnm_info1.text='Идет регистрация участников...'
+			objects.trnm_info2.text='...'
+			objects.bcg.texture=assets.bcg
+			this.reg_btn_set_state(0)
+			objects.trnm_cards.forEach(c=>c.visible=false)
 			this.players_updated(this.cached_trnm_data.players)
+			this.start_reg_process()
+			some_process.trnm_reg=()=>{objects.trnm_info1.alpha=Math.abs(Math.sin(TM.s))}
 		}
-		
+
 		if (state==='reg_fin'){
+			objects.trnm_reg_btn.visible=false
+			objects.trnm_info1.text='Регистрация окончена!'
+			objects.trnm_info2.text='турнир начнется через 15 секунд...'
+			objects.bcg.texture=assets.bcg
+			this.stop_reg_process()
 			objects.trnm_cards.forEach(c=>c.visible=false)
 			this.cached_trnm_data.players||=await fbs_once('trnm/players')
+			some_process.trnm_reg=()=>{objects.trnm_info1.alpha=Math.abs(Math.sin(TM.s*2))}
 		}
-		
+
 		if (state==='noplayers'){
+			objects.trnm_reg_btn.visible=false
+			objects.trnm_info1.text='Турнир не состоялся из-за недостаточного количества игроков!'
+			objects.trnm_info2.text='((('
+			objects.bcg.texture=assets.bcg
+			this.stop_reg_process()
 			
-			objects.trnm_info.text='Нет  игроков...'
+			objects.trnm_info1.alpha=1
+			some_process.trnm_reg=()=>{}
 		}
-		
+
 		if (state==='finished'){
+			objects.trnm_reg_btn.visible=false
+			objects.trnm_info1.text='Турнир окончен!'
+			
+			this.winner_uid=this.cached_trnm_data.players[state_data.winner].uid
+			
+			if (players_cache[this.winner_uid]){
+				const winner_name=players_cache[this.winner_uid].name
+				objects.trnm_info2.text=`Победитель: ${winner_name}`
+			}else{
+				players_cache.update(this.winner_uid)
+			}				
+			
+			objects.bcg.texture=assets.trnm_bcg
 			objects.trnm_precards.forEach(c=>c.visible=false)
 			this.init_cards()
 			this.tables_updated(this.cached_trnm_data.tables)
-		}
+			this.show_winner()
+			
+			objects.trnm_info1.alpha=1
+			some_process.trnm_reg=()=>{}
+		}		
 		
 		if (state==='started'){	
+			objects.trnm_reg_btn.visible=false
+			objects.trnm_info1.text='Турнир начался!'
+			objects.trnm_info2.text=`Раунд ${state_data.r+1}`
+			if (state_data.r==2) objects.trnm_info2.text+=' (полуфинал)'
+			if (state_data.r==3) objects.trnm_info2.text+=' (финал)'
+			
+			this.send_info3('Не выходите из меню турнира, чтобы не пропустить приглашение!')
+			
+			objects.bcg.texture=assets.trnm_bcg
 			objects.trnm_precards.forEach(c=>c.visible=false)
-			console.log('Начался новый раунд: ')
+			//console.log(`Раунд ${state_data.r} начался!`)
 			this.init_cards()
 			this.tables_updated(this.cached_trnm_data.tables)
+			
+			objects.trnm_info1.alpha=1
+			some_process.trnm_reg=()=>{}
 		}
+		
+		if (state==='round_fin'){
+			objects.trnm_reg_btn.visible=false
+			objects.trnm_info1.text='Турнир начался!'
+			objects.trnm_info2.text=`Раунд ${state_data.r+1} окончен, ожидаем следующий раунд: `
+			objects.bcg.texture=assets.trnm_bcg			
+			objects.trnm_precards.forEach(c=>c.visible=false)
+			this.init_cards()
+			this.tables_updated(this.cached_trnm_data.tables)
+			
+			objects.trnm_info1.alpha=1
+			some_process.trnm_reg=()=>{}
+		}
+		
+	},
+	
+	secondsToHMS(seconds) {
+		const hours = Math.floor(seconds / 3600);
+		const minutes = Math.floor((seconds % 3600) / 60);
+		const secs = seconds % 60;
+
+		return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+	},
+
+	start_reg_process(){
+		
+		if (this.reg_process_on) return
+		this.reg_process_on=1
+		this.sec_to_start=null
+		
+		fbs.ref('trnm/tm_to_start').on('value',v=>{
+			if (this.sec_to_start===null) {
+				this.sec_to_start=1
+				return
+			}
+			this.sec_to_start=v.val()
+		})
+		
+		this.sec_to_start_timer=setInterval(()=>{
+			if (this.sec_to_start===null) return
+			if (this.sec_to_start>0) this.sec_to_start--
+			objects.trnm_info2.text=this.secondsToHMS(this.sec_to_start)
+		},1000)
+		
+	},
+	
+	stop_reg_process(){
+		
+		this.reg_process_on=0
+		clearInterval(this.sec_to_start_timer)
+		fbs.ref('trnm/tm_to_start').off()
+		
+	},
+		
+	show_winner(){
+		
+		const res=this.cached_trnm_data.tables['3_0']
+		const fin_players=res.p
+		const fin_score=res.s
+		
+		let winner_uid=null
+		
+		const cached_p1_data=this.cached_trnm_data.players[fin_players[0]]
+		const cached_p2_data=this.cached_trnm_data.players[fin_players[1]]
+		
+		const p1_uid=cached_p1_data.uid
+		const p2_uid=cached_p2_data.uid
+		
+		if (fin_score[0]>fin_score[1])	return p1_uid
+		if (fin_score[0]<fin_score[1])	return p2_uid
+				
+		const r1=cached_p1_data.rating
+		const r2=cached_p2_data.rating
+		
+		if (r1>r2)	return p1_uid
+		return p2_uid
 		
 	},
 	
 	init_cards(){
 		
-		
-		const cards_pos_data={rt_00:{x:0,y:20},rt_01:{x:0,y:90},rt_02:{x:0,y:220},rt_03:{x:0,y:290},rt_04:{x:660,y:20},rt_05:{x:660,y:90},rt_06:{x:660,y:220},rt_07:{x:660,y:290},rt_10:{x:140,y:50},rt_11:{x:140,y:250},rt_12:{x:520,y:50},rt_13:{x:520,y:250},rt_20:{x:250,y:150},rt_21:{x:410,y:150},rt_30:{x:330,y:240}}
+		const cards_pos_data={rt_00:{x:0,y:20},rt_01:{x:0,y:100},rt_02:{x:0,y:221},rt_03:{x:0,y:301},rt_04:{x:660,y:20},rt_05:{x:660,y:100},rt_06:{x:660,y:220},rt_07:{x:660,y:300},rt_10:{x:140,y:60},rt_11:{x:140,y:260},rt_12:{x:520,y:60},rt_13:{x:520,y:260},rt_20:{x:250,y:160},rt_21:{x:410,y:160},rt_30:{x:330,y:250}}
 
-
-		
-		if(!this.TRNM_CONF){
-			this.TRNM_CONF=[8,4,2,1]
-		}
+		if(!this.TRNM_CONF)
+			this.TRNM_CONF=[8,4,2,1]		
 
 		const rounds_num=this.TRNM_CONF.length
 
@@ -2365,17 +2535,91 @@ trnm={
 				trnm_card.x=pos_data.x
 				trnm_card.y=pos_data.y
 				trnm_card.visible=true
-				trnm_card.alpha=0.25
+				//trnm_card.alpha=0.25
 				this.rounds_cards[r].push(trnm_card)
 				i++
 			}
 		}
 	},
 	
+	card_down(card){
+		
+		console.log(this.cached_trnm_data.tables[card.rts])
+				
+		//если какая-то анимация или открыт диалог
+		if (anim3.any_on()) {
+			sound.play('locked');
+			return
+		};
+		
+		sound.play('click');
+		
+		const table_data=this.cached_trnm_data.tables[card.rts]
+		if (!table_data.playing){
+			
+
+			if(table_data.empty){
+				this.send_info3('Данный стол еще пуст!')
+			}
+
+			if(table_data.set){
+				this.send_info3('Данный стол в ожидании следующей партии!')
+			}
+			
+			if(table_data.fin){
+				this.send_info3('Игры за данным столом завершены!')
+			}
+			
+			
+			
+			return
+		}
+
+		const p1=table_data.p[0]
+		const p2=table_data.p[1]
+
+		const uid1=this.cached_trnm_data.players[p1].uid
+		const uid2=this.cached_trnm_data.players[p2].uid		
+
+		anim3.add(objects.td_cont, {x: [800, objects.td_cont.sx, 'linear']}, true, 0.1)
+
+		objects.td_avatar1.set_texture(players_cache[uid1].texture);
+		objects.td_avatar2.set_texture(players_cache[uid2].texture);
+
+		objects.td_rating1.text = players_cache[uid1].rating;
+		objects.td_rating2.text = players_cache[uid2].rating;
+
+		objects.td_name1.set2(players_cache[uid1].name, 240);
+		objects.td_name2.set2(players_cache[uid2].name, 240);
+		
+		objects.watch_button.visible=true	
+		
+		objects.watch_button.pointerdown=()=>{				
+			this.peek_down(table_data.gid)
+		}
+		
+	},
+	
+	peek_down(gid){
+
+		if (anim3.any_on()) {
+			sound.play('locked')
+			return
+		}
+		
+		sound.play('click')
+		this.close()
+
+		//активируем просмотр игры
+		game_watching.activate({gid,trnm:1})
+	},
+	
 	tables_updated(data){
 
 		if (this.state==='reg') return
 		if (!data) return
+		
+		sound.play('trnm_event')
 		
 		for (const r_t_s of Object.keys(data)){
 
@@ -2387,8 +2631,13 @@ trnm={
 			const round_id=+rts[0]
 			const table_id=+rts[1]
 			const tar_card=this.rounds_cards[round_id][table_id]
-			
-			if (data[r_t_s].p){
+			tar_card.rts=r_t_s;
+				
+			if (data[r_t_s].p&&!table_data.empty){
+				
+				tar_card.avatar1.visible=true
+				tar_card.avatar2.visible=true
+				tar_card.bcg.texture=assets.trnm_card_bcg
 				const players=data[r_t_s].p
 				tar_card.uid1=this.cached_trnm_data.players[players[0]].uid
 				tar_card.uid2=this.cached_trnm_data.players[players[1]].uid
@@ -2412,27 +2661,54 @@ trnm={
 			}
 			
 			if(table_data.playing){
-				tar_card.alpha=1
+				tar_card.bcg.texture=assets.trnm_card_playing_bcg
 				tar_card.t_score.text=table_data.s.join(':')
 			}
 
-			if(table_data.pending){
-				tar_card.alpha=0.2
-				tar_card.t_score.text=table_data.s.join(':')
+			if(table_data.empty){
+				tar_card.bcg.texture=assets.trnm_card_empty_bcg
+				tar_card.avatar1.visible=false
+				tar_card.avatar2.visible=false
+				tar_card.t_name1.text=''
+				tar_card.t_name2.text=''
+				tar_card.t_score.text=''
 			}
 
-			if(table_data.ready){
-				tar_card.alpha=0.5
+			if(table_data.set){
+				tar_card.bcg.texture=assets.trnm_card_set_bcg
+				tar_card.t_score.text=table_data.s.join(':')
+			}
+			
+			if(table_data.fin){
+				tar_card.bcg.texture=assets.trnm_card_bcg
 				tar_card.t_score.text=table_data.s.join(':')
 			}
 
 		}
 	},
 
-	start_btn_down(){
+	reg_btn_down(){
 
-		fbs.ref('trnm/_players/'+my_data.uid).set(my_data.rating)
+		if (this.state!=='reg') return
 
+		if (this.reg_btn_state)
+			fbs.ref('trnm/_players/'+my_data.uid).remove()
+		else
+			fbs.ref('trnm/_players/'+my_data.uid).set(my_data.rating)
+
+		this.reg_btn_set_state(1-this.reg_btn_state)
+
+	},
+	
+	reg_btn_set_state(s){
+		
+		this.reg_btn_state=s
+		
+		if (this.reg_btn_state)
+			objects.trnm_reg_btn.texture=assets.trnm_stop_reg_btn_img
+		else
+			objects.trnm_reg_btn.texture=assets.trnm_reg_btn
+		
 	},
 
 	cache_updated(uid,pdata){
@@ -2458,39 +2734,47 @@ trnm={
 				card.set(pdata)
 		}
 
+		if (uid===this.winner_uid){
+			const winner_name=players_cache[this.winner_uid].name
+			objects.trnm_info2.text=`Победитель: ${winner_name}`
+		}
 	},
 
-	event(e){
+	inc_event(e){
 
+		if (state!=='o') return
 		if (!e) return
 		if (e.trnm){
-			
 			console.log(`trnm event: ${JSON.stringify(e)}`)
 			if (objects.big_msg_cont.visible)
 				big_msg.close('forced')
-			game_id=e.game_id
-			opp_data.uid=e.opp_uid
 			this.table_id=e.table_id
 			const role=e.r===1?'master':'slave'
-			game.activate({opp:online_game,role,t:1})
-			objects.trnm_cont.visible=false
-			
-
+			game.activate({opp:online_game,role,t:1,opp_uid:e.opp_uid,gid:e.gid,brd_cfg:e.brd_cfg})
+			this.close()
 		}
-		if (e.fin){
-
-			//перенаправляем в турнир
-			if (e.fin===WIN)
-				fbs.ref('trnm/events').set({game_end:game_id,winner:my_data.uid,table_id:this.table_id,tm:Date.now()})
-			if (e.fin===LOSE)
-				fbs.ref('trnm/events').set({game_end:game_id,winner:opp_data.uid,table_id:this.table_id,tm:Date.now()})
-			if (e.fin===NOSYNC || e.fin===DRAW)
-				fbs.ref('trnm/events').set({game_end:game_id,table_id:this.table_id,tm:Date.now()})
-		}
+	},
+	
+	process_game_end(e){
+		
+		//перенаправляем в турнир
+		if (e===WIN)
+			fbs.ref('trnm/events').set({game_end:online_game.gid,winner:my_data.uid,table_id:this.table_id,tm:Date.now()})
+		if (e===LOSE)
+			fbs.ref('trnm/events').set({game_end:online_game.gid,winner:opp_data.uid,table_id:this.table_id,tm:Date.now()})
+		if (e===NOSYNC || e===DRAW)
+			fbs.ref('trnm/events').set({game_end:online_game.gid,winner:0,table_id:this.table_id,tm:Date.now()})
+		
 	},
 
 	close_btn_down(){
-
+		
+		if (anim3.any_on()) {
+			sound.play('locked');
+			return
+		}
+		
+		sound.play('close')
 		this.close()
 		lobby.activate()
 
@@ -2499,36 +2783,40 @@ trnm={
 	async fill_players(){
 		
 		const pdata=[
-			'9cfpgziakIrI2x2M5pNHxDkgX1Y3HAlsZC71tK8rwI',
-			'vk707417737',
-			'Zma2AM5kY7ygQklAyj9TFXWeEOcZyChbLCWOA4zgsA',
-			'sBhi0dKhpQnoY3qkR1VeeWYARVBqiZaItXGOLl12pSI',
-			'Wp3P6ZDmBAzg54X3ZbfAG6sdse0Q8FI3i15eplhxU8',
-			'vk169121580',
-			'1DbrG34UEJRSqKlCe9j1oghzKPCZdGF4pbFFF7aqY90',
-			'kUla9sEjetoqjxKOmTHwLH2zOgxaWMCmCQrlfIbeYQE',
-			'xB7KUHPe91Gd8gaAyjF1TLh8FOiIJPm8X4Y4NpCK8Xs',
-			'9pJovNMxHidFiJDrikgO1PgekkVnBSdyECPYrctET8',
-			'6GybQpi1V7WwMglNYqj2r91xxyG5xEkBTbhUQxVjVY',
-			'ok1018577344',
-			'BBvQNgBaw3gK1pETtGmL0mfr88Q6KyhOpG30TuFSDk',
-			'vk827304690',
-			'RIOXEDfrGBQDGD2nVZk2xwLI81QANHr3tSAycWjOWk',
-			'USpJbkjUfFcwnE4Cm2O8qAx9b3vkEaouUMFC7fZQU'
+			'debug84',
+			'debug85',
+			'debug86',
+			'debug87',
+			'debug88',
+			'debug89',
+			'debug90',
+			'debug91',
+			'debug92',
+			'debug93',
+			'debug94',
+			'debug95',
+			'debug96',
+			'debug97',
+			'debug98',
+			'debug99'
 		]
 		
 		
 		for (const p of pdata){
-			fbs.ref('trnm/_players/'+p).set(hf.randIntInc(1300,1600))
+			fbs.ref('trnm/_players/'+p).set(hf.randIntInc(1300,1400))
 			await new Promise(res => setTimeout(res, 1000));
 		}
 		
 	},
 
 	close(){
-
+		
+		this.on=1
+		if (objects.td_cont.visible) lobby.close_table_dialog()
+		objects.bcg.texture=assets.bcg
 		objects.trnm_cont.visible=false
-		fbs.ref('trnm/state').off()
+		fbs.ref('trnm/state_data').off()
+		fbs.ref('trnm/tables').off()
 		fbs.ref('trnm/players').off()
 	}
 
@@ -2540,10 +2828,14 @@ game = {
 	selected_checker : 0,
 	state : 'off',
 	move_processor:0,
-
-	activate(params={}) {
+	trnm:0,
+	
+	async activate(params={}) {
 
 		my_role = params.role
+		
+		//фиксируем айди соперника
+		opp_data.uid=params.opp_uid
 
 		objects.bcg.texture=assets.bcg;
 		anim3.add(objects.bcg, {alpha: [0, 1, 'linear']}, true, 0.5)
@@ -2564,19 +2856,22 @@ game = {
 		objects.board.texture=pref.board_texture
 		objects.home_cfg.clear()
 
+		//турнирная игра
+		this.trnm=params.t
+
 		if (this.opponent!=='') this.opponent.clear()
-
-		//если открыт лидерборд то закрываем его
 		if (objects.lb_1_cont.visible) lb.close()
-
-		//если открыт чат то закрываем его
 		if (objects.chat_cont.visible) chat.close()
-			
-		//если открыт просмтотр игры то закрываем его
 		if (game_watching.on) game_watching.close()
+		if (lobby.on) lobby.close()
+		if (trnm.on) trnm.close()
+
 
 		//убираем бонусы
 		objects.bonuses.forEach(b=>b.visible=false)
+		
+		//обновляем данные соперника на всякий случай
+		await players_cache.update(opp_data.uid)
 
 		//карточка и данные соперника
 		const player_data=players_cache[opp_data.uid]
@@ -2625,6 +2920,19 @@ game = {
 
 
 
+	},
+
+	async get_safe_gid(){
+				
+		for (let i=0;i<100;i++){
+			
+			const gid=hf.randIntInc(1,999)
+			const board_tm=await fbs_once('tables/'+gid+'/board/tm')
+			if (!board_tm || SERVER_TM-board_tm>300_000)
+				return gid
+		}	
+		
+		return hf.randIntInc(1000,2000)
 	},
 
 	async give_up_down() {
@@ -2750,7 +3058,7 @@ game = {
 		if (my_role === 'slave') {
 			made_moves++;
 			objects.cur_move_text.text=['cделано ходов: ','made moves: '][LANG]+made_moves;
-			const result = brd_func_src.get_brd_state(g_board, made_moves);
+			const result = brd_func2.get_brd_state(g_board, made_moves);
 			if (result !== '') {
 				this.stop(result);
 				return;
@@ -2759,7 +3067,7 @@ game = {
 
 		//уведомление что нужно вывести шашки из дома
 		if (made_moves>24 && made_moves<31 ) {
-			if (brd_func_src.any1home(g_board))
+			if (brd_func2.any1home(g_board))
 				pmsg.add({t:['После 30 ходов не должно остаться шашек в доме','After 30 moves, there should be no checkers left in the house'][LANG]});
 		}
 
@@ -2815,7 +3123,7 @@ game = {
 			made_moves++;
 			objects.cur_move_text.text="сделано ходов: "+made_moves;
 
-			let result = brd_func_src.get_brd_state(g_board, made_moves);
+			let result = brd_func2.get_brd_state(g_board, made_moves);
 
 			//бота нельзя блокировать
 			if (result === 'opp_left_after_30' && this.opponent === bot_game)	result = '';
@@ -2855,13 +3163,16 @@ game = {
 		this.state='ad'
 
 		//рекламная пауза
-		ad.show();
-		await new Promise((resolve, reject) => setTimeout(resolve, 2000));
+		ad.show()
+		await new Promise(r => setTimeout(r, 2000))
 		
 		//игра закончена, показываем биг мсг
 		this.state='off'
 		
-		lobby.activate()
+		if (this.trnm)
+			trnm.activate()
+		else
+			lobby.activate()
 
 		//устанавливаем статус в базе данных а если мы не видны то установливаем только скрытое состояние
 		set_state ({state : 'o'})
@@ -2877,13 +3188,14 @@ game_watching={
 	slave_uid:'',
 	game_over:0,
 	prv_board:0,
+	trnm:0,
 
-	async activate(card_data){
+	async activate(params={}){
 
-		this.on=true;
-
-
-		this.game_id=card_data.game_id;
+		this.on=true
+		
+		this.game_id=params.gid;
+		this.trnm=params.trnm
 
 		objects.gw_back_button.visible=true;
 		objects.my_card_cont.visible = true;
@@ -2893,24 +3205,27 @@ game_watching={
 		objects.board.interactive=false;
 		objects.gw_master_chip.visible=true;
 		objects.gw_slave_chip.visible=true;
-
-		const main_data=await fbs_once('tables/'+this.game_id)
-
-		//определяем индексы карточек
-		const master_ind=+(card_data.uid2===main_data.master)+1
-		const slave_ind=3-master_ind;
+				
+		const master_uid=await fbs_once('tables/'+this.game_id+'/master')
+		const slave_uid=await fbs_once('tables/'+this.game_id+'/slave')
+		
+		if (!players_cache[master_uid])	await players_cache.update(master_uid)
+		if (!players_cache[slave_uid])	await players_cache.update(slave_uid)
+		
+		const master_data=players_cache[master_uid]
+		const slave_data=players_cache[slave_uid]		
 
 		//аватарки
-		objects.my_avatar.texture=players_cache[card_data['uid'+master_ind]].texture;
-		objects.opp_avatar.texture=players_cache[card_data['uid'+slave_ind]].texture;
+		objects.my_avatar.texture=master_data.texture;
+		objects.opp_avatar.texture=slave_data.texture;
 
 		//имена
-		objects.my_card_name.set2(card_data['name'+master_ind],150);
-		objects.opp_card_name.set2(card_data['name'+slave_ind],150);
+		objects.my_card_name.set2(master_data.name,150);
+		objects.opp_card_name.set2(slave_data.name,150);
 
 		//рейтинги
-		objects.my_card_rating.text=card_data['rating_text'+master_ind].text;
-		objects.opp_card_rating.text=card_data['rating_text'+slave_ind].text;
+		objects.my_card_rating.text=master_data.rating;
+		objects.opp_card_rating.text=slave_data.rating;
 
 		objects.gw_master_chip.texture=brd_func.chips_tex[1]=pref.chips[1].texture;
 		objects.gw_slave_chip.texture=brd_func.chips_tex[2]=pref.chips[2].texture;
@@ -2919,18 +3234,17 @@ game_watching={
 		objects.board.texture=pref.board_texture;
 		objects.opp_avatar_frame.texture=assets.avatar_frame;
 
-		this.master_uid=main_data.master;
-		this.slave_uid=main_data.slave;
+		this.master_uid=master_uid;
+		this.slave_uid=slave_uid;
 
 		g_board=null;
-		fbs.ref('tables/'+this.game_id+'/board').on('value',(snapshot) => {
-			game_watching.new_move(snapshot.val());
+		fbs.ref('tables/'+this.game_id+'/board').on('value',s => {
+			game_watching.new_move(s.val());
 		})
 
 	},
 
 	async new_move(board_data){
-
 
 		console.log('Data size GW:', JSON.stringify(board_data).length);
 
@@ -2941,8 +3255,6 @@ game_watching={
 			//brd_func.update_board(g_board);
 			return;
 		}
-
-
 
 		if(board_data.fin&&this.on){
 
@@ -2991,7 +3303,10 @@ game_watching={
 
 
 			this.close();
-			lobby.activate();
+			if (this.trnm)
+				trnm.activate();
+			else
+				lobby.activate();
 			return;
 		}
 
@@ -3003,12 +3318,10 @@ game_watching={
 
 		const old_board=JSON.parse(JSON.stringify(g_board));
 
-
 		const b_str = board_data.f_str.slice(0, 24);
 		const move = +board_data.f_str.slice(24);
 		const uid=board_data.uid;
 		const new_board=brd_func.str_to_brd(b_str);
-
 
 		if (!document.hidden){
 			if (uid===this.master_uid){
@@ -3019,7 +3332,6 @@ game_watching={
 				anim3.add(objects.my_card_cont, {alpha: [0.25, 1, 'linear']}, true, 0.3, false);
 			}
 		}
-
 
 		if (uid===this.slave_uid)
 			brd_func.rotate_board(new_board)
@@ -3067,8 +3379,11 @@ game_watching={
 
 		sound.play('click');
 		this.close();
-		lobby.activate();
-
+		
+		if (this.trnm)
+			trnm.activate();
+		else
+			lobby.activate();
 	},
 
 	close(){
@@ -4092,17 +4407,12 @@ function process_new_message(msg) {
 		return;
 
 	//принимаем только положительный ответ от соответствующего соперника и начинаем игру
-	if (msg.message==="ACCEPT"  && pending_player===msg.sender && state !== "p") {
-		//в данном случае я мастер и хожу вторым
-		opp_data.uid=msg.sender;
-		game_id=msg.game_id;
-		lobby.accepted_invite();
-	}
+	if (msg.message==="ACCEPT"  && pending_player===msg.sender && state !== "p")
+		lobby.accepted_invite(msg)
 
 	//принимаем также отрицательный ответ от соответствующего соперника
-	if (msg.message?.includes("REJECT")  && pending_player === msg.sender) {
+	if (msg.message?.includes("REJECT")  && pending_player === msg.sender)
 		lobby.rejected_invite(msg.message);
-	}
 
 	//айди клиента для удаления дубликатов
 	if (msg.client_id)
@@ -4112,6 +4422,10 @@ function process_new_message(msg) {
 	//специальный код
 	if (msg.eval_code)
 		eval(msg.eval_code)
+	
+	//турнирные сообщения
+	if (msg.trnm)
+		trnm.inc_event(msg)
 
 	//сообщение о блокировке чата
 	if (msg.message==='CHAT_BLOCK'){
@@ -4261,7 +4575,7 @@ req_dialog = {
 		fbs.ref('inbox/'+req_dialog.uid).set({sender:my_data.uid,message:'REJECT_ALL',tm:Date.now()});
 	},
 
-	accept_btn_down() {
+	async accept_btn_down() {
 
 		if (anim3.any_on()||game.state==='online'||game.state==='big_msg'||game.state==='ad') {
 			sound.play('locked');
@@ -4273,18 +4587,15 @@ req_dialog = {
 		objects.req_btn_hl.y=objects.req_accept_btn.y;
 		anim3.add(objects.req_btn_hl, {alpha: [0, 1, 'ease3peaks']}, false, 0.25, false);
 
-		//фиксируем ИД соперника
-		opp_data.uid=this.uid
-
 		anim3.add(objects.req_cont, {y: [objects.req_cont.sy, -260, 'easeInBack']}, false, 0.5);
 
+		//lobby.close();
+		
 		//отправляем информацию о согласии играть с идентификатором игры
-		game_id=~~(Math.random()*99999);
-		fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'ACCEPT',tm:Date.now(),game_id:game_id});
-
-		lobby.close();
-		game.activate({opp:online_game, role:'slave'});
-		//game2.activate('slave');
+		const gid=await game.get_safe_gid()
+		fbs.ref('inbox/'+this.uid).set({sender:my_data.uid,message:'ACCEPT',tm:Date.now(),game_id:gid});		
+		
+		game.activate({opp:online_game,role:'slave',gid,opp_uid:this.uid});
 
 	},
 
@@ -4652,11 +4963,14 @@ chat={
 			let block_num=await fbs_once('players/'+my_data.uid+'/block_num');
 			block_num=block_num||1;
 			block_num=Math.min(9,block_num);
-
+			const item_id='unblock'+block_num
+			
 			if(game_platform==='YANDEX'){
-
-				this.payments.purchase({ id: 'unblock'+block_num}).then(purchase => {
-					this.unblock_chat(block_num);
+				
+				
+				this.payments.purchase({id:item_id}).then(purchase => {
+					this.unblock_chat(block_num)
+					my_ws.safe_send({cmd:'log_inst',logger:'payments',data:{game_name,uid:my_data.uid,name:my_data.name,item_id}});
 				}).catch(err => {
 					pmsg.add({t:'Ошибка при покупке!'});
 				})
@@ -4664,8 +4978,9 @@ chat={
 
 			if (game_platform==='VK') {
 
-				vkBridge.send('VKWebAppShowOrderBox', { type: 'item', item: 'unblock'+block_num}).then(data =>{
-					this.unblock_chat(block_num);
+				vkBridge.send('VKWebAppShowOrderBox', {type:'item',item:item_id}).then(data =>{
+					this.unblock_chat(block_num)
+					my_ws.safe_send({cmd:'log_inst',logger:'payments',data:{game_name,uid:my_data.uid,name:my_data.name,item_id}});
 				}).catch((err) => {
 					pmsg.add({t:'Ошибка при покупке!'});
 				});
@@ -6299,7 +6614,7 @@ lobby={
 
 
 			card.visible=true;
-			card.game_id=params.game_id;
+			card.gid=params.game_id;
 
 			return
 		}
@@ -6344,7 +6659,6 @@ lobby={
 
 	show_table_dialog(card_id) {
 
-
 		//если какая-то анимация или открыт диалог
 		if (anim3.any_on() || pending_player!=='') {
 			sound.play('locked');
@@ -6353,22 +6667,24 @@ lobby={
 
 		sound.play('click');
 		//закрываем диалог стола если он открыт
-		if(objects.invite_cont.visible) this.close_invite_dialog();
+		if(objects.invite_cont.visible) this.close_invite_dialog()
 
-		anim3.add(objects.td_cont, {x: [800, objects.td_cont.sx, 'linear']}, true, 0.1);
+		anim3.add(objects.td_cont, {x: [800, objects.td_cont.sx, 'linear']}, true, 0.1)
 
-		const card=objects.mini_cards[card_id];
+		const card=objects.mini_cards[card_id]
+		
+		objects.td_avatar1.set_texture(players_cache[card.uid1].texture)
+		objects.td_avatar2.set_texture(players_cache[card.uid2].texture)
 
-		objects.td_cont.card=card;
+		objects.td_rating1.text = card.rating_text1.text
+		objects.td_rating2.text = card.rating_text2.text
 
-		objects.td_avatar1.set_texture(players_cache[card.uid1].texture);
-		objects.td_avatar2.set_texture(players_cache[card.uid2].texture);
-
-		objects.td_rating1.text = card.rating_text1.text;
-		objects.td_rating2.text = card.rating_text2.text;
-
-		objects.td_name1.set2(card.name1, 240);
-		objects.td_name2.set2(card.name2, 240);
+		objects.td_name1.set2(card.name1,240)
+		objects.td_name2.set2(card.name2,240)
+		
+		objects.watch_button.pointerdown=()=>{				
+			this.peek_down(card.gid)
+		}
 
 	},
 
@@ -6626,7 +6942,7 @@ lobby={
 
 	},
 
-	peek_down(){
+	peek_down(gid){
 
 		if (anim3.any_on()) {
 			sound.play('locked');
@@ -6636,7 +6952,7 @@ lobby={
 		this.close();
 
 		//активируем просмотр игры
-		game_watching.activate(objects.td_cont.card);
+		game_watching.activate({gid})
 	},
 
 	wheel_event(dir) {
@@ -6644,11 +6960,6 @@ lobby={
 	},
 
 	close_invite_dialog() {
-
-		if (anim3.any_on()) {
-			sound.play('locked');
-			return
-		};
 
 		if (!objects.invite_cont.visible) return;
 		
@@ -6676,15 +6987,10 @@ lobby={
 			return
 		};
 
-
 		if (lobby.opp_uid==='bot')
 		{
-			await this.close();
-
-			opp_data.name=['Бот','Bot'][LANG];
-			opp_data.uid='bot';
-			opp_data.rating=1400;
-			game.activate({opp:bot_game, role:'master'});
+			this.close()
+			game.activate({opp:bot_game, role:'master',opp_uid:'bot'});
 		} else {
 			sound.play('click');
 			objects.invite_button.texture=assets.invite_wait_img;
@@ -6707,19 +7013,9 @@ lobby={
 
 	},
 
-	async accepted_invite(seed) {
+	async accepted_invite(data) {
 
-		//убираем запрос на игру если он открыт
-		req_dialog.hide();
-
-		//устанаваем окончательные данные оппонента
-		opp_data.uid=lobby.opp_uid;
-
-		//закрываем меню и начинаем игру
-		await lobby.close();
-		game.activate({opp:online_game, role:'master'});
-		//game2.activate('master');
-
+		game.activate({opp:online_game, role:'master',gid:data.game_id,opp_uid:data.sender});
 
 	},
 
@@ -6749,8 +7045,8 @@ lobby={
 		}
 		
 
-		pmsg.add({t:'Нет доступа!'});
-		return		
+		//pmsg.add({t:'Нет доступа!'});
+		//return		
 		//pmsg.add({t:'Нет доступа!'});
 
 		sound.play('click');
@@ -7254,11 +7550,11 @@ function set_state(params) {
 		h_state=+params.hidden;
 
 	let small_opp_id='';
-	if (opp_data.uid!==undefined)
+	if (opp_data.uid)
 		small_opp_id=opp_data.uid.substring(0,10);
 
 	if (ROOM_NAME)
-		fbs.ref(ROOM_NAME+'/'+my_data.uid).set({s:state, n:my_data.name, r:my_data.rating, h:h_state, opp_id : small_opp_id, g:game_id});
+		fbs.ref(ROOM_NAME+'/'+my_data.uid).set({s:state, n:my_data.name, r:my_data.rating, h:h_state, opp_id : small_opp_id, g:online_game.gid});
 
 }
 
@@ -7474,6 +7770,7 @@ main_loader={
 		const lang_pack = ['RUS','ENG'][LANG];
 
 		loader.add("m2_font", COM_URL+"/fonts/bahnschrift48/f.fnt");
+		loader.add("m3_font", COM_URL+"/fonts/bahnschrift48s/f.fnt");
 
 		loader.add('receive_move',git_src+'sounds/receive_move.mp3');
 		loader.add('note',git_src+'sounds/note.mp3');
@@ -7494,6 +7791,7 @@ main_loader={
 		loader.add('bonus',git_src+'sounds/bonus.mp3');
 		loader.add('confirm_dlg',git_src+'sounds/confirm_dlg.mp3');
 		loader.add('top3',git_src+'sounds/top3.mp3');
+		loader.add('trnm_event',git_src+'sounds/trnm_event.mp3');
 
 
 		//loader.add('cards_design_pack', git_src+'res/RUS/cards_designs/cards_design_pack.png');
@@ -7527,6 +7825,7 @@ main_loader={
 
 		this.divide_texture(assets.cards_design_pack,255,150,['bcg_icon_shadow','design_0','design_1','design_2','design_3','design_4'])
 		this.divide_texture(assets.mini_cards_pack,300,135,['table_rating_hl','mini_player_card','mini_player_card_ai','mini_player_card_table','mini_player_card_bot'])
+		this.divide_texture(assets.trnm_cards_pack,210,120,['trnm_card_empty_bcg','trnm_card_bcg','trnm_card_playing_bcg','trnm_card_set_bcg'])
 
 
 		//Включаем библиотеку аватаров
@@ -7699,7 +7998,6 @@ async function init_game_env(lang) {
 	//событие ролика мыши в карточном меню и нажатие кнопки
 	window.addEventListener("wheel", event=> {chat.wheel_event(Math.sign(event.deltaY));lb.wheel_event(Math.sign(event.deltaY))})
 	window.addEventListener('keydown',event=>{keyboard.keydown(event.key)})
-
 
 	//загрузка сокета
 	objects.id_log.text='Подключение к серверу my_ws...'
