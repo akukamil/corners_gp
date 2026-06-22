@@ -1492,8 +1492,11 @@ brd_func2={
 	
 	set_brd_cfg(id){
 		
-		this.init_brd_cfg=this.boards_cfg[id]
-		
+		this.init_brd_cfg=JSON.parse(JSON.stringify(this.boards_cfg[id]))
+		for (let y=0;y<8;y++)
+			for (let x=0;x<8;x++)
+				if (this.init_brd_cfg[y][x])
+					this.init_brd_cfg[7-y][7-x]=2
 	},
 	
 	get_start_brd(){
@@ -1502,7 +1505,7 @@ brd_func2={
 		
 		for (let y=0;y<8;y++)
 			for (let x=0;x<8;x++)
-				if (b[y][x])
+				if (b[y][x]==1)
 					b[7-y][7-x]=2
 					
 		return b
@@ -2463,10 +2466,10 @@ trnm={
 		this.sec_to_start=null
 		
 		fbs.ref('trnm/tm_to_start').on('value',v=>{
-			if (this.sec_to_start===null) {
+			/*if (this.sec_to_start===null) {
 				this.sec_to_start=1
 				return
-			}
+			}*/
 			this.sec_to_start=v.val()
 		})
 		
