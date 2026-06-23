@@ -6493,7 +6493,7 @@ lobby={
 		card.name_text.set2(params.name,105);
 		card.rating=params.rating;
 		card.rating_text.text=params.rating
-		//card.icon.visible=params.icon?true:false
+		card.icon.visible=params.icon?true:false
 		card.visible=true
 	},
 
