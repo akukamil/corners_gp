@@ -6493,7 +6493,7 @@ lobby={
 		card.name_text.set2(params.name,105);
 		card.rating=params.rating;
 		card.rating_text.text=params.rating
-		card.icon.visible=params.icon?true:false
+		//card.icon.visible=params.icon?true:false
 		card.visible=true
 	},
 
@@ -6579,7 +6579,8 @@ lobby={
 			card.avatar1_frame.visible = false;
 			card.avatar2_frame.visible = false;
 			card.name_text.visible = false;
-
+			card.icon.visible = false
+			
 			//Включаем элементы стола
 			card.table_rating_hl.visible=true
 			card.rating_text1.visible = true
@@ -6588,7 +6589,7 @@ lobby={
 			card.avatar2.visible = true
 			card.avatar1_frame.visible = true
 			card.avatar2_frame.visible = true
-			card.icon.visible = true
+
 
 			card.rating_text1.text = params.rating1
 			card.rating_text2.text = params.rating2
