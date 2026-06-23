@@ -80,6 +80,14 @@ class player_mini_card_class extends PIXI.Container {
 		this.table_rating_hl=new PIXI.Sprite(assets.table_rating_hl);
 		this.table_rating_hl.width=200;
 		this.table_rating_hl.height=90;
+		
+
+		this.icon=new PIXI.Sprite(assets.cup_icon)
+		this.icon.width=40
+		this.icon.height=40
+		this.icon.x=82
+		this.icon.y=43
+		this.icon.visible=false
 
 		this.avatar=new PIXI.Graphics();
 		this.avatar.x=16;
@@ -117,8 +125,6 @@ class player_mini_card_class extends PIXI.Container {
 		this.avatar1_frame.y=this.avatar1.y-11.64;
 		this.avatar1_frame.width=this.avatar1_frame.height=81.48;
 
-
-
 		//аватар второго игрока
 		this.avatar2=new PIXI.Graphics();
 		this.avatar2.x=121;
@@ -146,7 +152,7 @@ class player_mini_card_class extends PIXI.Container {
 		this.name1="";
 		this.name2="";
 
-		this.addChild(this.bcg,this.avatar,this.avatar_frame,this.avatar1, this.avatar1_frame, this.avatar2,this.avatar2_frame,this.rating_text,this.table_rating_hl,this.rating_text1,this.rating_text2, this.name_text);
+		this.addChild(this.bcg,this.avatar,this.icon,this.avatar_frame,this.avatar1, this.avatar1_frame, this.avatar2,this.avatar2_frame,this.rating_text,this.table_rating_hl,this.rating_text1,this.rating_text2, this.name_text);
 	}
 
 }
@@ -1462,26 +1468,26 @@ brd_func={
 brd_func2={
 	
 	boards_cfg:[
-	   [[0,0,0,0,0,0,0,0],
-		[0,0,0,0,0,0,0,0],
-		[0,0,0,0,0,0,0,0],
+	   [[2,2,2,2,0,0,0,0],
+		[2,2,2,2,0,0,0,0],
+		[2,2,2,2,0,0,0,0],
 		[0,0,0,0,0,0,0,0],
 		[0,0,0,0,0,0,0,0],
 		[0,0,0,0,1,1,1,1],
 		[0,0,0,0,1,1,1,1],
 		[0,0,0,0,1,1,1,1]],
-	   [[0,0,0,0,0,0,0,0],
-		[0,0,0,0,0,0,0,0],
-		[0,0,0,0,0,0,0,0],
+	   [[2,2,2,0,0,0,0,0],
+		[2,2,2,0,0,0,0,0],
+		[2,2,2,0,0,0,0,0],
 		[0,0,0,0,0,0,0,0],
 		[0,0,0,0,0,0,0,0],
 		[0,0,0,0,0,1,1,1],
 		[0,0,0,0,0,1,1,1],
 		[0,0,0,0,0,1,1,1]],
-	   [[0,0,0,0,0,0,0,0],
-		[0,0,0,0,0,0,0,0],
-		[0,0,0,0,0,0,0,0],
-		[0,0,0,0,0,0,0,0],
+	   [[1,1,1,1,0,0,0,0],
+		[1,1,1,0,0,0,0,0],
+		[1,1,0,0,0,0,0,0],
+		[1,0,0,0,0,0,0,0],
 		[0,0,0,0,0,0,0,1],
 		[0,0,0,0,0,0,1,1],
 		[0,0,0,0,0,1,1,1],
@@ -1490,25 +1496,12 @@ brd_func2={
 	
 	init_brd_cfg:[],
 	
-	set_brd_cfg(id){
-		
-		this.init_brd_cfg=JSON.parse(JSON.stringify(this.boards_cfg[id]))
-		for (let y=0;y<8;y++)
-			for (let x=0;x<8;x++)
-				if (this.init_brd_cfg[y][x])
-					this.init_brd_cfg[7-y][7-x]=2
+	set_brd_cfg(id){		
+		this.init_brd_cfg=this.boards_cfg[id]
 	},
 	
-	get_start_brd(){
-		
-		const b=JSON.parse(JSON.stringify(this.init_brd_cfg))
-		
-		for (let y=0;y<8;y++)
-			for (let x=0;x<8;x++)
-				if (b[y][x]==1)
-					b[7-y][7-x]=2
-					
-		return b
+	get_start_brd(){		
+		return JSON.parse(JSON.stringify(this.init_brd_cfg))
 	},
 	
 	count_finished1(brd) {
@@ -6310,7 +6303,7 @@ lobby={
 				if (single[card_uid] === undefined)
 					objects.mini_cards[i].visible = false;
 				else
-					this.update_existing_card({id:i, state:players[card_uid].state, rating:players[card_uid].rating, name:players[card_uid].name});
+					this.update_existing_card({id:i, ...players[card_uid]});
 			}
 		}
 
@@ -6490,7 +6483,7 @@ lobby={
 
 	},
 
-	update_existing_card(params={id:0, state:'o' , rating:1400, name:''}) {
+	update_existing_card(params={id:0,state:'o' ,rating:1400, name:''}) {
 
 		//устанавливаем цвет карточки в зависимости от состояния( аватар не поменялись)
 		const card=objects.mini_cards[params.id];
@@ -6499,8 +6492,9 @@ lobby={
 
 		card.name_text.set2(params.name,105);
 		card.rating=params.rating;
-		card.rating_text.text=params.rating;
-		card.visible=true;
+		card.rating_text.text=params.rating
+		card.icon.visible=params.icon?true:false
+		card.visible=true
 	},
 
 	place_new_card(params={uid:0, state: 'o', name:'X ', rating: rating}) {
@@ -6516,7 +6510,7 @@ lobby={
 			card.bcg.texture=this.get_state_texture(params.state,params.uid);
 			card.state=params.state;
 
-			card.type = 'single';
+			card.type = 'single'
 
 			//присваиваем карточке данные
 			card.uid=params.uid;
@@ -6540,6 +6534,7 @@ lobby={
 			card.name_text.set2(params.name,105)
 			card.rating=params.rating
 			card.rating_text.text=params.rating
+			card.icon.visible=params.icon?true:false
 
 			card.visible=true
 
@@ -6586,14 +6581,14 @@ lobby={
 			card.name_text.visible = false;
 
 			//Включаем элементы стола
-			card.table_rating_hl.visible=true;
-			card.rating_text1.visible = true;
-			card.rating_text2.visible = true;
-			card.avatar1.visible = true;
-			card.avatar2.visible = true;
-			card.avatar1_frame.visible = true;
-			card.avatar2_frame.visible = true;
-			//card.rating_bcg.visible = true;
+			card.table_rating_hl.visible=true
+			card.rating_text1.visible = true
+			card.rating_text2.visible = true
+			card.avatar1.visible = true
+			card.avatar2.visible = true
+			card.avatar1_frame.visible = true
+			card.avatar2_frame.visible = true
+			card.icon.visible = true
 
 			card.rating_text1.text = params.rating1
 			card.rating_text2.text = params.rating2
@@ -7556,8 +7551,15 @@ function set_state(params) {
 	if (opp_data.uid)
 		small_opp_id=opp_data.uid.substring(0,10);
 
-	if (ROOM_NAME)
-		fbs.ref(ROOM_NAME+'/'+my_data.uid).set({s:state, n:my_data.name, r:my_data.rating, h:h_state, opp_id : small_opp_id, g:online_game.gid});
+	if (ROOM_NAME){
+		const my_state_data={s:state, n:my_data.name, r:my_data.rating, h:h_state, opp_id : small_opp_id, g:online_game.gid}
+		
+		//если есть иконка
+		if (my_data.icon) my_state_data.icon=my_data.icon
+		
+		fbs.ref(ROOM_NAME+'/'+my_data.uid).set(my_state_data);		
+	}
+
 
 }
 
