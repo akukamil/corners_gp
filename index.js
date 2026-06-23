@@ -4519,7 +4519,7 @@ req_dialog = {
 		sound.play('receive_sticker');
 
 		//Отображаем  имя и фамилию в окне приглашения
-		objects.req_name.text=pdata.name
+		objects.req_name.set2(pdata.name,210)
 		objects.req_rating.text=pdata.rating
 		objects.req_avatar.set_texture(pdata.texture)
 
@@ -6730,7 +6730,6 @@ lobby={
 		//иконка если есть
 		objects.invite_icon.texture=opp_data.icon?assets.cup_icon:null
 
-
 		//на моей карточке показываем стастику
 		if(lobby.opp_uid===my_data.uid){
 			objects.invite_my_stat.text=[`Рейтинг: ${my_data.rating}\nИгры: ${my_data.games}`,`Rating: ${my_data.rating}\nGames: ${my_data.games}`][LANG]
@@ -6739,8 +6738,6 @@ lobby={
 			objects.invite_my_stat.visible=false;
 		}
 		
-
-
 		//кнопка удаления комментариев
 		objects.fb_delete_button.visible=my_data.uid===lobby.opp_uid;
 
@@ -7049,9 +7046,6 @@ lobby={
 		}
 		
 
-		anim3.add(objects.lobby_trnm_btn, {alpha:[0.25, 1, 'linear']}, true, 0.5)
-		sound.play('locked');
-		return
 		sound.play('click');
 
 		this.close()
