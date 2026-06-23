@@ -6919,7 +6919,7 @@ lobby={
 
 	get_room_to_go(){
 	
-		//return 'states5'
+		return 'states5'
 		
 		//московское время и ночная комната
 		if (SERVER_TM){
@@ -7047,7 +7047,7 @@ lobby={
 		
 
 		sound.play('click');
-
+		return
 		this.close()
 		trnm.activate()
 
