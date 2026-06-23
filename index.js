@@ -2382,7 +2382,7 @@ trnm={
 			objects.trnm_info2.text='((('
 			objects.bcg.texture=assets.bcg
 			this.stop_reg_process()
-			
+			objects.trnm_precards.forEach(c=>c.visible=false)
 			objects.trnm_info1.alpha=1
 			some_process.trnm_reg=()=>{}
 		}
