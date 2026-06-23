@@ -7041,7 +7041,7 @@ lobby={
 
 	},
 
-	bg_btn_down(){
+	trnm_btn_down(){
 		
 		if (anim3.any_on()) {
 			sound.play('locked')
@@ -7049,7 +7049,7 @@ lobby={
 		}
 		
 
-		anim3.add(objects.lobby_bcg_btn, {alpha:[0.25, 1, 'linear']}, true, 0.5)
+		anim3.add(objects.lobby_trnm_btn, {alpha:[0.25, 1, 'linear']}, true, 0.5)
 		sound.play('locked');
 		return
 		sound.play('click');
