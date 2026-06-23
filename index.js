@@ -988,8 +988,10 @@ big_msg = {
 			return;
 		}
 
-		sound.play('click');
-
+		sound.play('close');
+		
+		anim3.add(objects.big_msg_close_btn, {alpha:[0.25, 1, 'linear']}, true, 0.5)
+		
 		this.close('close')
 	},
 	
@@ -2086,23 +2088,17 @@ online_game = {
 				my_ws.safe_send({cmd:'log',logger:'corners_games',data});
 			}
 
-			//бонусы за слепую игру
-			if (this.blind_game_flag){
-				
-				//энергия за результат
-				if (result_number === LOSE) this.energy_collected=1
-				if (result_number === DRAW) this.energy_collected=3
-				if (result_number === WIN) this.energy_collected=10
-				
-				crystals+=10
-			}
 		}
 		
 		pref.change_energy(this.energy_collected)
 		pref.change_crystals(crystals)
 				
 		//сообщение об изменении рейтинга
-		await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,t3:auth_msg,fb:1,energy:this.energy_collected,crystals})
+		
+		if (this.trnm)
+			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,t3:'вертитесь в меню турнира для продолжения.',energy:this.energy_collected,crystals})
+		else
+			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,t3:auth_msg,energy:this.energy_collected,crystals})
 
 	},
 
@@ -6303,7 +6299,7 @@ lobby={
 				if (single[card_uid] === undefined)
 					objects.mini_cards[i].visible = false;
 				else
-					this.update_existing_card({id:i, ...players[card_uid]});
+					this.update_existing_card({id:i,...players[card_uid]});
 			}
 		}
 
@@ -6349,7 +6345,7 @@ lobby={
 
 		//размещаем на свободных ячейках новых игроков
 		for (let uid in new_single)
-			this.place_new_card({uid,state:players[uid].state, name:players[uid].name, rating:players[uid].rating});
+			this.place_new_card({uid,...players[uid]});
 
 		//размещаем НОВЫЕ столы где свободно
 		for (let uid in tables) {
@@ -6709,14 +6705,14 @@ lobby={
 		//закрываем диалог стола если он открыт
 		if(objects.td_cont.visible) this.close_table_dialog();
 
-		pending_player="";
+		pending_player=''
 
-		sound.play('click');
+		sound.play('click')
 
-		objects.invite_feedback.text = '';
+		objects.invite_feedback.text = ''
 
 		//показыаем кнопку приглашения
-		objects.invite_button.texture=assets.invite_button;
+		objects.invite_button.texture=assets.invite_button
 
 		anim3.add(objects.invite_cont, {x: [800, objects.invite_cont.sx, 'linear']}, true, 0.15);
 
@@ -6727,9 +6723,13 @@ lobby={
 
 		this.show_feedbacks(uid);
 
-		let invite_available=uid !== my_data.uid;
-		invite_available=invite_available || lobby.opp_uid==='bot';
-		invite_available=invite_available && opp_data.rating >= 50 && my_data.rating >= 50;
+		let invite_available=uid !== my_data.uid
+		invite_available=invite_available || lobby.opp_uid==='bot'
+		invite_available=invite_available && opp_data.rating >= 50 && my_data.rating >= 50
+
+		//иконка если есть
+		objects.invite_icon.texture=opp_data.icon?assets.cup_icon:null
+
 
 		//на моей карточке показываем стастику
 		if(lobby.opp_uid===my_data.uid){
@@ -6738,6 +6738,8 @@ lobby={
 		}else{
 			objects.invite_my_stat.visible=false;
 		}
+		
+
 
 		//кнопка удаления комментариев
 		objects.fb_delete_button.visible=my_data.uid===lobby.opp_uid;
@@ -7025,7 +7027,10 @@ lobby={
 		};
 
 		sound.play('click');
-
+		
+		
+		anim3.add(objects.lobby_chat_btn, {alpha:[0.25, 1, 'linear']}, true, 0.5)
+		
 		//подсветка
 		objects.lobby_btn_hl.x=objects.lobby_lb_btn.x;
 		objects.lobby_btn_hl.y=objects.lobby_lb_btn.y;
@@ -7044,10 +7049,9 @@ lobby={
 		}
 		
 
-		//pmsg.add({t:'Нет доступа!'});
-		//return		
-		//pmsg.add({t:'Нет доступа!'});
-
+		anim3.add(objects.lobby_bcg_btn, {alpha:[0.25, 1, 'linear']}, true, 0.5)
+		sound.play('locked');
+		return
 		sound.play('click');
 
 		this.close()
@@ -7909,7 +7913,6 @@ async function init_game_env(lang) {
 	//git_src="https://akukamil.github.io/corners_gp/"
 	git_src=""
 
-
 	await define_platform_and_language();
 	console.log(game_platform, LANG);
 
@@ -7917,7 +7920,6 @@ async function init_game_env(lang) {
 	await auth2.init()
 
 	document.body.innerHTML='<style>html,body {margin: 0;padding: 0;height: 100%;}body {display: flex;align-items:center;justify-content: center;background-color: rgba(41,41,41,1)}</style>';
-
 
 	const dw=M_WIDTH/document.body.clientWidth;
 	const dh=M_HEIGHT/document.body.clientHeight;
