@@ -9,32 +9,13 @@ const COM_URL='https://akukamil.github.io/com'
 
 let TM={s:0,ms:0}
 
-hf={
-	
-	randIntInc(min,max){
-		min = Math.ceil(min)
-		max = Math.floor(max)
-		return Math.floor(Math.random() * (max - min + 1) + min)
-	},
-
-	hash(s){
-		
-		let h = 0;
-		for (let i = 0; i < s.length; i++) {
-			h = (h << 5) - h + s.charCodeAt(i)
-			h |= 0
-		}
-		return h
-	}	
-	
-}
-
 DESIGN_DATA={
 	0:{name:'def',rating:0,games:0},
 	1:{name:'old',rating:0,games:0},
 	2:{name:'ice',rating:1500,games:1000},
 	3:{name:'grass',rating:1700,games:5000},
 	4:{name:'wood',rating:1900,games:15000},
+	5:{name:'neon',rating:0,games:0,trnm:1}
 }
 
 my_log={
@@ -1066,8 +1047,8 @@ brd_func={
 				const chip_id=board[y][x];
 				if (chip_id){
 
-					objects.checkers[ind].x=x*50+objects.board.x+30;
-					objects.checkers[ind].y=y*50+objects.board.y+30;
+					objects.checkers[ind].x=x*50+objects.board.x+20;
+					objects.checkers[ind].y=y*50+objects.board.y+20;
 
 					objects.checkers[ind].ix=x;
 					objects.checkers[ind].iy=y;
@@ -1305,8 +1286,8 @@ brd_func={
 		moving_chip = this.get_checker_by_pos(move_data.x1, move_data.y1);
 
 		for (let i = 1 ; i < moves.length; i++) {
-			let tar_x = moves[i][0] * 50 + objects.board.x+30;
-			let tar_y = moves[i][1] * 50 + objects.board.y+30;
+			const tar_x = moves[i][0] * 50 + objects.board.x+20;
+			const tar_y = moves[i][1] * 50 + objects.board.y+20;
 			await anim3.add(moving_chip, {x:[moving_chip.x, tar_x,'linear'], y: [moving_chip.y, tar_y, 'linear']}, true, 0.16);
 			sound.play('move');
 		}
@@ -2841,11 +2822,17 @@ game = {
 		}
 
 		//устанаваем вид моих и чужих фишек в зависимости у кого первый ход и текущего дизайна
-		brd_func.chips_tex[1]=pref.chips[2-my_turn].texture
-		brd_func.chips_tex[2]=pref.chips[1+my_turn].texture
+		const design_name=DESIGN_DATA[my_data.design_id].name
+		const chips_tex=[]
+		chips_tex[1]=pref.design_loader.resources[design_name+'_chip1'].texture
+		chips_tex[2]=pref.design_loader.resources[design_name+'_chip2'].texture
+				
+		brd_func.chips_tex[1]=chips_tex[2-my_turn]
+		brd_func.chips_tex[2]=chips_tex[1+my_turn]
 
 		//устанаваем текстуру
-		objects.board.texture=pref.board_texture
+		const brd_tex=pref.design_loader.resources[design_name+'_board'].texture
+		objects.board.texture=brd_tex
 		objects.home_cfg.clear()
 
 		//турнирная игра
@@ -3218,12 +3205,23 @@ game_watching={
 		//рейтинги
 		objects.my_card_rating.text=master_data.rating;
 		objects.opp_card_rating.text=slave_data.rating;
+		
+		//
+		const design_name=DESIGN_DATA[my_data.design_id].name
+		const chips_tex=[]
+		chips_tex[1]=pref.design_loader.resources[design_name+'_chip1'].texture
+		chips_tex[2]=pref.design_loader.resources[design_name+'_chip2'].texture
+				
 
-		objects.gw_master_chip.texture=brd_func.chips_tex[1]=pref.chips[1].texture;
-		objects.gw_slave_chip.texture=brd_func.chips_tex[2]=pref.chips[2].texture;
+		//устанаваем текстуру
+		const brd_tex=pref.design_loader.resources[design_name+'_board'].texture
+		objects.board.texture=brd_tex
+		objects.home_cfg.clear()				
+		
+		objects.gw_master_chip.texture=brd_func.chips_tex[1]=chips_tex[1]
+		objects.gw_slave_chip.texture=brd_func.chips_tex[2]=chips_tex[2]
 
 		//устанаваем текстуру доски
-		objects.board.texture=pref.board_texture;
 		objects.opp_avatar_frame.texture=assets.avatar_frame;
 
 		this.master_uid=master_uid;
@@ -5101,17 +5099,16 @@ players_cache={
 		const player=this[uid]
 
 		//загружаем картинку если нет данных
-		if (params.pic_url)
-			player.pic_url=params.pic_url
+		if (params.pic_url) player.pic_url=params.pic_url
 
 		//загружаем имя если нет данных
-		if (params.name)
-			player.name=params.name
+		if (params.name) player.name=params.name
 
 		//загружаем рейтинг если нет данных
-		if (params.rating)
-			player.rating=params.rating
-
+		if (params.rating) player.rating=params.rating
+		
+		//загружаем рейтинг если нет данных
+		if (params.icon) player.icon=params.icon
 	},
 
 	my_texture_from(pic_url){
@@ -5465,38 +5462,26 @@ pref={
 
 	board_texture:null,
 	chips:[0,{texture:null},{texture:null}],
-	selected_design:0,
+	cur_design_id:0,
 	design_loader:new PIXI.Loader(),
 	cur_pic_url:'',
 	avatar_changed:0,
 	name_changed:0,
-	tex_loading:0,
 	avatar_switch_center:0,
 	avatar_swtich_cur:0,
 	hours_to_nick_change:0,
 	hours_to_photo_change:0,
+	loading:0,
 	
 	activate(){
 
 		//устанавливаем текущий фон
-		this.select_design(objects.designs[my_data.design_id]);
-
-		//определяем доступные скины
-		for (let i in DESIGN_DATA){
-			const rating_req=DESIGN_DATA[i].rating;
-			const games_req=DESIGN_DATA[i].games;
-			const av=my_data.rating>=rating_req||my_data.games>=games_req;
-			objects.designs[i].lock.visible=!av;
-		}
-
+		this.cur_design_id=my_data.design_id
+		this.switch_design(0)
 
 		this.send_info(['Менять аватар и имя можно 1 раз в 30 дней!','You can change name and avatar once per month'][LANG]);
 
 		objects.pref_sound_slider.x=sound.on?367:322;
-
-		//пока ничего не изменено
-		this.avatar_changed=0;
-		this.name_changed=0;
 
 		//обновляем кнопки
 		this.update_buttons()
@@ -5667,8 +5652,10 @@ pref={
 
 	async load_design(design_id){
 
-		const design_name=DESIGN_DATA[design_id].name;
+		objects.pref_info.text=['Загружаем...','Loading...'][LANG]
 
+		this.loading=1
+		const design_name=DESIGN_DATA[design_id].name		
 		const board_res_name=design_name+'_board';
 		const chip1_res_name=design_name+'_chip1';
 		const chip2_res_name=design_name+'_chip2';
@@ -5679,45 +5666,88 @@ pref={
 		if (!d_res[chip2_res_name]) this.design_loader.add(chip2_res_name,git_src+'res/design/'+chip2_res_name+'.png');
 
 		console.time('load design');
-		await new Promise(resolve=> this.design_loader.load(resolve))
+		await new Promise(r=> this.design_loader.load(r))
 		console.timeEnd('load design');
-		this.board_texture=d_res[board_res_name].texture;
-		this.chips[1].texture=d_res[chip1_res_name].texture;
-		this.chips[2].texture=d_res[chip2_res_name].texture;
-	},
-
-	message(msg){		
-		objects.pref_info.text=msg;
-		anim3.add(objects.pref_info, {alpha: [0, 1, 'easeBridge']}, false, 3, false);	
+		//this.board_texture=d_res[board_res_name].texture;
+		//this.chips[1].texture=d_res[chip1_res_name].texture;
+		//this.chips[2].texture=d_res[chip2_res_name].texture;
+		this.loading=0
+		this.send_info(['Загружено!','Complete!'][LANG])
 	},
 
 	send_info(msg){
 		objects.pref_info.text=msg;
 		anim3.add(objects.pref_info, {alpha: [0, 1, 'easeBridge']}, false, 3, false);
 	},
-
-	design_down(bcg){
-
-
-		const rating_req=DESIGN_DATA[bcg.id].rating;
-		const games_req=DESIGN_DATA[bcg.id].games;
-
-		if (!(my_data.rating>=rating_req||my_data.games>=games_req)){
-			anim3.add(bcg.lock, {angle: [bcg.lock.angle, bcg.lock.angle+10, 'shake']}, true, 0.15);
-			const msg=[`НУЖНО: Рейтинг >${rating_req} или Игры >${games_req}`,`NEED: Rating >${rating_req} or Games >${games_req}`][LANG];
-			this.message(msg);
-			sound.play('locked');
-			return;
-		}
-
-		sound.play('click');
-		this.select_design(bcg);
+		
+	switch_design(d){
+		
+		const next_design_id=this.cur_design_id+d
+		const next_design_data=DESIGN_DATA[next_design_id]
+		if (!next_design_data){
+			sound.play('locked')
+			return
+		} 
+		
+		sound.play('click')
+		
+		//только если текущая доска не твоя
+		objects.pref_conf_brd_btn.visible=next_design_id!==my_data.design_id
+		
+		
+		this.cur_design_id=next_design_id
+		const cur_design_data=DESIGN_DATA[next_design_id]
+		objects.design_img.texture=assets[cur_design_data.name]
+		objects.pref_brd_name.text=DESIGN_DATA[next_design_id].name		
+		
 	},
 
-	select_design(design){
-		this.selected_design=design;
-		objects.pref_design_hl.x=design.x;
-		objects.pref_design_hl.y=design.y;
+	conf_brd_down(){
+		
+		if (this.loading) return
+		
+		const design_data=DESIGN_DATA[this.cur_design_id]
+		if (my_data.rating<design_data.rating){
+			this.send_info(`Только для игроков с рейтингом более ${design_data.rating}`)
+			sound.play('locked')
+			return
+		}
+		
+		if (my_data.games<design_data.games){
+			this.send_info(`Только для игроков сыгравших более ${design_data.games} игр`)
+			sound.play('locked')
+			return
+		}
+		
+		if (!my_data.trnm&&design_data.trnm){
+			this.send_info(`Только для победителей турнира`)
+			sound.play('locked')
+			return
+		}
+		
+		my_data.design_id=this.cur_design_id		
+		this.load_design(my_data.design_id)		
+		safe_ls('corners_design_id',my_data.design_id)
+		
+		objects.pref_conf_brd_btn.visible=false
+		
+		sound.play('confirm_dlg')
+		
+	},
+	
+	getHoursEnding(hours) {
+		hours = Math.abs(hours) % 100;
+		let lastDigit = hours % 10;
+
+		if (hours > 10 && hours < 20) {
+			return 'часов';
+		} else if (lastDigit == 1) {
+			return 'час';
+		} else if (lastDigit >= 2 && lastDigit <= 4) {
+			return 'часа';
+		} else {
+			return 'часов';
+		}
 	},
 
 	async change_name_down(){
@@ -5742,10 +5772,21 @@ pref={
 
 		const name=await keyboard.read(15);
 		if (name&&name.replace(/\s/g, '').length>3){
-			this.name_changed=name;
-			objects.pref_name.set2(name,260);
-			objects.pref_info.text=['Нажмите ОК чтобы сохранить','Press OK to confirm'][LANG];
-			objects.pref_info.visible=true;
+			
+			my_data.name=name
+			my_data.nick_tm=SERVER_TM			
+			fbs.ref(`players/${my_data.uid}/nick_tm`).set(my_data.nick_tm);
+			fbs.ref(`players/${my_data.uid}/name`).set(my_data.name);
+			
+			set_state({})
+			
+			objects.pref_name.set2(name,260)
+			
+			this.hours_to_nick_change=720
+			
+			this.send_info(['Вы изменили имя','Name is changed'][LANG])
+			sound.play('confirm_dlg')
+			
 		}else{
 			objects.pref_info.text=['Какая-то ошибка','Unknown error'][LANG];
 			anim3.add(objects.pref_info, {alpha: [0, 1, 'easeBridge']}, false, 3, false);
@@ -5760,7 +5801,7 @@ pref={
 			return;
 		}
 
-		if (anim3.any_on()||this.tex_loading) {
+		if (anim3.any_on()||this.loading) {
 			sound.play('blocked')
 			return;
 		}
@@ -5782,16 +5823,40 @@ pref={
 			this.avatar_changed=1
 		}
 
-		this.tex_loading=1
+		sound.play('click')
+
+		objects.pref_conf_photo_btn.visible=true;
+		this.loading=1
 		const t=await players_cache.my_texture_from(multiavatar(this.cur_pic_url))
 		objects.pref_avatar.set_texture(t)
-		this.tex_loading=0
+		this.loading=0
 
 	},
 
+	conf_photo_down(){
+		
+		my_data.avatar_tm=SERVER_TM	
+		fbs.ref(`players/${my_data.uid}/pic_url`).set(this.cur_pic_url)
+		fbs.ref(`players/${my_data.uid}/avatar_tm`).set(SERVER_TM)
+		
+		objects.pref_conf_photo_btn.visible=false
+		sound.play('confirm_dlg')
+		
+		this.send_info('Вы изменили фото)))')
+		
+		this.hours_to_photo_change=720
+		
+		//обновляем аватар в кэше
+		players_cache.update_avatar_forced(my_data.uid,this.cur_pic_url).then(()=>{
+			const my_card=objects.mini_cards.find(card=>card.uid===my_data.uid);
+			my_card.avatar.set_texture(players_cache[my_data.uid].texture);
+		})
+		
+	},
+	
 	async reset_avatar_down(){
 
-		if (anim3.any_on()||this.tex_loading) {
+		if (anim3.any_on()||this.loading) {
 			sound.play('blocked');
 			return;
 		}
@@ -5810,10 +5875,10 @@ pref={
 
 		this.avatar_changed=1;
 		this.cur_pic_url=my_data.orig_pic_url;
-		this.tex_loading=1;
+		this.loading=1;
 		const t=await players_cache.my_texture_from(my_data.orig_pic_url);
 		objects.pref_avatar.set_texture(t);
-		this.tex_loading=0;
+		this.loading=0;
 		this.send_info(['Нажмите ОК чтобы сохранить','Press OK to confirm'][LANG])
 
 	},
@@ -5882,7 +5947,7 @@ pref={
 
 		sound.play('click');
 		this.switch_to_lobby();
-
+/*
 		if (this.avatar_changed){
 
 			fbs.ref(`players/${my_data.uid}/pic_url`).set(this.cur_pic_url);
@@ -5919,10 +5984,9 @@ pref={
 			my_data.design_id=this.selected_design.id;
 			safe_ls('corners_design_id',my_data.design_id)
 			this.load_design(my_data.design_id);
-		}
+		}*/
 
 	}
-
 
 }
 
@@ -7827,7 +7891,7 @@ main_loader={
 			assets[res_name]=res.texture||res.sound||res.data;
 		}
 
-		this.divide_texture(assets.cards_design_pack,255,150,['bcg_icon_shadow','design_0','design_1','design_2','design_3','design_4'])
+		this.divide_texture(assets.cards_design_pack,255,150,Object.values(DESIGN_DATA).map(v=>v.name))
 		this.divide_texture(assets.mini_cards_pack,300,135,['table_rating_hl','mini_player_card','mini_player_card_ai','mini_player_card_table','mini_player_card_bot'])
 		this.divide_texture(assets.trnm_cards_pack,210,120,['trnm_card_empty_bcg','trnm_card_bcg','trnm_card_playing_bcg','trnm_card_set_bcg'])
 
@@ -8005,10 +8069,6 @@ async function init_game_env(lang) {
 	objects.id_log.text='Подключение к серверу my_ws...'
 	await my_ws.init();
 	
-	if(my_data.uid==='YfgniBZLIRWtvIOVUlKlPzpnBPurlQcBt3IyPJPz1n8'){
-		fbs.ref('alex_case').push({init:1,client_id,tm:firebase.database.ServerValue.TIMESTAMP})
-	}
-	
 	//получаем данные
 	objects.id_log.text='Запрос к Google... '
 	const other_data=await fbs_once('players/' + my_data.uid)
@@ -8019,19 +8079,20 @@ async function init_game_env(lang) {
 		fbs.ref("players/"+my_data.uid+"/s_msg").remove();
 	}
 
-	my_data.rating = (other_data?.rating) || 1400;
-	my_data.games = (other_data?.games) || 0;
-	my_data.name = (other_data?.name) || my_data.name;
-	my_data.nick_tm = other_data?.nick_tm || 0;
-	my_data.avatar_tm = other_data?.avatar_tm || 0;	
+	my_data.rating = (other_data?.rating) || 1400
+	my_data.games = (other_data?.games) || 0
+	my_data.name = (other_data?.name) || my_data.name
+	my_data.nick_tm = other_data?.nick_tm || 0
+	my_data.avatar_tm = other_data?.avatar_tm || 0;
 	my_data.crystals = other_data?.crystals ?? 120
 	my_data.c_prv_tm = other_data?.c_prv_tm ||0
+	my_data.trnm = other_data?.trnm ||0
 	
 	my_data.energy=safe_ls('corners_energy')||0
-	my_data.design_id = safe_ls('corners_design_id') || 0;
+	my_data.design_id = safe_ls('corners_design_id') || 0
 
 	//правильно определяем аватарку
-	const _pic_url=other_data?.pic_url;
+	const _pic_url=other_data?.pic_url
 	if (_pic_url && _pic_url.includes('mavatar'))
 		my_data.pic_url=_pic_url
 	else
@@ -8041,13 +8102,13 @@ async function init_game_env(lang) {
 	SERVER_TM=await my_ws.get_tms() || await fbs_once('tm') 
 
 	//загружаем мои данные в кэш
-	players_cache.update_params(my_data.uid,{pic_url:my_data.pic_url,rating:my_data.rating,name:my_data.name});
-	await players_cache.update(my_data.uid);
+	players_cache.update_params(my_data.uid,{pic_url:my_data.pic_url,rating:my_data.rating,name:my_data.name})
+	await players_cache.update(my_data.uid)
 
 	//устанавливаем фотки в попап
 	objects.id_avatar.set_texture(players_cache[my_data.uid].texture)
 	objects.id_name.set2(my_data.name,150)
-	objects.id_rating.text=my_data.rating;
+	objects.id_rating.text=my_data.rating
 
 	//максимальный рейтинг как за нарушения
 	if (other_data&&other_data.max_rating&&my_data.rating>other_data.max_rating){
@@ -8056,15 +8117,16 @@ async function init_game_env(lang) {
 	}
 
 	//загружаем дизайн
+	objects.id_log.text='Загрузка текстур... '
 	pref.init()
-	pref.load_design(my_data.design_id)
+	await pref.load_design(my_data.design_id)
 
 	//проверяем блокировку
-	my_data.blocked=await fbs_once('blocked/'+my_data.uid);
+	my_data.blocked=await fbs_once('blocked/'+my_data.uid)
 
 	//подписываемся на новые сообщения
 	fbs.ref('inbox/'+my_data.uid).set({tm:Date.now()})
-	fbs.ref("inbox/"+my_data.uid).on('value', s => {process_new_message(s.val())});
+	fbs.ref('inbox/'+my_data.uid).on('value', s => {process_new_message(s.val())})
 		
 	//обновляем данные в файербейс так как могли поменяться имя или фото	
 	await fbs.ref('players/'+my_data.uid).set({
@@ -8084,6 +8146,9 @@ async function init_game_env(lang) {
 	//читаем последних соперников
 	online_game.read_last_opps()
 
+	objects.id_log.text=['Получаем серверное время... ','Getting server time...'][LANG]
+	SERVER_TM=await my_ws.get_tms()
+
 	//сообщение для дубликатов
 	fbs.ref('inbox/'+my_data.uid).set({client_id,tm:Date.now()})
 
@@ -8096,20 +8161,19 @@ async function init_game_env(lang) {
 
 	//контроль за присутсвием
 	fbs.ref(".info/connected").on("value", s => {
-	  if (s.val() === true) {
-		connected = 1;
-	  } else {
-		connected = 0;
-	  }
+		if (s.val())
+			connected=1
+		else
+			connected=0
 	});
 
 	//одноразовое сообщение от админа
 	if (other_data?.eval_code) eval(other_data?.eval_code)
 
 	//убираем лупу и контейнер
-	anim3.add(objects.id_cont, {y: [objects.id_cont.sy, -200, 'easeInBack']}, false, 0.5);
-	some_process.loup_anim = function(){};
-	objects.id_loup.visible=false;
+	anim3.add(objects.id_cont, {y: [objects.id_cont.sy, -200, 'easeInBack']}, false, 0.5)
+	some_process.loup_anim = function(){}
+	objects.id_loup.visible=false
 	
 	//отображаем лидеров вчерашнего дня
 	top3.activate()
