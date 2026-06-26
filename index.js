@@ -5053,6 +5053,7 @@ chat={
 		if (objects.chat_keyboard_cont.visible)	keyboard.close()
 		if (objects.gif_sel_cont.visible) gif_sel.close()	
 		if (objects.td_cont.visible) lobby.close_table_dialog()
+		if (objects.invite_cont.visible) lobby.close_invite_dialog()
 
 	}
 
@@ -7060,7 +7061,7 @@ lobby={
 
 	close_invite_dialog() {
 
-		if (!objects.invite_cont.visible) return;
+		if (!objects.invite_cont.ready) return;
 		
 		sound.play('close');
 		
