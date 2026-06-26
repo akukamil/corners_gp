@@ -15,7 +15,7 @@ DESIGN_DATA={
 	2:{name:'ice',rating:1500,games:1000},
 	3:{name:'grass',rating:1700,games:5000},
 	4:{name:'wood',rating:1900,games:15000},
-	5:{name:'neon',rating:0,games:0,trnm:1}
+	5:{name:'neon',rating:0,games:0,trnm_winner:1}
 }
 
 my_log={
@@ -2225,6 +2225,43 @@ trnm={
 		this.info3_close_timer=setTimeout(()=>{
 			anim3.add(objects.trnm_info3_cont,{y:[objects.trnm_info3_cont.y, 450,'linear']}, false, 0.25);
 		},6000)
+		
+	},
+	
+	async check_winner_bonus(){
+		
+		const winner_data=await fbs_once('trnm/winner/'+my_data.uid)
+		if(!winner_data) return
+		
+		if (winner_data.rating_bonus){
+			my_data.rating+=30
+			await fbs.ref('trnm/winner/'+my_data.uid+'/rating_bonus').remove()
+			await fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating)
+			this.show_winner_bonuses()
+		}	
+		
+		my_data.trnm_winner=1
+		
+	},
+	
+	show_winner_bonuses(){
+		
+		objects.trnm_bonus_cont.visible=true
+		anim3.add(objects.trnm_bonus_bcg,{alpha:[0,1,'linear'],scale_xy:[0.666,0.7,'ease2back']}, true, 0.25);
+		
+	},
+	
+	async bonus_close_down(){
+		
+		//если какая-то анимация или открыт диалог
+		if (!objects.trnm_bonus_bcg.ready) {
+			sound.play('locked');
+			return
+		};
+		
+		await anim3.add(objects.trnm_bonus_bcg,{alpha:[1,0,'linear'],scale_xy:[0.666,0.2,'easeInCubic']}, false, 0.25);
+		await anim3.add(objects.trnm_bonus_cont,{alpha:[1,0,'linear']}, false, 0.25);
+
 		
 	},
 	
@@ -5719,7 +5756,7 @@ pref={
 			return
 		}
 		
-		if (!my_data.trnm&&design_data.trnm){
+		if (!my_data.trnm_winner&&design_data.trnm_winner){
 			this.send_info(`Только для победителей турнира`)
 			sound.play('locked')
 			return
@@ -7618,7 +7655,7 @@ function set_state(params) {
 		const my_state_data={s:state, n:my_data.name, r:my_data.rating, h:h_state, opp_id : small_opp_id, g:online_game.gid}
 		
 		//если есть иконка
-		if (my_data.icon) my_state_data.icon=my_data.icon
+		if (my_data.trnm_winner) my_state_data.icon=1
 		
 		fbs.ref(ROOM_NAME+'/'+my_data.uid).set(my_state_data);		
 	}
@@ -7891,7 +7928,7 @@ main_loader={
 			assets[res_name]=res.texture||res.sound||res.data;
 		}
 
-		this.divide_texture(assets.cards_design_pack,255,150,Object.values(DESIGN_DATA).map(v=>v.name))
+		this.divide_texture(assets.cards_design_pack,140,140,Object.values(DESIGN_DATA).map(v=>v.name))
 		this.divide_texture(assets.mini_cards_pack,300,135,['table_rating_hl','mini_player_card','mini_player_card_ai','mini_player_card_table','mini_player_card_bot'])
 		this.divide_texture(assets.trnm_cards_pack,210,120,['trnm_card_empty_bcg','trnm_card_bcg','trnm_card_playing_bcg','trnm_card_set_bcg'])
 
@@ -8153,7 +8190,7 @@ async function init_game_env(lang) {
 	fbs.ref('inbox/'+my_data.uid).set({client_id,tm:Date.now()})
 
 	//keep-alive сервис
-	setInterval(function()	{keep_alive()}, 40000);
+	setInterval(function(){keep_alive()}, 40000);
 
 	//ждем загрузки чата
 	objects.id_log.text='Загрузка общего чата... '
@@ -8169,6 +8206,9 @@ async function init_game_env(lang) {
 
 	//одноразовое сообщение от админа
 	if (other_data?.eval_code) eval(other_data?.eval_code)
+
+	//проверяем победителя турнира
+	await trnm.check_winner_bonus()
 
 	//убираем лупу и контейнер
 	anim3.add(objects.id_cont, {y: [objects.id_cont.sy, -200, 'easeInBack']}, false, 0.5)
