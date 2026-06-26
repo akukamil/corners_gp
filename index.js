@@ -2209,7 +2209,6 @@ trnm={
 	players_data_received:0,
 	listeners:{players:0,state:0},
 	cached_trnm_data:{tables:{},players:[]},
-	reg_btn_state:0,
 	reg_process_on:0,
 	sec_to_start:0,
 	sec_to_start_timer:0,	
@@ -2699,15 +2698,16 @@ trnm={
 
 	reg_btn_down(){
 
+		if (anim3.any_on()) {
+			sound.play('locked')
+			return
+		}		
+		
 		if (this.state!=='reg') return
+		fbs.ref('trnm/_players/'+my_data.uid).set(my_data.rating)
+		anim3.add(objects.trnm_reg_btn, {alpha: [1, 0, 'linear']}, false, 0.25)
 
-		if (this.reg_btn_state)
-			fbs.ref('trnm/_players/'+my_data.uid).remove()
-		else
-			fbs.ref('trnm/_players/'+my_data.uid).set(my_data.rating)
-
-		this.reg_btn_set_state(1-this.reg_btn_state)
-
+		this.send_info3('Заявка принята, не пропустите начало!')
 	},
 	
 	reg_btn_set_state(s){
@@ -2810,7 +2810,6 @@ trnm={
 			'debug98',
 			'debug99'
 		]
-		
 		
 		for (const p of pdata){
 			fbs.ref('trnm/_players/'+p).set(hf.randIntInc(1300,1400))
@@ -5053,6 +5052,7 @@ chat={
 		anim3.add(objects.chat_cont,{alpha:[1, 0,'linear']}, false, 0.1);
 		if (objects.chat_keyboard_cont.visible)	keyboard.close()
 		if (objects.gif_sel_cont.visible) gif_sel.close()	
+		if (objects.td_cont.visible) lobby.close_table_dialog()
 
 	}
 
@@ -6786,7 +6786,7 @@ lobby={
 
 	close_table_dialog() {
 		
-		if (anim3.any_on()) {
+		if (!objects.td_cont.ready) {
 			sound.play('locked');
 			return
 		};
