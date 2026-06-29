@@ -7914,10 +7914,6 @@ main_loader={
 			if (load_list[i].class ==='sprite'|| load_list[i].class ==='image')
 				loader.add(load_list[i].name, git_src+'res/'+lang_pack + '/' + load_list[i].name + '.' +  load_list[i].image_format);
 
-		//добавляем библиотеку аватаров
-		loader.add('multiavatar', 'https://akukamil.github.io/common/multiavatar.min.txt');
-
-
 		loader.onProgress.add(ldr=>{
 			objects.loader_bar_mask.width =  240*ldr.progress*0.01;
 		});
@@ -7932,12 +7928,6 @@ main_loader={
 		this.divide_texture(assets.cards_design_pack,140,140,Object.values(DESIGN_DATA).map(v=>v.name))
 		this.divide_texture(assets.mini_cards_pack,300,135,['table_rating_hl','mini_player_card','mini_player_card_ai','mini_player_card_table','mini_player_card_bot'])
 		this.divide_texture(assets.trnm_cards_pack,210,120,['trnm_card_empty_bcg','trnm_card_bcg','trnm_card_playing_bcg','trnm_card_set_bcg'])
-
-
-		//Включаем библиотеку аватаров
-		const script = document.createElement('script');
-		script.textContent = assets.multiavatar;
-		document.head.appendChild(script);
 
 		//создаем спрайты и массивы спрайтов и запускаем первую часть кода
 		for (let i = 0; i < load_list.length; i++) {
