@@ -2214,6 +2214,7 @@ trnm={
 	sec_to_start_timer:0,	
 	winner_uid:0,
 	info3_close_timer:0,
+	rules_shown:0,
 
 	send_info3(t){
 	
@@ -2265,6 +2266,13 @@ trnm={
 	},
 	
 	async activate(){
+		
+		
+		if (!this.rules_shown){
+			anim3.add(objects.trnm_rules_cont,{alpha:[0,1,'linear']}, true, 0.3);			
+			this.rules_shown=1
+		}
+
 
 		this.on=1
 		anim3.add(objects.trnm_cont, {alpha: [0, 1, 'linear']}, true, 0.25)
@@ -2420,7 +2428,7 @@ trnm={
 			this.show_winner()
 			
 			objects.trnm_info1.alpha=1
-			some_process.trnm_reg=()=>{}
+			some_process.trnm_reg=()=>{objects.trnm_info1.alpha=Math.abs(Math.sin(TM.s*0.5))}
 		}		
 		
 		if (state==='started'){	
@@ -2553,7 +2561,7 @@ trnm={
 	
 	card_down(card){
 		
-		console.log(this.cached_trnm_data.tables[card.rts])
+		//console.log(this.cached_trnm_data.tables[card.rts])
 				
 		//если какая-то анимация или открыт диалог
 		if (anim3.any_on()) {
@@ -2788,6 +2796,17 @@ trnm={
 		this.close()
 		lobby.activate()
 
+	},
+
+	rules_close_down(){
+		
+		if (anim3.any_on()) {
+			sound.play('locked');
+			return
+		}
+		
+		anim3.add(objects.trnm_rules_cont,{alpha:[1,0,'linear']}, false, 0.3);
+		
 	},
 
 	async fill_players(){
@@ -7149,11 +7168,13 @@ lobby={
 		
 
 		sound.play('click');
-		return
+		//return
 		this.close()
 		trnm.activate()
 
 	},
+	
+	
 
 	async lb_btn_down() {
 
