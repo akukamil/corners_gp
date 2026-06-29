@@ -517,7 +517,7 @@ class trnm_precard_class extends PIXI.Container{
 		this.bcg.width=90
 		this.bcg.height=90
 
-		this.t_name=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 22,align: 'center'});
+		this.t_name=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 18,align: 'center'});
 		this.t_name.x=45
 		this.t_name.y=90
 		this.t_name.anchor.set(0.5,0.5)
@@ -534,7 +534,7 @@ class trnm_precard_class extends PIXI.Container{
 	set(pdata){
 
 		this.avatar.set_texture(pdata.texture)
-		this.t_name.text=pdata.name
+		this.t_name.set2(pdata.name,90)
 		this.t_rating.text=pdata.rating
 
 	}
