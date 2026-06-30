@@ -33,12 +33,6 @@ fbs_once=async function(path){
 	return info.val();
 }
 
-irnd = function(min,max) {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
 class player_mini_card_class extends PIXI.Container {
 
 	constructor(x,y,id) {
@@ -1361,8 +1355,8 @@ brd_func={
 	rotate_board(brd){
 		if (!brd) return;
 		const new_board=JSON.parse(JSON.stringify(brd));
-		for (x=0;x<8;x++){
-			for(y=0;y<8;y++){
+		for (let x=0;x<8;x++){
+			for(let y=0;y<8;y++){
 				let figure=new_board[7-y][7-x];
 				if(figure!==0) figure=3-figure;
 				brd[y][x]=figure;
@@ -1374,7 +1368,7 @@ brd_func={
 		let cnt=0;
 		for (let y=0;y<3;y++)
 			for (let x=0;x<4;x++)
-				if (brd[y*8+x]===1)
+				if (brdU[y*8+x]===1)
 					cnt++;
 		return cnt;
 	},
