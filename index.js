@@ -1,5 +1,5 @@
-var M_WIDTH=800, M_HEIGHT=450;
-var app ={stage:{},renderer:{}}, assets={}, SERVER_TM=0,fbs,client_id, objects={}, state="", my_role="", game_tick=0, made_moves=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=0, h_state=0, game_platform="",git_src='', ROOM_NAME = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process={}, my_data={opp_id : ''},opp_data={}, game_name='corners';
+let M_WIDTH=800, M_HEIGHT=450;
+let app ={stage:{},renderer:{}}, assets={}, SERVER_TM=0,fbs,client_id, objects={}, state="", my_role="", game_tick=0, made_moves=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=0, h_state=0, game_platform="",git_src='', ROOM_NAME = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process={}, my_data={opp_id : ''},opp_data={}, game_name='corners';
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 const MAX_NO_AUTH_RATING=1950;
 const MAX_NO_REP_RATING=1910;
@@ -1033,6 +1033,15 @@ brd_func={
 		
 	},
 	
+	brd_to_Uint8Array(brd){
+		
+		const b = new Uint8Array(64);
+		for (let y=0;y<8;y++)
+			for (let x=0;x<8;x++)
+				b[y*8+x]=brd[y][x]
+		return b
+	},
+	
 	update_board(board) {
 
 		this.target_point=0;
@@ -1040,7 +1049,7 @@ brd_func={
 		//сначала скрываем все шашки
 		objects.checkers.forEach(c=>{c.visible=false});
 
-		var ind=0;
+		let ind=0;
 		for (let x=0;x<8;x++) {
 			for (let y=0;y<8;y++) {
 
@@ -1078,8 +1087,8 @@ brd_func={
 
 		function left(move_data,cur_board, m_archive) {
 
-			var new_x=move_data.x1-1;
-			var new_y=move_data.y1;
+			let new_x=move_data.x1-1;
+			let new_y=move_data.y1;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
 
@@ -1098,8 +1107,8 @@ brd_func={
 		}
 
 		function right(move_data,cur_board, m_archive) {
-			var new_x=move_data.x1+1;
-			var new_y=move_data.y1;
+			let new_x=move_data.x1+1;
+			let new_y=move_data.y1;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0)
 				return;
@@ -1119,8 +1128,8 @@ brd_func={
 		}
 
 		function up(move_data,cur_board, m_archive){
-			var new_x=move_data.x1;
-			var new_y=move_data.y1-1;
+			let new_x=move_data.x1;
+			let new_y=move_data.y1-1;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0)
 				return;
@@ -1140,8 +1149,8 @@ brd_func={
 		}
 
 		function down(move_data,cur_board, m_archive){
-			var new_x=move_data.x1;
-			var new_y=move_data.y1+1;
+			let new_x=move_data.x1;
+			let new_y=move_data.y1+1;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0)
 				return;
@@ -1162,8 +1171,8 @@ brd_func={
 
 		function left_combo(move_data, cur_board, m_archive) {
 
-			var new_x=move_data.x1-2;
-			var new_y=move_data.y1;
+			let new_x=move_data.x1-2;
+			let new_y=move_data.y1;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
 			if (cur_board[move_data.y1][move_data.x1-1]===0) return;
@@ -1191,8 +1200,8 @@ brd_func={
 
 		function right_combo(move_data,cur_board, m_archive) {
 
-			var new_x=move_data.x1+2;
-			var new_y=move_data.y1;
+			let new_x=move_data.x1+2;
+			let new_y=move_data.y1;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
 			if (cur_board[move_data.y1][move_data.x1+1]===0) return;
@@ -1219,8 +1228,8 @@ brd_func={
 
 		function up_combo(move_data,cur_board, m_archive) {
 
-			var new_x=move_data.x1;
-			var new_y=move_data.y1-2;
+			let new_x=move_data.x1;
+			let new_y=move_data.y1-2;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
 			if (cur_board[move_data.y1-1][move_data.x1]===0) return;
@@ -1247,8 +1256,8 @@ brd_func={
 
 		function down_combo(move_data,cur_board, m_archive) {
 
-			var new_x=move_data.x1;
-			var new_y=move_data.y1+2;
+			let new_x=move_data.x1;
+			let new_y=move_data.y1+2;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
 			if (cur_board[move_data.y1+1][move_data.x1]===0) return;
@@ -1324,7 +1333,7 @@ brd_func={
 		const t_board =[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]];
 
 		//декодируем строку в доску
-		for (i=0;i<str.length;i++){
+		for (let i=0;i<str.length;i++){
 			const ind=this.base64.indexOf(str[i])
 			const y=Math.floor(ind/8)
 			const x=ind%8;
@@ -1340,7 +1349,7 @@ brd_func={
 		const t_board =[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]];
 
 		//декодируем строку в доску
-		for (i=0;i<24;i++){
+		for (let i=0;i<24;i++){
 			const ind=this.base64.indexOf(str[i]);
 			const y=Math.floor(ind/8);
 			const x=ind%8;
@@ -1361,52 +1370,52 @@ brd_func={
 		}
 	},
 
-	count_finished1(brd) {
+	count_finished1(brdU) {
 		let cnt=0;
-		for (var y=0;y<3;y++)
-			for (var x=0;x<4;x++)
-				if (brd[y][x]===1)
+		for (let y=0;y<3;y++)
+			for (let x=0;x<4;x++)
+				if (brd[y*8+x]===1)
 					cnt++;
 		return cnt;
 	},
 
-	count_finished2(brd) {
+	count_finished2(brdU) {
 		let cnt=0;
-		for (var y=5;y<8;y++)
-			for (var x=4;x<8;x++)
-				if (brd[y][x]===2)
+		for (let y=5;y<8;y++)
+			for (let x=4;x<8;x++)
+				if (brdU[y*8+x]===2)
 					cnt++;
 		return cnt;
 	},
 
-	finished1(brd) {
-		for (var y=0;y<3;y++)
-			for (var x=0;x<4;x++)
-				if (brd[y][x]!==1)
+	finished1(brdU) {
+		for (let y=0;y<3;y++)
+			for (let x=0;x<4;x++)
+				if (brdU[y*8+x]!==1)
 					return 0;
 		return 1;
 	},
 
-	finished2(brd) {
-		for (var y=5;y<8;y++)
-			for (var x=4;x<8;x++)
-				if (brd[y][x]!==2)
+	finished2(brdU) {
+		for (let y=5;y<8;y++)
+			for (let x=4;x<8;x++)
+				if (brdU[y*8+x]!==2)
 					return 0;
 		return 1;
 	},
 
-	any1home(brd) {
-		for (var y=5;y<8;y++)
-			for (var x=4;x<8;x++)
-				if (brd[y][x]===1)
+	any1home(brdU) {
+		for (let y=5;y<8;y++)
+			for (let x=4;x<8;x++)
+				if (brdU[y*8+x]===1)
 					return 1;
 		return 0;
 	},
 
-	any2home(brd) {
-		for (var y=0;y<3;y++)
-			for (var x=0;x<4;x++)
-				if (brd[y][x]===2)
+	any2home(brdU) {
+		for (let y=0;y<3;y++)
+			for (let x=0;x<4;x++)
+				if (brdU[y*8+x]===2)
 					return 1;
 		return 0;
 	},
@@ -2095,7 +2104,7 @@ bot_game = {
 	on:0,
 	me_conf_play : 0,
 	opp_conf_play : 0,
-
+	
 	activate() {
 
 		this.on=1;
@@ -2174,15 +2183,18 @@ bot_game = {
 
 		if(!this.on) return;
 
-		await new Promise(r=>setTimeout(r,300))
+		await new Promise(r=>setTimeout(r,150))
 
 		let m_data={};
+		const brdUINT=brd_func.brd_to_Uint8Array(g_board)
+		
 		if (made_moves < 30)
-			m_data=minimax_solver.minimax_3(g_board, made_moves);
+			m_data=minimax_solver.minimax_3(brdUINT, made_moves)
 		else
-			m_data=minimax_solver.minimax_3_single(g_board, made_moves);
-
-		game.receive_move2(m_data);
+			m_data=minimax_solver.minimax_3_single(brdUINT, made_moves)
+		
+		await new Promise(r=>setTimeout(r,150))
+		game.receive_move2(m_data)
 
 	},
 
@@ -3391,8 +3403,8 @@ game_watching={
 		//опредеяем кто ушел
 		let fig_to_move,tx,ty;
 		let move_data={x1:0,y1:0,x2:0,y2:0};
-		for (var x = 0; x < 8; x++) {
-			for (var y = 0; y < 8; y++) {
+		for (let x = 0; x < 8; x++) {
+			for (let y = 0; y < 8; y++) {
 				const fig0 = old_board[y][x];
 				const fig1 = new_board[y][x];
 
@@ -3499,7 +3511,7 @@ keyboard={
 		if(key==='ENTER') key ='ОТПРАВИТЬ';
 		if(key==='ESCAPE') key ='ЗАКРЫТЬ';
 
-		var key2 = this.layout.find(k => {return k[4] === key})
+		let key2 = this.layout.find(k => {return k[4] === key})
 
 		this.process_key(key2)
 
@@ -3768,24 +3780,11 @@ keep_alive = function() {
 
 minimax_solver = {
 
-
 bad_1:[[-4,-4,0,8,25,41,61,85],[-2,-2,2,10,27,43,63,87],[4,4,8,16,33,49,69,93],[19,19,23,31,43,59,79,103],[33,33,37,45,57,73,93,117],[51,51,55,63,75,91,111,135],[73,73,77,85,97,113,133,157],[99,99,103,111,123,139,159,183]],
-
 patterns:[[[0,1,1],[0,2,1],[1,0,1],[2,0,1]],[[0,1,2],[0,2,1],[0,3,1],[1,0,2],[2,0,1],[3,0,1]],[[0,1,1],[0,2,2],[1,0,1],[1,2,1],[2,0,2],[2,1,1]],[[0,1,1],[0,2,2],[0,3,1],[1,0,2],[2,0,1],[3,0,1]],[[0,1,2],[0,2,1],[0,3,1],[1,0,1],[2,0,2],[3,0,1]],[[0,1,1],[0,2,2],[1,0,2],[1,2,1],[2,0,1],[3,0,1]],[[0,1,2],[0,2,1],[0,3,1],[1,0,1],[2,0,2],[2,1,1]],[[0,1,1],[0,2,1],[1,0,1],[2,0,2],[2,1,1]],[[0,1,1],[0,2,2],[1,0,1],[1,2,1],[2,0,1]],[[0,1,2],[0,2,2],[1,0,2],[1,1,1],[1,2,1],[2,0,1]],[[0,1,2],[0,2,1],[1,0,2],[1,1,1],[2,0,2],[2,1,1]],[[0,1,2],[0,2,1],[0,3,1],[1,0,1],[2,0,1]],[[0,1,1],[0,2,1],[1,0,2],[2,0,1],[3,0,1]],[[0,1,2],[0,2,1],[1,0,1],[1,1,1],[2,0,1]],[[0,1,1],[0,2,1],[1,0,2],[1,1,1],[2,0,1]],[[0,1,1],[0,2,2],[1,0,1],[1,2,1],[2,0,1]],[[0,1,1],[0,2,1],[1,0,1],[2,0,2],[2,1,1]],[[0,1,1],[0,2,2],[0,3,1],[1,0,1],[2,0,1]],[[0,1,1],[0,2,1],[1,0,1],[2,0,2],[3,0,1]],[[0,1,2],[0,2,1],[1,0,2],[1,1,1],[2,0,1],[3,0,1]],[[0,1,2],[0,2,1],[0,3,1],[1,0,2],[1,1,1],[2,0,1]]],
-
 fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,2,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,2,5,3,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,3,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[5,2,5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,5,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,4,4,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,4,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[3,4,4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,4,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,2,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,2,5,3,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,3,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,4,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,4,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,3,5,4,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,3,5,4,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,4,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,4,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[4,6,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,4,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[3,5,4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[4,7,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,4,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,4,5,5,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,7],[3,6,4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,4,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,4,5,5,5,6,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,5,5,6,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,6,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6],[3,7,4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6],[5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,2,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,3,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,2,6,3,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,3,6,5,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,3,6,5,6,6,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,3,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,4,4,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,3,5,4,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,4,5,5,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,4,5,5,5,6,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,5,5,6,5,7,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,4,4,5,4,5,5,5,6,5,7,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,4,5,5,5,6,5,7,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,4,5,5,5,6,5,7,6,5,6,6,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,3,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,2,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,2,6,3,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,3,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,3,6,4,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,3,6,4,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,3,6,4,6,6,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,3,7,4,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[3,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,4,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[3,5,4,5,5,4,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,5,5,6,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,3,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,5,5,6,5,7,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,6,5,7,6,4,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,5,5,6,5,7,6,4,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,3,6,4,6,6,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,5,5,6,5,7,6,4,6,6,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,4,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[3,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,4,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,6,4,6,5,4,5,5,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,6,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,3,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,4,5,5,5,6,5,7,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,3,6,4,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,6,5,7,6,4,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,6,5,7,6,4,6,5,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,6,5,7,6,4,6,5,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,3,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,3,7,4,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[3,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,3,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,4,4,7,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,3,5,4,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,7,4,7,5,4,5,5,5,6,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,3,6,5,6,6,7,4,7,5,7,6,7,7],[4,4,4,7,5,4,5,5,5,6,5,7,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,3,6,4,6,6,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,5,5,6,5,7,6,4,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,6,5,7,6,4,6,5,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,3,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,3,7,4,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,3,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,3,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,2,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,5,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,2,7,3,7,5,7,7],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,3,7,4,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,4,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,3,7,4,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,3,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,2,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,2,7,3,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,5,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,5,7,6]],
 
-
-	clone_board (board) {
-
-		r_board=[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]];
-		for (let y=0;y<8;y++)
-			for (let x=0;x<8;x++)
-				r_board[y][x]=board[y][x];
-		return r_board;
-	},
-
-	get_childs(board_data, checkers, forward){
+	get_childs(board_dataU, checkers, forward){
 
 		function check_in_hist(x,y, hist) {
 			for (let i=0;i<hist.length;i++)
@@ -3794,206 +3793,206 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 			return false;
 		}
 
-		function left(ix,iy,cur_board,moves_hist,boards_array) {
+		function left(ix,iy,cur_boardU,moves_hist,boards_array) {
 
-			var new_x=ix-1;
-			var new_y=iy;
+			let new_x=ix-1;
+			let new_y=iy;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
 
-			if (cur_board[new_y][new_x]===0) {
-				cur_board[iy][ix]=0;
-				cur_board[new_y][new_x]=checkers;
-				boards_array.push([cur_board,ix,iy,new_x,new_y]);
+			if (cur_boardU[new_y*8+new_x]===0) {
+				cur_boardU[iy*8+ix]=0;
+				cur_boardU[new_y*8+new_x]=checkers;
+				boards_array.push([cur_boardU,ix,iy,new_x,new_y]);
 				return;
 			}
 			else {
-				left_combo(ix,iy,cur_board,moves_hist,boards_array);
+				left_combo(ix,iy,cur_boardU,moves_hist,boards_array);
 			}
 		}
 
-		function right(ix,iy,cur_board,moves_hist,boards_array) {
-			var new_x=ix+1;
-			var new_y=iy;
+		function right(ix,iy,cur_boardU,moves_hist,boards_array) {
+			let new_x=ix+1;
+			let new_y=iy;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
 
-			if (cur_board[new_y][new_x]===0) {
-				cur_board[iy][ix]=0;
-				cur_board[new_y][new_x]=checkers;
-				boards_array.push([cur_board,ix,iy,new_x,new_y]);
+			if (cur_boardU[new_y*8+new_x]===0) {
+				cur_boardU[iy*8+ix]=0;
+				cur_boardU[new_y*8+new_x]=checkers;
+				boards_array.push([cur_boardU,ix,iy,new_x,new_y]);
 				return
 			} else {
-				right_combo(ix,iy,cur_board,moves_hist,boards_array);
+				right_combo(ix,iy,cur_boardU,moves_hist,boards_array);
 			}
 		}
 
-		function up(ix,iy,cur_board,moves_hist,boards_array){
-			var new_x=ix;
-			var new_y=iy-1;
+		function up(ix,iy,cur_boardU,moves_hist,boards_array){
+			let new_x=ix;
+			let new_y=iy-1;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
 
-			if (cur_board[new_y][new_x]===0) {
-				cur_board[iy][ix]=0;
-				cur_board[new_y][new_x]=checkers;
-				boards_array.push([cur_board,ix,iy,new_x,new_y]);
+			if (cur_boardU[new_y*8+new_x]===0) {
+				cur_boardU[iy*8+ix]=0;
+				cur_boardU[new_y*8+new_x]=checkers;
+				boards_array.push([cur_boardU,ix,iy,new_x,new_y]);
 				return
 			} else {
-				up_combo(ix,iy,cur_board,moves_hist,boards_array);
+				up_combo(ix,iy,cur_boardU,moves_hist,boards_array);
 			}
 		}
 
-		function down(ix,iy,cur_board,moves_hist,boards_array){
-			var new_x=ix;
-			var new_y=iy+1;
+		function down(ix,iy,cur_boardU,moves_hist,boards_array){
+			let new_x=ix;
+			let new_y=iy+1;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
 
-			if (cur_board[new_y][new_x]===0) {
-				cur_board[iy][ix]=0;
-				cur_board[new_y][new_x]=checkers;
-				boards_array.push([cur_board,ix,iy,new_x,new_y]);
+			if (cur_boardU[new_y*8+new_x]===0) {
+				cur_boardU[iy*8+ix]=0;
+				cur_boardU[new_y*8+new_x]=checkers;
+				boards_array.push([cur_boardU,ix,iy,new_x,new_y]);
 				return
 			} else {
-				down_combo(ix,iy,cur_board,moves_hist,boards_array);
+				down_combo(ix,iy,cur_boardU,moves_hist,boards_array);
 			}
 		}
 
-		function left_combo(ix,iy,cur_board,moves_hist,boards_array) {
+		function left_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
 
-			var new_x=ix-2;
-			var new_y=iy;
+			let new_x=ix-2;
+			let new_y=iy;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-			if (cur_board[iy][ix-1]===0) return;
+			if (cur_boardU[iy*8+ix-1]===0) return;
 
-			if (cur_board[new_y][new_x]===0)
+			if (cur_boardU[new_y*8+new_x]===0)
 			{
 
 				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
 
 				moves_hist.push([ix,iy]);
-				cur_board[new_y][new_x]=cur_board[iy][ix];
-				cur_board[iy][ix]=0;
+				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
+				cur_boardU[iy*8+ix]=0;
 
 				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
-				if (cur_board[new_y][new_x]===1)
+				if (cur_boardU[new_y*8+new_x]===1)
 					d_move=-d_move;
 
 				if (d_move>min_move_amount)
-					boards_array.push([minimax_solver.clone_board(cur_board),moves_hist[0][0],moves_hist[0][1],new_x,new_y]);
+					boards_array.push([new Uint8Array(cur_boardU),moves_hist[0][0],moves_hist[0][1],new_x,new_y]);
 
 				//продолжаем попытки комбо
-				left_combo(new_x,new_y,cur_board,moves_hist,boards_array);
-				up_combo(new_x,new_y,cur_board,moves_hist,boards_array);
-				down_combo(new_x,new_y,cur_board,moves_hist,boards_array);
+				left_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				up_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				down_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
 			}
 		}
 
-		function right_combo(ix,iy,cur_board,moves_hist,boards_array) {
+		function right_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
 
-			var new_x=ix+2;
-			var new_y=iy;
+			let new_x=ix+2;
+			let new_y=iy;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-			if (cur_board[iy][ix+1]===0) return;
+			if (cur_boardU[iy*8+ix+1]===0) return;
 
-			if (cur_board[new_y][new_x]===0)
+			if (cur_boardU[new_y*8+new_x]===0)
 			{
 
 				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
 
 				moves_hist.push([ix,iy]);
-				cur_board[new_y][new_x]=cur_board[iy][ix];
-				cur_board[iy][ix]=0;
+				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
+				cur_boardU[iy*8+ix]=0;
 
 				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
-				if (cur_board[new_y][new_x]===1)
+				if (cur_boardU[new_y*8+new_x]===1)
 					d_move=-d_move;
 
 				if (d_move>min_move_amount)
-					boards_array.push([minimax_solver.clone_board(cur_board),moves_hist[0][0],moves_hist[0][1],new_x,new_y]);
+					boards_array.push([new Uint8Array(cur_boardU),moves_hist[0][0],moves_hist[0][1],new_x,new_y]);
 
 				//продолжаем попытки комбо
-				right_combo(new_x,new_y,cur_board,moves_hist,boards_array);
-				up_combo(new_x,new_y,cur_board,moves_hist,boards_array);
-				down_combo(new_x,new_y,cur_board,moves_hist,boards_array);
+				right_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				up_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				down_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
 			}
 		}
 
-		function up_combo(ix,iy,cur_board,moves_hist,boards_array) {
+		function up_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
 
-			var new_x=ix;
-			var new_y=iy-2;
+			let new_x=ix;
+			let new_y=iy-2;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-			if (cur_board[iy-1][ix]===0) return;
+			if (cur_boardU[(iy-1)*8+ix]===0) return;
 
-			if (cur_board[new_y][new_x]===0)
+			if (cur_boardU[new_y*8+new_x]===0)
 			{
 
 				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
 
 				moves_hist.push([ix,iy]);
-				cur_board[new_y][new_x]=cur_board[iy][ix];
-				cur_board[iy][ix]=0;
+				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
+				cur_boardU[iy*8+ix]=0;
 
 				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
-				if (cur_board[new_y][new_x]===1)
+				if (cur_boardU[new_y*8+new_x]===1)
 					d_move=-d_move;
 
 				if (d_move>min_move_amount)
-					boards_array.push([minimax_solver.clone_board(cur_board),moves_hist[0][0],moves_hist[0][1],new_x,new_y]);
+					boards_array.push([new Uint8Array(cur_boardU),moves_hist[0][0],moves_hist[0][1],new_x,new_y]);
 
 				//продолжаем попытки комбо
-				right_combo(new_x,new_y,cur_board,moves_hist,boards_array);
-				up_combo(new_x,new_y,cur_board,moves_hist,boards_array);
-				left_combo(new_x,new_y,cur_board,moves_hist,boards_array);
+				right_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				up_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				left_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
 			}
 		}
 
-		function down_combo(ix,iy,cur_board,moves_hist,boards_array) {
+		function down_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
 
-			var new_x=ix;
-			var new_y=iy+2;
+			let new_x=ix;
+			let new_y=iy+2;
 
 			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-			if (cur_board[iy+1][ix]===0) return;
+			if (cur_boardU[(iy+1)*8+ix]===0) return;
 
-			if (cur_board[new_y][new_x]===0)
+			if (cur_boardU[new_y*8+new_x]===0)
 			{
 				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
 
 				moves_hist.push([ix,iy]);
-				cur_board[new_y][new_x]=cur_board[iy][ix];
-				cur_board[iy][ix]=0;
+				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
+				cur_boardU[iy*8+ix]=0;
 
 				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
-				if (cur_board[new_y][new_x]===1)
+				if (cur_boardU[new_y*8+new_x]===1)
 					d_move=-d_move;
 
 				if (d_move>min_move_amount)
-					boards_array.push([minimax_solver.clone_board(cur_board),moves_hist[0][0],moves_hist[0][1],new_x,new_y]);
+					boards_array.push([new Uint8Array(cur_boardU),moves_hist[0][0],moves_hist[0][1],new_x,new_y]);
 
 				//продолжаем попытки комбо
-				right_combo(new_x,new_y,cur_board,moves_hist,boards_array);
-				down_combo(new_x,new_y,cur_board,moves_hist,boards_array);
-				left_combo(new_x,new_y,cur_board,moves_hist,boards_array);
+				right_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				down_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				left_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
 			}
 		}
 
-		var boards_array=[];
+		let boards_array=[];
 
 		if (forward===1) {
 
 			if (checkers===1) {
 				for (let y=0;y<8;y++) {
 					for (let x=0;x<8;x++) {
-						if (board_data[y][x]===checkers) {
-							var moves_hist=[[x,y]];
-							left	(		x,y,	minimax_solver.clone_board(board_data),	moves_hist, boards_array);
-							up		(		x,y,	minimax_solver.clone_board(board_data),	moves_hist, boards_array);
+						if (board_dataU[y*8+x]===checkers) {
+							let moves_hist=[[x,y]];
+							left	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+							up		(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
 						}
 					}
 				}
@@ -4003,10 +4002,10 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 
 				for (let y=0;y<8;y++) {
 					for (let x=0;x<8;x++) {
-						if (board_data[y][x]===checkers) {
+						if (board_dataU[y*8+x]===checkers) {
 							let moves_hist=[[x,y]];
-							right	(		x,y,	minimax_solver.clone_board(board_data),	moves_hist, boards_array);
-							down	(		x,y,	minimax_solver.clone_board(board_data),	moves_hist, boards_array);
+							right	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+							down	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
 						}
 					}
 				}
@@ -4015,12 +4014,12 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 
 			for (let y=0;y<8;y++) {
 				for (let x=0;x<8;x++) {
-					if (board_data[y][x]===checkers) {
+					if (board_dataU[y*8+x]===checkers) {
 						let moves_hist=[[x,y]];
-						right	(		x,y,	minimax_solver.clone_board(board_data),	moves_hist, boards_array);
-						down	(		x,y,	minimax_solver.clone_board(board_data),	moves_hist, boards_array);
-						left	(		x,y,	minimax_solver.clone_board(board_data),	moves_hist, boards_array);
-						up		(		x,y,	minimax_solver.clone_board(board_data),	moves_hist, boards_array);
+						right	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+						down	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+						left	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+						up		(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
 					}
 				}
 			}
@@ -4063,19 +4062,19 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 
 	},
 
-	board_val(board, made_moves) {
+	board_val(boardU, made_moves) {
 
-		var val_1=0;
-		var val_2=0;
+		let val_1=0;
+		let val_2=0;
 
 
 		for (let y=0;y<8;y++) {
 			for (let x=0;x<8;x++) {
 
-				if (board[y][x]===1)
+				if (boardU[y*8+x]===1)
 					val_1-=this.bad_1[y][x];
 
-				if (board[y][x]===2)
+				if (boardU[y*8+x]===2)
 					val_2-=this.bad_1[7-y][7-x];
 			}
 		}
@@ -4083,7 +4082,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 		//вычисляем блокированных 2 и добавляем как бонус к 1 dxdy положительный
 		for (let y=0;y<3;y++) {
 			for (let x=0;x<4;x++) {
-				if (board[y][x]===2) {
+				if (boardU[y*8+x]===2) {
 					for (let p=0;p<this.patterns.length;p++) {
 
 						let pattern_ok=1;
@@ -4092,7 +4091,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 							let dx=this.patterns[p][r][1];
 							let ch=this.patterns[p][r][2];
 
-							if (board[y+dy][x+dx]!==ch) {
+							if (boardU[(y+dy)*8+x+dx]!==ch) {
 								pattern_ok=0;
 								break;
 							}
@@ -4107,7 +4106,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 		//вычисляем блокированных 1 и добавляем как бонус к 2 dxdy отрицательный
 		for (let y=5;y<8;y++) {
 			for (let x=4;x<8;x++) {
-				if (board[y][x]===1) {
+				if (boardU[y*8+x]===1) {
 					for (let p=0;p<this.patterns.length;p++) {
 
 						let pattern_ok=1;
@@ -4116,7 +4115,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 							let dx=-this.patterns[p][r][1];
 							let ch=3-this.patterns[p][r][2];
 
-							if (board[y+dy][x+dx]!==ch) {
+							if (boardU[(y+dy)*8+x+dx]!==ch) {
 								pattern_ok=0;
 								break;
 							}
@@ -4131,32 +4130,30 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 		//проверяем не закончилась ли игра
 		if (made_moves>=30) {
 
-			if (brd_func.any1home(board)===1)
+			if (brd_func.any1home(boardU)===1)
 				val_2=999999;
 
-			if (brd_func.any2home(board)===1)
+			if (brd_func.any2home(boardU)===1)
 				val_1=999999;
 		}
 
 		return val_1-val_2;
 	},
 
-	invert_board(board) {
+	invert_board(brdU) {
 
-		inv_brd=minimax_solver.clone_board(board);
-		for (let y = 0; y < 8; y++) {
-			for (let x = 0; x < 8; x++) {
-				inv_brd[y][x] = board[7-y][7-x];
-				if (inv_brd[y][x] !== 0)
-					inv_brd[y][x] = 3 - inv_brd[y][x];
-			}
+		const inv_brdU=new Uint8Array(brdU);
+		for (let i=0;i<64;i++){
+			inv_brdU[i]=brdU[63-i]			
+			if (inv_brdU[i])
+				inv_brdU[i]=3-inv_brdU[i]
 		}
 
-		return inv_brd;
 
+		return inv_brdU;
 	},
 
-	check_fin_moves(board) {
+	check_fin_moves(brdU) {
 
 		for (let i=0;i<this.fin_moves.length;i++) {
 
@@ -4165,66 +4162,65 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 
 				let y=this.fin_moves[i][c*2];
 				let x=this.fin_moves[i][c*2+1];
-				if (board[y][x]!=2) {
+				if (brdU[y*8+x]!=2) {
 					found=0;
 					break;
 				}
 			}
 
-			if (found===1)
+			if (found)
 				return 1;
 		}
 		return 0;
 	},
 
-	how_bad_board_2(board) {
+	how_bad_board_2(brdU) {
 
-		var bad_val_1=[0,999];
+		let bad_val_1=[0,999];
 
 		for (let y=0;y<8;y++) {
 			for (let x=0;x<8;x++) {
-				if (board[y][x]===2) {
+				if (brdU[y*8+x]===2) {
 
-					let cy=7-y;
-					let cx=7-x;
-					let v=this.bad_1[cy][cx];
+					const cy=7-y;
+					const cx=7-x;
+					const v=this.bad_1[cy][cx];
 					bad_val_1[0]+=v;
 				}
 			}
 		}
 
 
-		if (brd_func.finished2(board))
+		if (brd_func.finished2(brdU))
 			return [-999999,0];
 
-		if (this.check_fin_moves(board)===1)
+		if (this.check_fin_moves(brdU)===1)
 			return [-999999,2];
 
 		return bad_val_1;
 	},
 
-	minimax_3(board,made_moves) {
+	minimax_3(brdU,made_moves) {
 
 		this.make_weights_board(made_moves);
-		let inv_brd=this.invert_board(board);
+		let inv_brdU=this.invert_board(brdU);
 
-		var m_data2={};
-		var m_data={};
+		let m_data2={};
+		let m_data={};
 
-		var max_ind=0;
-		var max_ind2=0;
-		var max_val2=0;
-		var max_0=-9999999;
-		var childs0=this.get_childs(inv_brd,1,1);
+		let max_ind=0;
+		let max_ind2=0;
+		let max_val2=0;
+		let max_0=-9999999;
+		let childs0=this.get_childs(inv_brdU,1,1);
 		for (let c0=0;c0<childs0.length;c0++) {
 
-			var min_1=9999999;
-			var childs1=this.get_childs(childs0[c0][0],2,1);
+			let min_1=9999999;
+			let childs1=this.get_childs(childs0[c0][0],2,1);
 			for (let c1=0;c1<childs1.length;c1++) {
 
-
-				var max_2=-9999999;
-				var childs2=this.get_childs(childs1[c1][0],1,1);
+				let max_2=-9999999;
+				let childs2=this.get_childs(childs1[c1][0],1,1);
 				for (let c2=0;c2<childs2.length;c2++) {
 
 
@@ -4263,23 +4259,23 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 	},
 
 	download(content, fileName, contentType) {
-		var a = document.createElement("a");
-		var file = new Blob([content], {type: contentType});
+		let a = document.createElement("a");
+		let file = new Blob([content], {type: contentType});
 		a.href = URL.createObjectURL(file);
 		a.download = fileName;
 		a.click();
 	},
-
+	/*
 	generate_fin_moves() {
 
 		let tb=[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
 
 		let bcnt=0;
 		arr2=[]
-		var childs0=this.get_childs(tb,1,0);
+		let childs0=this.get_childs(tb,1,0);
 		for (let c0=0;c0<childs0.length;c0++) {
 
-			var childs1=this.get_childs(childs0[c0][0],1,0);
+			let childs1=this.get_childs(childs0[c0][0],1,0);
 			for (let c1=0;c1<childs1.length;c1++) {
 
 				arr = childs1[c1][0];
@@ -4303,20 +4299,20 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 
 		this.download(JSON.stringify(arr2),"comb","text/plain");
 
-	},
+	},*/
 
-	minimax_3_single(board, made_moves) {
+	minimax_3_single(brdU, made_moves) {
 
 		this.make_weights_board2(made_moves);
 		min_move_amount=-3;
 
 		//this.update_weights_board();
-		var m_data={};
-		var min_bad=999999;
-		var min_moves_to_win=9999;
+		let m_data={};
+		let min_bad=999999;
+		let min_moves_to_win=9999;
 
 
-		var childs0=this.get_childs(board,2,0);
+		let childs0=this.get_childs(brdU,2,0);
 		for (let c0=0;c0<childs0.length;c0++) {
 			let ret=this.how_bad_board_2(childs0[c0][0]);
 			let moves_to_win=ret[1]+1;
@@ -4327,7 +4323,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 				m_data={x1:childs0[c0][1],y1:childs0[c0][2],x2:childs0[c0][3], y2:childs0[c0][4]};
 			}
 
-			var childs1=this.get_childs(childs0[c0][0],2,0);
+			let childs1=this.get_childs(childs0[c0][0],2,0);
 			for (let c1=0;c1<childs1.length;c1++) {
 				let ret=this.how_bad_board_2(childs1[c1][0]);
 				let moves_to_win=ret[1]+2;
@@ -4338,7 +4334,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 					m_data={x1:childs0[c0][1],y1:childs0[c0][2],x2:childs0[c0][3], y2:childs0[c0][4]};
 				}
 
-				var childs2=this.get_childs(childs1[c1][0],2,0);
+				let childs2=this.get_childs(childs1[c1][0],2,0);
 				for (let c2=0;c2<childs2.length;c2++) {
 					let ret=this.how_bad_board_2(childs2[c2][0]);
 					let moves_to_win=ret[1]+3;
@@ -4354,28 +4350,25 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 						min_depth=3;
 						m_data={x1:childs0[c0][1],y1:childs0[c0][2],x2:childs0[c0][3], y2:childs0[c0][4]};
 					}
-
 				}
-
 			}
-
 		}
 
 		//короткая версия
 		return m_data.x1.toString()+m_data.y1.toString()+m_data.x2.toString()+m_data.y2.toString();
 	},
-
+/*
 	minimax_4_single(board) {
 
 		//this.update_weights_board(15);
 		min_move_amount=-3;
 
 		//this.update_weights_board();
-		var m_data={};
-		var min_bad=999999;
-		var min_depth=999;
+		let m_data={};
+		let min_bad=999999;
+		let min_depth=999;
 
-		var childs0=this.get_childs(board,2,0);
+		let childs0=this.get_childs(board,2,0);
 		for (let c0=0;c0<childs0.length;c0++) {
 			let val=this.how_bad_board_2(childs0[c0][0]);
 			if (val===-999999 && min_depth>1) {
@@ -4388,7 +4381,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 			}
 
 
-			var childs1=this.get_childs(childs0[c0][0],2,0);
+			let childs1=this.get_childs(childs0[c0][0],2,0);
 			for (let c1=0;c1<childs1.length;c1++) {
 				let val=this.how_bad_board_2(childs1[c1][0]);
 				if (val===-999999 && min_depth>2) {
@@ -4401,7 +4394,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 				}
 
 
-				var childs2=this.get_childs(childs1[c1][0],2,0);
+				let childs2=this.get_childs(childs1[c1][0],2,0);
 				for (let c2=0;c2<childs2.length;c2++) {
 					let val=this.how_bad_board_2(childs2[c2][0]);
 
@@ -4415,7 +4408,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 					}
 
 
-					var childs3=this.get_childs(childs2[c2][0],2,1);
+					let childs3=this.get_childs(childs2[c2][0],2,1);
 					for (let c3=0;c3<childs3.length;c3++) {
 						let val=this.how_bad_board_2(childs3[c3][0]);
 						if (val<min_bad) {
@@ -4434,7 +4427,7 @@ fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,
 
 		return m_data;
 	}
-
+*/
 
 }
 
@@ -7174,8 +7167,6 @@ lobby={
 
 	},
 	
-	
-
 	async lb_btn_down() {
 
 		if (anim3.any_on()===true) {
@@ -8050,7 +8041,7 @@ async function init_game_env(lang) {
 	//доп функция для текста битмап
 	PIXI.BitmapText.prototype.set2=function(text,w){
 		const t=this.text=text;
-		for (i=t.length;i>=0;i--){
+		for (let i=t.length;i>=0;i--){
 			this.text=t.substring(0,i)
 			if (this.width<w) return;
 		}
