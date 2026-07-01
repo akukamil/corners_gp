@@ -3288,7 +3288,9 @@ game_watching={
 		this.master_uid=master_uid;
 		this.slave_uid=slave_uid;
 
-		g_board=null;
+		//сначала ничего не видно
+		g_board=null
+		objects.checkers.forEach(c=>{c.visible=false})
 		fbs.ref('tables/'+this.game_id+'/board').on('value',s => {
 			game_watching.new_move(s.val());
 		})
@@ -3389,9 +3391,9 @@ game_watching={
 
 		//если старой доски еще нет
 		if (!g_board){
-			g_board=new_board;
-			brd_func.update_board(g_board);
-			return;
+			g_board=new_board
+			brd_func.update_board(g_board)
+			return
 		}
 
 		//опредеяем кто ушел
