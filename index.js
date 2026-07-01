@@ -6526,69 +6526,6 @@ lobby={
 		}
 	},
 
-	place_table(params={uid1:0,uid2:0,name1: 'X',name2:'X', rating1: 1400, rating2: 1400,game_id:0}) {
-
-
-		for(let i=this.starting_card;i<objects.mini_cards.length;i++) {
-
-			const card=objects.mini_cards[i];
-
-			//это если есть вакантная карточка
-			if (!card.visible) {
-
-				//устанавливаем цвет карточки в зависимости от состояния
-				card.bcg.texture=this.get_state_texture(params.state);
-				card.state=params.state;
-
-				card.type = "table";
-
-				card.bcg.texture = assets.mini_player_card_table;
-
-				//присваиваем карточке данные
-				//card.uid=params.uid;
-				card.uid1=params.uid1;
-				card.uid2=params.uid2;
-
-				//убираем элементы свободного стола
-				card.rating_text.visible = false;
-				card.avatar.visible = false;
-				card.avatar_frame.visible = false;
-				card.avatar1_frame.visible = false;
-				card.avatar2_frame.visible = false;
-				card.name_text.visible = false;
-
-				//Включаем элементы стола
-				card.table_rating_hl.visible=true;
-				card.rating_text1.visible = true;
-				card.rating_text2.visible = true;
-				card.avatar1.visible = true;
-				card.avatar2.visible = true;
-				card.avatar1_frame.visible = true;
-				card.avatar2_frame.visible = true;
-				//card.rating_bcg.visible = true;
-
-				card.rating_text1.text = params.rating1;
-				card.rating_text2.text = params.rating2;
-
-				card.name1 = params.name1;
-				card.name2 = params.name2;
-
-				//получаем аватар и загружаем его
-				this.load_avatar2({uid:params.uid1, tar_obj:card.avatar1});
-
-				//получаем аватар и загружаем его
-				this.load_avatar2({uid:params.uid2, tar_obj:card.avatar2});
-
-
-				card.visible=true;
-				card.game_id=params.game_id;
-
-				break;
-			}
-		}
-
-	},
-
 	update_existing_card(params={id:0,state:'o' ,rating:1400, name:''}) {
 
 		//устанавливаем цвет карточки в зависимости от состояния( аватар не поменялись)
