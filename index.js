@@ -3713,7 +3713,7 @@ ad={
 
 confirm_dialog = {
 
-	p_resolve : 0,
+	p_resolve:0,
 
 	show(msg) {
 
@@ -3728,8 +3728,8 @@ confirm_dialog = {
 
 		anim3.add(objects.confirm_cont, {y: [450, objects.confirm_cont.sy, 'easeOutBack']}, true, 0.3)
 
-		return new Promise(function(resolve, reject){
-			confirm_dialog.p_resolve = resolve;
+		return new Promise(r=>{
+			confirm_dialog.p_resolve = r;
 		});
 	},
 
@@ -3742,16 +3742,17 @@ confirm_dialog = {
 
 		sound.play('click')
 
-		this.close();
-		this.p_resolve(res);
+		this.close()
+		this.p_resolve(res)
+		this.p_resolve=0
 
 	},
 
 	close_forced(){
 
 		objects.confirm_cont.visible=false
-		if (typeof(this.p_resolve.then)==='function')
-			this.p_resolve('111');
+		if (this.p_resolve)	this.p_resolve(1)
+		this.p_resolve=0
 
 	},
 
