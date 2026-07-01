@@ -2292,11 +2292,11 @@ trnm={
 		objects.trnm_info2.text='...'
 		
 		//заносим в кэш столы
-		this.cached_trnm_data.tables=await fbs_once("trnm/tables")
+		this.cached_trnm_data.tables=await fbs_once('trnm/tables')
 		
 		//обновляем игроков
 		await new Promise(res=>{
-			fbs.ref("trnm/players").on('value', s => {
+			fbs.ref('trnm/players').on('value', s => {
 				this.cached_trnm_data.players=s.val()
 				this.players_updated(s.val())
 				res()
@@ -3303,7 +3303,7 @@ game_watching={
 
 		if(!this.on) return;
 
-		if(!board_data || board_data?.f_str?.length>35){
+		if(!board_data || !board_data.f_str || board_data?.f_str?.length>35){
 			//g_board = [[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
 			//brd_func.update_board(g_board);
 			return;
