@@ -1873,7 +1873,7 @@ online_game = {
 		if (!this.chat_in) return;
 		pmsg.add({t:data,timeout:10000,snd:'online_message'});
 
-		my_log.add({name:my_data.name,opp_name:opp_data.name,game_id,connected,tm:Date.now(),info:'in_chat',chat:data})
+		//my_log.add({name:my_data.name,opp_name:opp_data.name,game_id,connected,tm:Date.now(),info:'in_chat',chat:data})
 	},
 
 	nochat(){
@@ -2068,7 +2068,7 @@ online_game = {
 			//контрольные концовки логируем на виртуальной машине
 			if (my_data.rating>1800 || opp_data.rating>1800){
 				const duration = Math.floor((Date.now() - this.start_time)*0.001);
-				const data={uid:my_data.uid,p1:objects.my_card_name.text,p2:objects.opp_card_name.text,res:result_number,f:result,d:duration,games:my_data.games,r:[old_rating,my_data.rating],g:game_id,cid:client_id,tm:'TMS'}
+				const data={uid:my_data.uid,p1:objects.my_card_name.text,p2:objects.opp_card_name.text,res:result_number,f:result,d:duration,games:my_data.games,r:[old_rating,my_data.rating],g:this.gid,cid:client_id,tm:'TMS'}
 				my_ws.safe_send({cmd:'log',logger:'corners_games',data});
 			}
 
