@@ -370,7 +370,7 @@ class feedback_record_class extends PIXI.Container {
 	constructor() {
 
 		super();
-		this.text=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 19,align: 'left',lineSpacing:45})
+		this.text=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 19,align: 'left',lineSpacing:42})
 		this.text.maxWidth=290
 		this.text.tint=0xFFFF00
 
