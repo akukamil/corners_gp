@@ -6232,6 +6232,7 @@ lobby={
 	state_listener_on:0,
 	state_listener_timeout:0,
 	perm_room:'',
+	trnm_check_tm:0,
 
 	activate() {
 
@@ -6288,6 +6289,7 @@ lobby={
 
 		this.players_list_updated(this.global_players)
 
+		this.check_trnm_reg()
 		set_state({state:'o'})
 
 	},
@@ -6316,6 +6318,27 @@ lobby={
 		anim3.add(objects.pref_footer_cont, {y: [450, objects.pref_footer_cont.sy, 'linear']}, true, 0.2);
 		pref.activate();
 
+	},
+
+	async check_trnm_reg(){
+		
+		const tm=Date.now()
+		if (tm-this.trnm_check_tm<30_000) return
+		this.trnm_check_tm=tm
+		
+		const data=await fbs_once('trnm/state_data/state')
+		if (data==='reg')
+			some_process.blinkTrnm=()=>{objects.lobby_trnm_btn.alpha=0.5+0.5*Math.abs(Math.sin(TM.s*2))}
+		else{
+			some_process.blinkTrnm=()=>{}
+			objects.lobby_trnm_btn.alpha=0.5
+		}
+			
+	},
+	
+	process(){
+		
+		
 	},
 
 	players_list_updated(players) {
