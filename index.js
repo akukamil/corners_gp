@@ -6323,7 +6323,7 @@ lobby={
 	async check_trnm_reg(){
 		
 		const tm=Date.now()
-		if (tm-this.trnm_check_tm<30_000) return
+		if (tm-this.trnm_check_tm<90_000) return
 		this.trnm_check_tm=tm
 		
 		const data=await fbs_once('trnm/state_data/state')
