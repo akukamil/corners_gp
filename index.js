@@ -137,35 +137,36 @@ class lb_player_card_class extends PIXI.Container{
 	constructor(x,y,place) {
 		super();
 
-		this.bcg=new PIXI.Sprite(assets.lb_player_card_bcg)
-		this.bcg.width = 370
-		this.bcg.height = 70
+		this.bcgFrame=new PIXI.Sprite(assets.lbCardFrame)
+		this.bcgFrame.width = 390
+		this.bcgFrame.height = 80
 
-		this.place=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 25,align: 'center'})
-		this.place.tint=0xffff00
-		this.place.x=20
-		this.place.y=22
+		this.place=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 25,align: 'center'})
+		this.place.tint=0xffffff
+		this.place.x=38
+		this.place.y=40
+		this.place.anchor.set(0.5,0.5)
 
-		this.avatar=new PIXI.Sprite()
-		this.avatar.x=43
-		this.avatar.y=12
-		this.avatar.width=this.avatar.height=45
+		this.avatar=new PIXI.Graphics()
+		this.avatar.x=50
+		this.avatar.y=14
+		this.avatar.w=this.avatar.h=54
+		this.avatar.width=this.avatar.height=54	
+		
 
+		this.name=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 22,align: 'center'})
+		this.name.tint=0xEBE3B9
+		this.name.x=115
+		this.name.y=30
 
-		this.name=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 25,align: 'center'})
-		this.name.tint=0xdddddd
-		this.name.x=105
-		this.name.y=22
-
-
-		this.rating=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 25,align: 'center'})
-		this.rating.x=298
-		this.rating.tint=0xfff2cc
-		this.rating.y=22
-
-		this.pivot.y=35
-
-		this.addChild(this.bcg,this.place, this.avatar, this.name, this.rating)
+		this.rating=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 30,align: 'center'})
+		this.rating.x=315
+		this.rating.tint=0xFFFF00
+		this.rating.y=25
+		
+		//this.alpha=1
+		
+		this.addChild(this.avatar, this.bcgFrame,this.place, this.name, this.rating)
 	}
 
 
@@ -2916,7 +2917,7 @@ game = {
 		this.trnm=params.t
 
 		if (this.opponent!=='') this.opponent.clear()
-		if (objects.lb_1_cont.visible) lb.close()
+		if (objects.lbCont.visible) lb.close()
 		if (objects.chat_cont.visible) chat.close()
 		if (game_watching.on) game_watching.close()
 		if (lobby.on) lobby.close()
@@ -5231,25 +5232,28 @@ lb={
 	drag_chat:false,
 	drag_sx:0,
 	drag_sy:-999,
+	
+	getRandomBrightTint(minBrightness = 200) {
+		const range = 255 - minBrightness;
+		const r = Math.floor(Math.random() * range) + minBrightness;
+		const g = Math.floor(Math.random() * range) + minBrightness;
+		const b = Math.floor(Math.random() * range) + minBrightness;
+		
+		return (r << 16) | (g << 8) | b;
+	},
 
 	show() {
 
 		objects.bcg.texture=assets.lb_bcg;
-		anim3.add(objects.bcg, {alpha: [0, 1, 'linear']}, true, 0.5);
+		anim3.add(objects.lbCont,{alpha:[0,1,'linear']}, true, 0.5);
 
-		anim3.add(objects.lb_1_cont, {x: [-150, objects.lb_1_cont.sx, 'easeOutBack']}, true, 0.5);
-		anim3.add(objects.lb_2_cont, {x: [-150, objects.lb_2_cont.sx, 'easeOutBack']}, true, 0.5);
-		anim3.add(objects.lb_3_cont, {x: [-150, objects.lb_3_cont.sx, 'easeOutBack']}, true, 0.5);
-		anim3.add(objects.lb_cards_cont, {x: [450, 0, 'easeOutCubic']}, true, 0.5);
-
-		objects.lb_cards_cont.visible=true;
-		objects.lb_back_btn.visible=true;
-
-		this.start_y=35
+		this.start_y=-5
 		for (let i=0;i<17;i++) {
 			objects.lb_cards[i].y=this.start_y+i*63;
 			objects.lb_cards[i].x=-0.001*Math.pow(450-objects.lb_cards[i].y-320,2)+350+30
-			objects.lb_cards[i].place.text=(i+4)+".";
+			objects.lb_cards[i].place.text=(i+4);
+			const randTint=this.getRandomBrightTint(180)
+			objects.lb_cards[i].bcgFrame.tint=randTint
 		}
 
 		if (Date.now()-this.last_update>120000){
@@ -5293,23 +5297,19 @@ lb={
 
 	close() {
 
+		objects.lbCont.visible=false
 		objects.bcg.texture=assets.bcg;
-		objects.lb_1_cont.visible=false;
-		objects.lb_2_cont.visible=false;
-		objects.lb_3_cont.visible=false;
-		objects.lb_cards_cont.visible=false;
-		objects.lb_back_btn.visible=false;
 
 	},
 
 	shift(dy){
 
 		this.start_y+=dy
-		if (this.start_y>35)
-			this.start_y=35
+		if (this.start_y>-5)
+			this.start_y=-5
 
-		if (this.start_y<-595)
-			this.start_y=-595
+		if (this.start_y<-630)
+			this.start_y=-630
 		for (let i=0;i<17;i++) {
 			objects.lb_cards[i].y=this.start_y+i*63;
 			objects.lb_cards[i].x=-0.001*Math.pow(450-objects.lb_cards[i].y-320,2)+350+30
@@ -5381,8 +5381,8 @@ lb={
 		for (let place in top){
 			const target=top[place];
 			const leader=leaders_array[place];
-			await players_cache.update(leader.uid);
-			target.avatar.texture=players_cache[leader.uid].texture;
+			await players_cache.update(leader.uid,{source:'lb'});
+			target.avatar.set_texture(players_cache[leader.uid].texture)
 		}
 
 	}
