@@ -1035,7 +1035,7 @@ brd_func={
 				b[y*8+x]=brd[y][x]
 		return b
 	},
-	
+		
 	update_board(board) {
 
 		this.target_point=0;
@@ -1046,12 +1046,17 @@ brd_func={
 		let ind=0;
 		for (let x=0;x<8;x++) {
 			for (let y=0;y<8;y++) {
-
+					
 				const chip_id=board[y][x];
+						
 				if (chip_id){
-
-					objects.checkers[ind].x=x*50+objects.board.x+20;
-					objects.checkers[ind].y=y*50+objects.board.y+20;
+					
+					//отображение в соответстии с транформером
+					let tx=pref.flipX?7-x:x
+					let ty=pref.flipY?7-y:y
+					
+					objects.checkers[ind].x=tx*50+objects.board.x+20;
+					objects.checkers[ind].y=ty*50+objects.board.y+20;
 
 					objects.checkers[ind].ix=x;
 					objects.checkers[ind].iy=y;
@@ -1064,6 +1069,8 @@ brd_func={
 				}
 			}
 		}
+	
+	
 	},
 
 	get_checker_by_pos(x,y) {
@@ -1289,8 +1296,17 @@ brd_func={
 		moving_chip = this.get_checker_by_pos(move_data.x1, move_data.y1);
 
 		for (let i = 1 ; i < moves.length; i++) {
-			const tar_x = moves[i][0] * 50 + objects.board.x+20;
-			const tar_y = moves[i][1] * 50 + objects.board.y+20;
+			
+			let tarXi=moves[i][0]
+			let tarYi=moves[i][1]
+			
+			//флип трансформер
+			let tx=pref.flipX?7-tarXi:tarXi
+			let ty=pref.flipY?7-tarYi:tarYi
+					
+			const tar_x = tx*50+objects.board.x+20;
+			const tar_y = ty*50+objects.board.y+20;			
+			
 			await anim3.add(moving_chip, {x:[moving_chip.x, tar_x,'linear'], y: [moving_chip.y, tar_y, 'linear']}, true, 0.16);
 			sound.play('move');
 		}
@@ -1888,7 +1904,7 @@ online_game = {
 		if(!this.on) return;
 
 		//проверяем бонусы
-		this.check_bonuses(moves,'my_move')
+		//this.check_bonuses(moves,'my_move')
 
 		//переворачиваем данные о ходе так как оппоненту они должны попасть как ход шашками №2
 		move_data.x1=7-move_data.x1;
@@ -1915,7 +1931,7 @@ online_game = {
 
 		if(!this.on) return
 		this.opp_moves_hist.push(Object.values(move_data).join(''))
-		this.check_bonuses(moves,'opp_move')
+		//this.check_bonuses(moves,'opp_move')
 
 	},
 
@@ -2908,7 +2924,7 @@ game = {
 
 
 		//убираем бонусы
-		objects.bonuses.forEach(b=>b.visible=false)
+		//objects.bonuses.forEach(b=>b.visible=false)
 		
 		//обновляем данные соперника на всякий случай
 		await players_cache.update(opp_data.uid)
@@ -3011,14 +3027,14 @@ game = {
 		}
 
 		//координаты указателя
-		const mx = e.data.global.x/app.stage.scale.x-objects.board_cont.x+240;
-		const my = e.data.global.y/app.stage.scale.y-objects.board_cont.y+240;
+		const mx = e.data.global.x/app.stage.scale.x;
+		const my = e.data.global.y/app.stage.scale.y;
 
 		//координаты указателя на игровой доске
 		let new_x=Math.floor(8*(mx-objects.board.x-30)/400);
-		if (objects.board_cont.scale_x===-1) new_x=7-new_x
 		let new_y=Math.floor(8*(my-objects.board.y-30)/400);
-		if (objects.board_cont.scale_y===-1) new_y=7-new_y
+		if (pref.flipX) new_x=7-new_x
+		if (pref.flipY) new_y=7-new_y
 
 		//если выбрана новая шашка
 		if (!this.selected_checker) {
@@ -3028,8 +3044,8 @@ game = {
 			//если мою выбрали фишку
 			if (this.selected_checker.m_id===1)
 			{
-				objects.selected_frame.x=this.selected_checker.x;
-				objects.selected_frame.y=this.selected_checker.y;
+				objects.selected_frame.x=this.selected_checker.x+15;
+				objects.selected_frame.y=this.selected_checker.y+15;
 				objects.selected_frame.visible=true;
 
 				//воспроизводим соответствующий звук
@@ -3305,7 +3321,7 @@ game_watching={
 
 		if(!this.on) return;
 
-		if(!board_data || !board_data.f_str || board_data?.f_str?.length>35){
+		if((!board_data || !board_data.f_str || board_data?.f_str?.length>35)&&(!board_data.fin)){
 			//g_board = [[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
 			//brd_func.update_board(g_board);
 			return;
@@ -5521,6 +5537,10 @@ pref={
 	hours_to_nick_change:0,
 	hours_to_photo_change:0,
 	loading:0,
+	flipIndex:0,
+	flipX:0,
+	flipY:0,
+	flipData:{0:{x:1,y:1},1:{x:-1,y:1},2:{x:-1,y:-1},3:{x:1,y:-1}},
 	
 	activate(){
 
@@ -5530,7 +5550,7 @@ pref={
 
 		this.send_info(['Менять аватар и имя можно 1 раз в 30 дней!','You can change name and avatar once per month'][LANG]);
 
-		objects.pref_sound_slider.x=sound.on?367:322;
+		objects.pref_sound_slider.x=sound.on?380:335;
 
 		//обновляем кнопки
 		this.update_buttons()
@@ -5550,6 +5570,11 @@ pref={
 	},
 
 	init(){
+		
+		//загружаем ориентацию доски
+		this.flipIndex=safe_ls('cornersFlipIndex')||0
+		this.flipConfDown(0)
+		
 
 		let i=0
 		setInterval(()=>{
@@ -5562,6 +5587,23 @@ pref={
 
 		},1000)
 
+	},
+
+	flipConfDown(i){
+				
+		this.flipIndex+=i
+		if (this.flipIndex>3)
+			this.flipIndex=0
+		
+		const flipData=this.flipData[this.flipIndex]
+				
+		objects.prefFlipConf.scale_x=flipData.x*0.666
+		objects.prefFlipConf.scale_y=flipData.y*0.666
+		
+		const _flipData=[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}][this.flipIndex]
+		this.flipX=_flipData.x
+		this.flipY=_flipData.y		
+		
 	},
 
 	update_buttons(){
@@ -5954,7 +5996,7 @@ pref={
 
 		sound.switch();
 		sound.play('click');
-		const tar_x=sound.on?367:322;
+		const tar_x=sound.on?380:335;
 		anim3.add(objects.pref_sound_slider, {x: [objects.pref_sound_slider.x, tar_x, 'linear']}, true, 0.1);
 
 	},
@@ -5993,6 +6035,14 @@ pref={
 			sound.play('locked');
 			return;
 		}
+
+
+		//утверждаем отображение углов
+		const flipData=[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}]
+		const _flipData=flipData[this.flipIndex]
+		this.flipX=_flipData.x
+		this.flipY=_flipData.y	
+		safe_ls('cornersFlipIndex',this.flipIndex)
 
 		sound.play('click');
 		this.switch_to_lobby();
