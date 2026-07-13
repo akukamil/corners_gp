@@ -2892,10 +2892,10 @@ game = {
 
 		if (my_role==='master') {
 			my_turn=1
-			pmsg.add({t:['Ваши шашки в нижнем правом углу. Последний ход за соперником','Ready to play. The last move for the opponent'][LANG]})
+			pmsg.add({t:['Вы играете красными шашками. Последний ход за соперником','Ready to play. The last move for the opponent'][LANG]})
 		} else {
 			my_turn=0
-			pmsg.add({t:['Ваши шашки в нижнем правом углу. Последний ход за вами','Ready to play. The last move is yours'][LANG]})
+			pmsg.add({t:['Вы играете голубыми шашками. Последний ход за вами','Ready to play. The last move is yours'][LANG]})
 		}
 
 		//устанаваем вид моих и чужих фишек в зависимости у кого первый ход и текущего дизайна
