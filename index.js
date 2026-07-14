@@ -462,30 +462,30 @@ class trnm_card_class extends PIXI.Container{
 		//аватар первого игрока
 		this.avatar1=new PIXI.Graphics();
 		this.avatar1.x=20
-		this.avatar1.y=20
+		this.avatar1.y=27
 		this.avatar1.w=this.avatar1.h=30
 
 		//аватар второго игрока
 		this.avatar2=new PIXI.Graphics();
 		this.avatar2.x=90
-		this.avatar2.y=20
+		this.avatar2.y=22
 		this.avatar2.w=this.avatar2.h=30
 
-		this.t_name1=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 15,align: 'center'});
+		this.t_name1=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 12,align: 'center'});
 		this.t_name1.anchor.set(0,0.5);
-		this.t_name1.x=15;
-		this.t_name1.y=60;
-		this.t_name1.tint=0xffffff
+		this.t_name1.x=18;
+		this.t_name1.y=17;
+		this.t_name1.tint=0xccffff
 
-		this.t_name2=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 15,align: 'center'});
+		this.t_name2=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 12,align: 'center'});
 		this.t_name2.anchor.set(1,0.5);
-		this.t_name2.x=125;
-		this.t_name2.y=60;
-		this.t_name2.tint=0xffffff
+		this.t_name2.x=122;
+		this.t_name2.y=61;
+		this.t_name2.tint=0xffffcc
 
 		this.t_score=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 18,align: 'center'});
 		this.t_score.x=70
-		this.t_score.y=20
+		this.t_score.y=40
 		this.t_score.anchor.set(0.5,0.5)
 		this.t_score.tint=0xffff00
 
@@ -2686,14 +2686,14 @@ trnm={
 				const uid2=this.cached_trnm_data.players[players[1]].uid
 				if (players_cache?.[uid1]?.texture){
 					tar_card.avatar1.set_texture(players_cache[uid1].texture)					
-					tar_card.t_name1.set2(players_cache[uid1].name,60)
+					tar_card.t_name1.set2(players_cache[uid1].name,70)
 				}
 				else
 					players_cache.update(uid1)
 				
 				if (players_cache?.[uid2]?.texture){
 					tar_card.avatar2.set_texture(players_cache[uid2].texture)					
-					tar_card.t_name2.set2(players_cache[uid2].name,60)
+					tar_card.t_name2.set2(players_cache[uid2].name,70)
 				}
 				else
 					players_cache.update(uid2)
@@ -2760,12 +2760,12 @@ trnm={
 			
 			if (card.uid1===uid){
 				card.avatar1.set_texture(pdata.texture)
-				card.t_name1.set2(pdata.name,60)
+				card.t_name1.set2(pdata.name,70)
 			}
 			
 			if (card.uid2===uid){
 				card.avatar2.set_texture(pdata.texture)
-				card.t_name2.set2(pdata.name,60)
+				card.t_name2.set2(pdata.name,70)
 			}
 			
 		}
