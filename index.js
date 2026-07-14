@@ -459,28 +459,32 @@ class trnm_card_class extends PIXI.Container{
 		const t=this
 		this.bcg.pointerdown=function(){trnm.card_down(t)}
 
+		this.frame=new PIXI.Sprite(assets.trnm_card_frame)
+		this.frame.width=140
+		this.frame.height=80
+
 		//аватар первого игрока
 		this.avatar1=new PIXI.Graphics();
-		this.avatar1.x=20
-		this.avatar1.y=27
-		this.avatar1.w=this.avatar1.h=30
+		this.avatar1.x=17
+		this.avatar1.y=29
+		this.avatar1.w=this.avatar1.h=34
 
 		//аватар второго игрока
 		this.avatar2=new PIXI.Graphics();
-		this.avatar2.x=90
-		this.avatar2.y=22
-		this.avatar2.w=this.avatar2.h=30
+		this.avatar2.x=89
+		this.avatar2.y=16
+		this.avatar2.w=this.avatar2.h=34
 
 		this.t_name1=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 12,align: 'center'});
 		this.t_name1.anchor.set(0,0.5);
 		this.t_name1.x=18;
-		this.t_name1.y=17;
-		this.t_name1.tint=0xccffff
+		this.t_name1.y=19;
+		this.t_name1.tint=0xccccff
 
 		this.t_name2=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 12,align: 'center'});
 		this.t_name2.anchor.set(1,0.5);
 		this.t_name2.x=122;
-		this.t_name2.y=61;
+		this.t_name2.y=60;
 		this.t_name2.tint=0xffffcc
 
 		this.t_score=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 18,align: 'center'});
@@ -489,7 +493,7 @@ class trnm_card_class extends PIXI.Container{
 		this.t_score.anchor.set(0.5,0.5)
 		this.t_score.tint=0xffff00
 
-		this.addChild(this.bcg,this.avatar1,this.avatar2,this.t_name1,this.t_name2,this.t_score)
+		this.addChild(this.bcg,this.avatar1,this.avatar2,this.t_name1,this.t_name2,this.t_score,this.frame)
 
 	}
 }
@@ -2702,7 +2706,7 @@ trnm={
 			
 			if(table_data.playing){
 				tar_card.bcg.texture=assets.trnm_card_playing_bcg
-				tar_card.t_score.text=table_data.s.join(':')
+				tar_card.t_score.text=table_data.s.join(' : ')
 			}
 
 			if(table_data.empty){
@@ -2716,12 +2720,12 @@ trnm={
 
 			if(table_data.set){
 				tar_card.bcg.texture=assets.trnm_card_set_bcg
-				tar_card.t_score.text=table_data.s.join(':')
+				tar_card.t_score.text=table_data.s.join(' : ')
 			}
 			
 			if(table_data.fin){
 				tar_card.bcg.texture=assets.trnm_card_bcg
-				tar_card.t_score.text=table_data.s.join(':')
+				tar_card.t_score.text=table_data.s.join(' : ')
 			}
 
 		}
@@ -2759,12 +2763,12 @@ trnm={
 			if(!card.visible) continue
 			
 			if (card.uid1===uid){
-				card.avatar1.set_texture(pdata.texture)
+				card.avatar1.quadSetTexture(pdata.texture)
 				card.t_name1.set2(pdata.name,70)
 			}
 			
 			if (card.uid2===uid){
-				card.avatar2.set_texture(pdata.texture)
+				card.avatar2.quadSetTexture(pdata.texture)
 				card.t_name2.set2(pdata.name,70)
 			}
 			
@@ -7948,7 +7952,7 @@ main_loader={
 
 		this.divide_texture(assets.cards_design_pack,140,140,Object.values(DESIGN_DATA).map(v=>v.name))
 		this.divide_texture(assets.mini_cards_pack,300,135,['table_rating_hl','mini_player_card','mini_player_card_ai','mini_player_card_table','mini_player_card_bot'])
-		this.divide_texture(assets.trnm_cards_pack,210,120,['trnm_card_empty_bcg','trnm_card_bcg','trnm_card_playing_bcg','trnm_card_set_bcg'])
+		this.divide_texture(assets.trnm_cards_pack,210,120,['trnm_card_empty_bcg','trnm_card_bcg','trnm_card_playing_bcg','trnm_card_set_bcg','trnm_card_frame'])
 
 		//создаем спрайты и массивы спрайтов и запускаем первую часть кода
 		for (let i = 0; i < load_list.length; i++) {
@@ -8080,6 +8084,33 @@ async function init_game_env(lang) {
 		this.endFill();
 
 	}
+	
+	//доп функция для применения текстуры к графу
+	PIXI.Graphics.prototype.quadSetTexture=function(texture){
+
+		if(!texture) return;
+		// Get the texture's original dimensions
+		const textureWidth = texture.baseTexture.width;
+		const textureHeight = texture.baseTexture.height;
+
+		// Calculate the scale to fit the texture to the circle's size
+		const scaleX = this.w / textureWidth;
+		const scaleY = this.h / textureHeight;
+
+		// Create a new matrix for the texture
+		const matrix = new PIXI.Matrix();
+
+		// Scale and translate the matrix to fit the circle
+		matrix.scale(scaleX, scaleY);
+		const radius=this.w*0.5;
+		this.clear();
+		//this.lineStyle(1, 0xcccccc);
+		this.beginTextureFill({texture,matrix});
+		this.drawRoundedRect(0, 0, this.w, this.h, 6);
+		this.endFill();
+
+	}
+	
 
 	//идентификатор клиента
 	client_id = hf.randIntInc(10,999999)
