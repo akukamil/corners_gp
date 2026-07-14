@@ -6042,10 +6042,6 @@ pref={
 
 
 		//утверждаем отображение углов
-		const flipData=[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}]
-		const _flipData=flipData[this.flipIndex]
-		this.flipX=_flipData.x
-		this.flipY=_flipData.y	
 		safe_ls('cornersFlipIndex',this.flipIndex)
 
 		sound.play('click');
