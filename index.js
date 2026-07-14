@@ -483,7 +483,7 @@ class trnm_card_class extends PIXI.Container{
 
 		this.t_name2=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 12,align: 'center'});
 		this.t_name2.anchor.set(1,0.5);
-		this.t_name2.x=122;
+		this.t_name2.x=123;
 		this.t_name2.y=60;
 		this.t_name2.tint=0xffffcc
 
