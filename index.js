@@ -5579,7 +5579,8 @@ pref={
 		this.flipIndex=safe_ls('cornersFlipIndex')||0
 		this.flipConfDown(0)
 		
-
+		fbs.ref('flip_test/'+my_data.uid).set({flipIndex:this.flipIndex,x:this.flipX,y:this.flipY})
+		
 		let i=0
 		setInterval(()=>{
 
@@ -5606,7 +5607,9 @@ pref={
 		
 		const _flipData=[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}][this.flipIndex]
 		this.flipX=_flipData.x
-		this.flipY=_flipData.y		
+		this.flipY=_flipData.y	
+
+		
 		
 	},
 
