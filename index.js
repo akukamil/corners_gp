@@ -5578,9 +5578,7 @@ pref={
 		//загружаем ориентацию доски
 		this.flipIndex=safe_ls('cornersFlipIndex')||0
 		this.flipConfDown(0)
-		
-		fbs.ref('flip_test/'+my_data.uid).set({flipIndex:this.flipIndex,x:this.flipX,y:this.flipY})
-		
+
 		let i=0
 		setInterval(()=>{
 
