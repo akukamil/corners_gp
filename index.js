@@ -6,6 +6,9 @@ const MAX_NO_REP_RATING=1910;
 const MAX_NO_CONF_RATING=1950;
 const DAYS_TO_CONF_RATING=7;
 const COM_URL='https://akukamil.github.io/com'
+const RATING_FOR_ALPHA=1750
+let gameHistForNN=[]
+
 
 let TM={s:0,ms:0}
 
@@ -553,6 +556,24 @@ class trnm_precard_class extends PIXI.Container{
 	}
 
 
+}
+
+async function saveGameHist(data){
+
+	try {
+		const response = await fetch('https://mtserver2.ru:443/save', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				gameData: data
+			})
+		});
+
+	} catch (error) {
+
+	}
 }
 
 anim3={
@@ -1648,6 +1669,8 @@ online_game = {
 		
 		//фиксируем номер игры
 		this.gid=params.gid
+		
+		
 
 		//пока еще никто не подтвердил игру (кроме случая турнира)
 		this.me_conf_play = params.t||0
@@ -1682,6 +1705,9 @@ online_game = {
 			fbs.ref('tables/'+this.gid+'/master').set(opp_data.uid)			
 			fbs.ref('tables/'+this.gid+'/slave').set(my_data.uid)			
 		}
+
+		//для проекта брэниак
+		gameHistForNN=[{role:params.role}]
 
 		//вычиcляем рейтинг при проигрыше и устанавливаем его в базу он потом изменится
 		const lose_rating = this.calc_new_rating(my_data.rating, LOSE)
@@ -1924,6 +1950,7 @@ online_game = {
 
 		//проверяем бонусы
 		//this.check_bonuses(moves,'my_move')
+		console.log
 
 		//переворачиваем данные о ходе так как оппоненту они должны попасть как ход шашками №2
 		move_data.x1=7-move_data.x1;
@@ -2033,6 +2060,7 @@ online_game = {
 			['my_no_connection',LOSE , ['Потеряна связь!\nИспользуйте надежное интернет соединение.','Lost connection!\nUse a reliable internet connection']],
 			['my_stop',DRAW , ['Вы отменили игру.','You canceled the game']]
 		];
+				
 
 		clearTimeout(this.timer_id);
 		clearTimeout(this.no_rating_msg_timer);
@@ -2084,6 +2112,12 @@ online_game = {
 			sound.play('win');
 		
 		this.energyCollected+=result_number===WIN?5:3
+		
+		//для проекта альфа
+		if (my_data.rating>RATING_FOR_ALPHA&&result_number === WIN&&gameHistForNN.length>10){
+			saveGameHist(gameHistForNN)
+		}
+		
 		
 		//если это турнир
 		if (this.trnm){
@@ -3126,8 +3160,15 @@ game = {
 		}
 
 	},
-
+	
 	async process_my_move(move_data, moves) {
+
+
+		//для проекта брэниак
+		if (this.opponent===online_game&&my_data.rating>RATING_FOR_ALPHA){
+			const move_data_short=move_data.x1.toString()+move_data.y1.toString()+move_data.x2.toString()+move_data.y2.toString();
+			gameHistForNN.push({brd:brd_func.brd_to_str(g_board),m:move_data_short,made_moves})				
+		}		
 
 		//делаем перемещение шашки
 		await brd_func.start_gentle_move(move_data, moves, g_board);
@@ -4793,6 +4834,7 @@ chat={
 			pmsg.add({t:`Только для игроков сыгравших более ${this.games_to_gif} игр.\nОсталось сыграть: ${left_to_play}`,snd:'locked'})
 			return
 		}
+			
 		
 		if (!SERVER_TM) {
 			pmsg.add({t:'Недотупно',snd:'locked'})
