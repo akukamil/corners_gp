@@ -29,8 +29,22 @@ my_log={
 };
 
 fbs_once=async function(path){
-	const info=await fbs.ref(path).get();
-	return info.val();
+		
+    let timeoutId;
+    
+    const infoPromise = fbs.ref(path).get();
+    const timeoutPromise = new Promise(r => {
+        timeoutId = setTimeout(() => {
+            console.warn('Firebase request timeout');
+            r(null); // Return null on timeout
+        }, 5000);
+    });
+    
+    const snapshot = await Promise.race([infoPromise, timeoutPromise]);
+    clearTimeout(timeoutId); // Clear timeout since race is done
+    
+    return snapshot ? snapshot.val() : null;
+
 }
 
 class player_mini_card_class extends PIXI.Container {
@@ -1610,7 +1624,7 @@ online_game = {
 	unique_opps:[],
 	my_moves_hist:[],
 	opp_moves_hist:[],
-	energy_collected:0,
+	energyCollected:0,
 	trnm:0,
 	gid:0,
 	
@@ -1951,7 +1965,7 @@ online_game = {
 			})
 			if (intersect){
 				sound.play('bonus')
-				if (whos_move==='my_move') this.energy_collected+=10
+				if (whos_move==='my_move') this.energyCollected+=10
 				const tar_x=whos_move==='my_move'?-80:560
 				anim3.add(bonus,{scale_xy:[0.6666,2,'linear'],angle:[0,40,'linear'],alpha:[1,0,'linear'],x:[bonus.x,tar_x,'linear'],y:[bonus.y,70,'linear']}, false, 0.5,false);
 			}
@@ -2035,8 +2049,8 @@ online_game = {
 		if (my_data.rating>MAX_NO_AUTH_RATING&&!my_data.auth_mode){
 			my_data.rating=MAX_NO_AUTH_RATING;
 			NO_AUTH_NO_RATING=1;
-			auth_msg=`Рейтинг более ${MAX_NO_AUTH_RATING} не доступен игрокам без авторизации(((`;
-		}
+			auth_msg=`Рейтинг более ${MAX_NO_AUTH_RATING} не доступен игрокам без авторизации(((`;			
+		} 
 		if (this.NO_RATING_GAME) {
 			my_data.rating=old_rating;
 			auth_msg='Выбирайте разных соперников для получения рейтинга';
@@ -2069,9 +2083,14 @@ online_game = {
 		else
 			sound.play('win');
 		
+		this.energyCollected+=result_number===WIN?5:3
+		
 		//если это турнир
-		if (this.trnm)
-			trnm.process_game_end(result_number)
+		if (this.trnm){
+			this.energyCollected+=30
+			trnm.process_game_end(result_number)			
+		}
+
 
 		//также фиксируем данные стола
 		setTimeout(()=>{fbs.ref('tables/'+this.gid+'/board').set({uid:my_data.uid,fin:result,tm:firebase.database.ServerValue.TIMESTAMP})},400)
@@ -2095,15 +2114,15 @@ online_game = {
 
 		}
 		
-		pref.change_energy(this.energy_collected)
+		pref.change_energy(this.energyCollected)
 		pref.change_crystals(crystals)
 				
 		//сообщение об изменении рейтинга
 		
 		if (this.trnm)
-			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,t3:'вертитесь в меню турнира для продолжения.',energy:this.energy_collected,crystals})
+			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,t3:'вертитесь в меню турнира для продолжения.',energy:this.energyCollected,crystals})
 		else
-			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,fb:1,t3:auth_msg,energy:this.energy_collected,crystals})
+			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,fb:1,t3:auth_msg,energy:this.energyCollected,crystals})
 
 	},
 
@@ -5095,6 +5114,7 @@ players_cache={
 
 	on:0,
 	loading:{},
+	pending:{},
 
 	async update(uid,params={}){
 
@@ -5102,14 +5122,13 @@ players_cache={
 		this[uid]||={}
 		const player=this[uid]
 
-		if (this.loading[uid]) return
-
+		if (this.loading[uid]) return		
 
 		while(Object.keys(this.loading).length>6){
 			console.log('Много загрузок, ждем...')
 			await new Promise(r => setTimeout(r, hf.randIntInc(400,800)));
 		}
-
+		
 		this.loading[uid]=1
 
 		//загружаем имя если нет данных
@@ -5679,11 +5698,6 @@ pref={
 			my_data.energy=0
 			objects.pref_energy_info.text=my_data.energy
 			safe_ls('corners_energy',my_data.energy)
-
-			//обновляем уникальных соперников (начиниаем с начала)
-			//mp_game.unique_opps=[]
-			//safe_ls(game_name+'_uo', mp_game.unique_opps)
-
 		}
 
 		safe_ls('corners_energy_prv_tm',SERVER_TM)
@@ -8256,7 +8270,7 @@ async function init_game_env(lang) {
 	objects.id_loup.visible=false
 	
 	//отображаем лидеров вчерашнего дня
-	top3.activate()
+	//top3.activate()
 	
 	//lobby.perm_room='statesNIGHT'
 	lobby.activate()
