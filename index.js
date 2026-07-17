@@ -2120,7 +2120,7 @@ online_game = {
 		//сообщение об изменении рейтинга
 		
 		if (this.trnm)
-			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,t3:'вертитесь в меню турнира для продолжения.',energy:this.energyCollected,crystals})
+			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,t3:'вернитесь в меню турнира для продолжения.',energy:this.energyCollected,crystals})
 		else
 			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,fb:1,t3:auth_msg,energy:this.energyCollected,crystals})
 
