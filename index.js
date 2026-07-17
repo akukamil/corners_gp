@@ -5122,13 +5122,17 @@ players_cache={
 		this[uid]||={}
 		const player=this[uid]
 
-		if (this.loading[uid]) return		
+		if (this.loading[uid]) return	
 
+			
+		this.pending[uid] = 1
+		
 		while(Object.keys(this.loading).length>6){
 			console.log('Много загрузок, ждем...')
 			await new Promise(r => setTimeout(r, hf.randIntInc(400,800)));
 		}
 		
+		delete this.pending[uid];
 		this.loading[uid]=1
 
 		//загружаем имя если нет данных
