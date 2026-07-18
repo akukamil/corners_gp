@@ -1707,7 +1707,7 @@ online_game = {
 		}
 
 		//для проекта брэниак
-		gameHistForNN=[{role:params.role}]
+		gameHistForNN=[{role:params.role,gid:this.gid,name:my_data.name}]
 
 		//вычиcляем рейтинг при проигрыше и устанавливаем его в базу он потом изменится
 		const lose_rating = this.calc_new_rating(my_data.rating, LOSE)
