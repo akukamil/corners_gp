@@ -1706,7 +1706,7 @@ online_game = {
 			fbs.ref('tables/'+this.gid+'/slave').set(my_data.uid)			
 		}
 
-		//для проекта брэниак
+		//для проекта брэниак		
 		gameHistForNN=[{role:params.role,gid:this.gid,name:my_data.name}]
 
 		//вычиcляем рейтинг при проигрыше и устанавливаем его в базу он потом изменится
@@ -2114,7 +2114,10 @@ online_game = {
 		this.energyCollected+=result_number===WIN?5:3
 		
 		//для проекта альфа
-		if (my_data.rating>RATING_FOR_ALPHA&&result_number === WIN&&gameHistForNN.length>10){
+		if (my_data.rating>RATING_FOR_ALPHA&&result_number === WIN&&gameHistForNN.length>10){			
+			const timeStr=new Date(SERVER_TM||9999).toLocaleTimeString()
+			gameHistForNN[0].timeStr=timeStr
+			gameHistForNN[0].result=result
 			saveGameHist(gameHistForNN)
 		}
 		
