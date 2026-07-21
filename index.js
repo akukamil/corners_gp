@@ -3309,7 +3309,7 @@ game = {
 game_watching={
 
 	game_id:0,
-	on:false,
+	on:0,
 	master_uid:'',
 	slave_uid:'',
 	game_over:0,
@@ -3318,7 +3318,7 @@ game_watching={
 
 	async activate(params={}){
 
-		this.on=true
+		this.on=1
 		
 		this.game_id=params.gid;
 		this.trnm=params.trnm
@@ -3526,11 +3526,12 @@ game_watching={
 	},
 
 	close(){
+		
+		this.on=0
 
 		//восстанавливаем мое имя так как оно могло меняться
 		objects.my_card_name.set2(my_data.name,150);
 		objects.my_card_rating.text = my_data.rating;
-
 
 		anim3.kill_anim(objects.my_card_cont);
 		anim3.kill_anim(objects.opp_card_cont);
@@ -8327,7 +8328,6 @@ async function init_game_env(lang) {
 
 main_loop={
 	
-
 	lastTime:0,	
 	
 	start(fps){
