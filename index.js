@@ -5867,13 +5867,13 @@ pref={
 		if (this.loading) return
 		
 		const design_data=DESIGN_DATA[this.cur_design_id]
-		if (my_data.rating<design_data.rating){
+		if (!my_data.trnm_winner&&my_data.rating<design_data.rating){
 			this.send_info(`Только для игроков с рейтингом более ${design_data.rating}`)
 			sound.play('locked')
 			return
 		}
 		
-		if (my_data.games<design_data.games){
+		if (!my_data.trnm_winner&&my_data.games<design_data.games){
 			this.send_info(`Только для игроков сыгравших более ${design_data.games} игр`)
 			sound.play('locked')
 			return
