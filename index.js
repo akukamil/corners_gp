@@ -33,20 +33,8 @@ my_log={
 
 fbs_once=async function(path){
 		
-    let timeoutId;
-    
-    const infoPromise = fbs.ref(path).get();
-    const timeoutPromise = new Promise(r => {
-        timeoutId = setTimeout(() => {
-            console.warn('Firebase request timeout');
-            r(null); // Return null on timeout
-        }, 5000);
-    });
-    
-    const snapshot = await Promise.race([infoPromise, timeoutPromise]);
-    clearTimeout(timeoutId); // Clear timeout since race is done
-    
-    return snapshot ? snapshot.val() : null;
+	const info=await fbs.ref(path).get();
+	return info.val();
 
 }
 
