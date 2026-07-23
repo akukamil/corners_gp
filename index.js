@@ -31,23 +31,9 @@ my_log={
 
 };
 
-fbs_once=async function(path){
-		
-    let timeoutId;
-    
-    const infoPromise = fbs.ref(path).get();
-    const timeoutPromise = new Promise(r => {
-        timeoutId = setTimeout(() => {
-            console.warn('Firebase request timeout');
-            r(null); // Return null on timeout
-        }, 99999999);
-    });
-    
-    const snapshot = await Promise.race([infoPromise, timeoutPromise]);
-    clearTimeout(timeoutId); // Clear timeout since race is done
-    
-    return snapshot ? snapshot.val() : null;
-
+fbs_once=async function(path){		
+	const info=await fbs.ref(path).get();
+	return info.val();
 }
 
 class player_mini_card_class extends PIXI.Container {
