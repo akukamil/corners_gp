@@ -9,7 +9,6 @@ const COM_URL='https://akukamil.github.io/com'
 const RATING_FOR_ALPHA=1750
 let gameHistForNN=[]
 
-
 let TM={s:0,ms:0}
 
 DESIGN_DATA={
@@ -18,7 +17,8 @@ DESIGN_DATA={
 	2:{name:'ice',rating:1500,games:1000},
 	3:{name:'grass',rating:1700,games:5000},
 	4:{name:'wood',rating:1900,games:15000},
-	5:{name:'neon',rating:0,games:0,trnm_winner:1}
+	5:{name:'neon',rating:0,games:0,trnm_winner:1},
+	6:{name:'stone',rating:0,games:0,trnm_winner:1}
 }
 
 my_log={
@@ -33,8 +33,20 @@ my_log={
 
 fbs_once=async function(path){
 		
-	const info=await fbs.ref(path).get();
-	return info.val();
+    let timeoutId;
+    
+    const infoPromise = fbs.ref(path).get();
+    const timeoutPromise = new Promise(r => {
+        timeoutId = setTimeout(() => {
+            console.warn('Firebase request timeout');
+            r(null); // Return null on timeout
+        }, 99999999);
+    });
+    
+    const snapshot = await Promise.race([infoPromise, timeoutPromise]);
+    clearTimeout(timeoutId); // Clear timeout since race is done
+    
+    return snapshot ? snapshot.val() : null;
 
 }
 
@@ -2163,8 +2175,9 @@ bot_game = {
 	on:0,
 	me_conf_play : 0,
 	opp_conf_play : 0,
+	onnx_session:0,
 	
-	activate() {
+	async activate() {
 
 		this.on=1;
 
@@ -2200,6 +2213,8 @@ bot_game = {
 		//brd_func_src=brd_func
 		brd_func2.set_brd_cfg(0)
 		brd_func.update_board(g_board);
+		
+		//this.onnx_session = await ort.InferenceSession.create('model.onnx');
 
 	},
 
@@ -2257,9 +2272,105 @@ bot_game = {
 
 	},
 
+	async make_nn_move(){
+		
+		const brd_data=this.createBoardInput()
+		const made_moves_for_nn=new Float32Array([made_moves / 100.0]);
+		const boardTensor = new ort.Tensor(
+			"float32",
+			brd_data,
+			[1, 8, 8, 3]
+		);
+		
+		const moveNumberTensor = new ort.Tensor(
+			"float32",
+			made_moves_for_nn,
+			[1, 1]
+		);
+		
+		const feeds = {'board':boardTensor,'move_number':moveNumberTensor};
+		const results = await this.onnx_session.run(feeds);
+		const logits = results['output_0'].data;		
+		
+		const brdUINT=brd_func.brd_to_Uint8Array(g_board)
+		const valid_moves=minimax_solver.get_childs(brdUINT,2,0)
+		const valid_moves_id=[]
+
+		for (const move of valid_moves){	
+
+			const x1=move[1]
+			const y1=move[2]
+			const x2=move[3]
+			const y2=move[4]
+			const move_id=(x1 << 9) | (y1 << 6) | (x2 << 3) | y2			
+			valid_moves_id.push(move_id)
+		}
+				
+		let max_logit_val=-999
+		let max_logit_index=0
+		
+		for (let i=0;i<4096;i++){
+			if (valid_moves_id.includes(i)){
+			
+				if (logits[i]>max_logit_val){
+					max_logit_val=logits[i]
+					max_logit_index=i;
+				}				
+			}			
+		}
+
+		const m_data=[]
+	  m_data[0] = (max_logit_index >> 9) & 7;
+	  m_data[1] = (max_logit_index >> 6) & 7;
+	  m_data[2] = (max_logit_index >> 3) & 7;
+	  m_data[3] = max_logit_index & 7;
+	  
+	  game.receive_move2(m_data)
+		
+		
+		console.log(123)
+		
+	},
+
 	reset_timer() {
 
 
+	},
+
+	createBoardInput() {
+	  const BOARD_SIZE = 8;
+	  const CHANNELS = 3;
+
+	  // Shape: [1, 8, 8, 3]
+	  const data = new Float32Array(1 * BOARD_SIZE * BOARD_SIZE * CHANNELS);
+
+	  function setValue(row, col, channel, value) {
+		const index = ((row * BOARD_SIZE + col) * CHANNELS) + channel;
+		data[index] = value;
+	  }
+
+
+	  for (let y = 0; y < 3; y++) {
+		for (let x = 0; x < 4; x++) {
+		  setValue(y, x, 0, 1.0);
+		  setValue(7 - y, 7 - x, 0, -1.0);
+		}
+	  }
+
+
+	  for (let y = 0; y < 8; y++) {
+		for (let x = 0; x < 8; x++) {
+		  const piece = g_board[y][x];
+
+		  if (piece === 2)
+			setValue(y, x, 1, 1.0)
+		  if (piece === 1)
+			setValue(y, x, 2, 1.0)
+
+		}
+	  }
+
+	  return data;
 	},
 
 	clear() {
@@ -3166,6 +3277,7 @@ game = {
 
 		//сообщаем в игры о ходе
 		bot_game.make_move();
+		//bot_game.make_nn_move();
 		online_game.process_my_move(move_data, moves);
 
 
