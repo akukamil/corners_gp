@@ -1027,6 +1027,14 @@ brd_func={
 		]
 		
 	},
+	
+	copyBrd(brd){
+		const copy = new Array(8);
+		for (let i = 0; i < 8; i++) {
+			copy[i] = brd[i].slice();
+		}
+		return copy
+	},
 
 	show_home_area(brd,line_style={width:1.8,alpha:0.65,color:0x55ff99,cap:PIXI.LINE_CAP.ROUND}){
 
@@ -1099,7 +1107,7 @@ brd_func={
 	
 	},
 
-	get_checker_by_pos(x,y) {
+	getCheckerByPos(x,y) {
 
 		for (let c of objects.checkers)
 			if (c.ix===x && c.iy===y)
@@ -1107,10 +1115,26 @@ brd_func={
 		return 0;
 	},
 
-	get_moves_path(move_data,board){
+	applyMove(mData,brd){
+			
+		//just exchanging old and new checker position
+		const [sx,sy,tx,ty]=[+mData[0],+mData[1],+mData[2],+mData[3]];
+		[brd[ty][tx],brd[sy][sx]]=[brd[sy][sx],brd[ty][tx]]
+		
+		//also setting position for chip
+		const chip=this.getCheckerByPos(sx,sy)
+		chip.ix=tx
+		chip.iy=ty
+		
+		
+	},
+
+	get_moves_path(mData,board){
+
+		const move_data={x1:+mData[0],y1:+mData[1],x2:+mData[2],y2:+mData[3]}
 
 		let g_archive=[0,0,0,0,0,0,0,0,0,0,0]
-		let move_archive=[[move_data.x1,move_data.y1]]
+		let move_archive=[[+move_data[0],+move_data[1]]]
 
 		function left(move_data,cur_board, m_archive) {
 
@@ -1309,17 +1333,18 @@ brd_func={
 
 		}
 
-		left(	move_data,	JSON.parse(	JSON.stringify(board)),	JSON.parse(JSON.stringify(move_archive)));
-		right(	move_data,	JSON.parse(	JSON.stringify(board)),	JSON.parse(JSON.stringify(move_archive)));
-		up(		move_data,	JSON.parse(	JSON.stringify(board)),	JSON.parse(JSON.stringify(move_archive)));
-		down(	move_data,	JSON.parse(	JSON.stringify(board)),	JSON.parse(JSON.stringify(move_archive)));
+		left(	move_data,	this.copyBrd(board),	JSON.parse(JSON.stringify(move_archive)));
+		right(	move_data,	this.copyBrd(board),	JSON.parse(JSON.stringify(move_archive)));
+		up(		move_data,	this.copyBrd(board),	JSON.parse(JSON.stringify(move_archive)));
+		down(	move_data,	this.copyBrd(board),	JSON.parse(JSON.stringify(move_archive)));
 
 		return g_archive;
 	},
 
-	async start_gentle_move(move_data, moves, board) {
+	async start_gentle_move(mData, moves, board) {
 
-		moving_chip = this.get_checker_by_pos(move_data.x1, move_data.y1);
+		const [sx,sy,tx,ty]=[+mData[0],+mData[1],+mData[2],+mData[3]]
+		const chipSpr = this.getCheckerByPos(sx, sy);
 
 		for (let i = 1 ; i < moves.length; i++) {
 			
@@ -1333,20 +1358,11 @@ brd_func={
 			const tar_x = tx*50+objects.board.x+20;
 			const tar_y = ty*50+objects.board.y+20;			
 			
-			await anim3.add(moving_chip, {x:[moving_chip.x, tar_x,'linear'], y: [moving_chip.y, tar_y, 'linear']}, true, 0.16);
+			await anim3.add(chipSpr, {x:[chipSpr.x, tar_x,'linear'], y: [chipSpr.y, tar_y, 'linear']}, true, 0.16);
 			sound.play('move');
 		}
 
-		moving_chip.ready=true;
-
-		const [sx,sy]=moves[0];
-		const [tx,ty]=moves[moves.length-1];
-
-		//меняем старую и новую позицию шашки
-		[board[ty][tx],board[sy][sx]]=[board[sy][sx],board[ty][tx]];
-
-		//обновляем доску
-		this.update_board(board);
+		chipSpr.ready=true;
 
 	},
 
@@ -1616,7 +1632,7 @@ brd_func2={
 online_game = {
 
 	on:0,
-	start_time : 0,
+	startTime : 0,
 	disconnect_time : 0,
 	me_conf_play : 0,
 	opp_conf_play : 0,
@@ -1634,6 +1650,7 @@ online_game = {
 	energyCollected:0,
 	trnm:0,
 	gid:0,
+	myThinkingTimeAdv:0,
 	
 	calc_new_rating(old_rating, game_result) {
 
@@ -1648,15 +1665,15 @@ online_game = {
 	activate(params) {
 
 		this.on=1
-
+		
+		const tm=Date.now()
+		
 		this.my_moves_hist=[]
 		this.opp_moves_hist=[]
 		my_log.log_arr=[]
 		
 		//фиксируем номер игры
-		this.gid=params.gid
-		
-		
+		this.gid=params.gid		
 
 		//пока еще никто не подтвердил игру (кроме случая турнира)
 		this.me_conf_play = params.t||0
@@ -1666,8 +1683,8 @@ online_game = {
 		this.trnm=params.t
 
 		//счетчик времени
-		this.prv_tick_time=Date.now()
-		this.timer_start_time=Date.now()
+		this.prv_tick_time=tm
+		this.timer_start_time=tm
 		this.time_for_move = 15
 		this.timer_id = setTimeout(function(){online_game.timer_tick()}, 1000)
 		objects.timer_text.tint=0xffffff
@@ -1677,9 +1694,17 @@ online_game = {
 		objects.game_buttons_cont.visible = true
 		objects.timer_cont.x = my_turn === 1 ? 30 : 630
 
-		//фиксируем врему начала игры
-		this.start_time = Date.now()
+		//thinking time text
+		objects.myThinkTime.text=''
+		objects.oppThinkTime.text=''
 
+
+		//фиксируем врему начала игры
+		this.startTime=tm
+		this.lastMoveTm=tm
+		my_data.totalThinkTime=0
+		if (my_turn) my_data.totalThinkTime=-3
+		
 		//сколько игрок играл с этим соперником
 		const prv_plays=this.count_in_arr(this.last_opps,opp_data.uid)
 		this.NO_RATING_GAME=(!this.blind_game_flag&&this.prv_plays>6&&my_data.rating>MAX_NO_REP_RATING)?1:0
@@ -1930,41 +1955,67 @@ online_game = {
 		pmsg.add({t:['Соперник отключил чат','Chat disabled'][LANG]});
 	},
 
-	process_my_move(move_data, moves){
+	showThinkingTime(my,opp){
+		
+		objects.myThinkTime.text=my+' сек.'
+		objects.oppThinkTime.text=opp+' сек.'
+		anim3.add(objects.myThinkTime,{alpha:[0,1,'linear']}, true, 2,false);
+		anim3.add(objects.oppThinkTime,{alpha:[0, 1,'linear']}, true, 2,false);
+	},
+
+	process_my_move(moveStr){
 
 		if(!this.on) return;
 
-		//проверяем бонусы
-		//this.check_bonuses(moves,'my_move')
-		console.log
-
 		//переворачиваем данные о ходе так как оппоненту они должны попасть как ход шашками №2
-		move_data.x1=7-move_data.x1;
-		move_data.y1=7-move_data.y1;
-		move_data.x2=7-move_data.x2;
-		move_data.y2=7-move_data.y2;
-
+		const moveStrInv=[]
+		moveStrInv[0]=7-moveStr[0];
+		moveStrInv[1]=7-moveStr[1];
+		moveStrInv[2]=7-moveStr[2];
+		moveStrInv[3]=7-moveStr[3];
+		
+		const tm=Date.now()
+				
 		//сохраняем историю ходов
-		this.my_moves_hist.push(Object.values(move_data).join(''));
-
-		const move_data_short=move_data.x1.toString()+move_data.y1.toString()+move_data.x2.toString()+move_data.y2.toString();
-
+		this.my_moves_hist.push(moveStrInv);
+		
+		//записываем время обдумывания хода
+		const myLastThinkingTime=my_data.totalThinkTime
+		my_data.totalThinkTime+=Math.floor((tm-this.lastMoveTm)/1000)
+		this.lastMoveTm=tm
+		
+		//last synchronized thinking time
+		if (my_role==='slave'){
+			this.myThinkingTimeAdv=opp_data.totalThinkTime-my_data.totalThinkTime
+			this.showThinkingTime(my_data.totalThinkTime,opp_data.totalThinkTime)
+		}			
+				
 		//новая версия
-		const t=((Date.now()-this.start_time||2323)*0.001).toFixed(1);
-		fbs.ref('inbox/'+opp_data.uid).set({s:my_data.uid.substring(0,8),m:'M',t,d:move_data_short});
+		const t=my_data.totalThinkTime;
+		const data={s:my_data.uid.substring(0,8),m:'M',t,d:moveStrInv}
+		fbs.ref('inbox/'+opp_data.uid).set(data);
 
-		//также фиксируем данные стола
+		//sending game watching Data
 		const moves_made=my_role==='slave'?made_moves+1:0;
 		fbs.ref('tables/'+this.gid+'/board').set({uid:my_data.uid,f_str:brd_func.brd_to_str(g_board,moves_made),tm:firebase.database.ServerValue.TIMESTAMP});
 
 	},
 
-	process_incoming_move(move_data, moves){
+	onReceiveMove(moveStr, oppThinkingTime){
 
 		if(!this.on) return
-		this.opp_moves_hist.push(Object.values(move_data).join(''))
-		//this.check_bonuses(moves,'opp_move')
-
+		this.opp_moves_hist.push(moveStr)
+		
+		//записываем время обдумывания хода
+		const tm=Date.now()		
+		this.lastMoveTm=Date.now()	
+		
+		//last synchronized thinking time
+		if (my_role==='master'){
+			this.myThinkingTimeAdv=oppThinkingTime-my_data.totalThinkTime
+			this.showThinkingTime(my_data.totalThinkTime,oppThinkingTime)
+		}
+		opp_data.totalThinkTime=oppThinkingTime
 	},
 
 	check_bonuses(moves,whos_move){
@@ -2111,7 +2162,7 @@ online_game = {
 		//если это турнир
 		if (this.trnm){
 			this.energyCollected+=30
-			trnm.process_game_end(result_number)			
+			trnm.process_game_end(result_number,this.myThinkingTimeAdv)			
 		}
 
 
@@ -2130,7 +2181,7 @@ online_game = {
 
 			//контрольные концовки логируем на виртуальной машине
 			if (my_data.rating>1800 || opp_data.rating>1800){
-				const duration = Math.floor((Date.now() - this.start_time)*0.001);
+				const duration = Math.floor((Date.now() - this.startTime)*0.001);
 				const data={uid:my_data.uid,p1:objects.my_card_name.text,p2:objects.opp_card_name.text,res:result_number,f:result,d:duration,games:my_data.games,r:[old_rating,my_data.rating],g:this.gid,cid:client_id,tm:'TMS'}
 				my_ws.safe_send({cmd:'log',logger:'corners_games',data});
 			}
@@ -2196,6 +2247,9 @@ bot_game = {
 
 		game.state='bot'
 		
+		objects.myThinkTime.text=''
+		objects.oppThinkTime.text=''
+		
 		//brd_func_src=brd_func
 		brd_func2.set_brd_cfg(0)
 		brd_func.update_board(g_board);
@@ -2245,7 +2299,7 @@ bot_game = {
 
 		await new Promise(r=>setTimeout(r,150))
 
-		let m_data={};
+		let m_data='';
 		const brdUINT=brd_func.brd_to_Uint8Array(g_board)
 		
 		if (made_moves < 30)
@@ -2254,7 +2308,7 @@ bot_game = {
 			m_data=minimax_solver.minimax_3_single(brdUINT, made_moves)
 		
 		await new Promise(r=>setTimeout(r,150))
-		game.receive_move2(m_data)
+		game.onReceiveMove({d:m_data})
 
 	},
 
@@ -2306,12 +2360,12 @@ bot_game = {
 		}
 
 		const m_data=[]
-	  m_data[0] = (max_logit_index >> 9) & 7;
-	  m_data[1] = (max_logit_index >> 6) & 7;
-	  m_data[2] = (max_logit_index >> 3) & 7;
-	  m_data[3] = max_logit_index & 7;
+		m_data[0] = (max_logit_index >> 9) & 7;
+		m_data[1] = (max_logit_index >> 6) & 7;
+		m_data[2] = (max_logit_index >> 3) & 7;
+		m_data[3] = max_logit_index & 7;
 	  
-	  game.receive_move2(m_data)
+		game.onReceiveMove({d:m_data})
 			
 	},
 
@@ -2938,16 +2992,20 @@ trnm={
 		}
 	},
 	
-	process_game_end(e){
+	process_game_end(e,myThinkingTimeAdv){
 		
 		//перенаправляем в турнир
 		if (e===WIN)
 			fbs.ref('trnm/events').set({game_end:online_game.gid,winner:my_data.uid,table_id:this.table_id,tm:Date.now()})
 		if (e===LOSE)
 			fbs.ref('trnm/events').set({game_end:online_game.gid,winner:opp_data.uid,table_id:this.table_id,tm:Date.now()})
-		if (e===NOSYNC || e===DRAW)
+		if (e===NOSYNC)
 			fbs.ref('trnm/events').set({game_end:online_game.gid,winner:0,table_id:this.table_id,tm:Date.now()})
-		
+		if (e===DRAW){
+			const winner=myThinkingTimeAdv>0?my_data.uid:opp_data.uid
+			fbs.ref('trnm/events').set({game_end:online_game.gid,winner,table_id:this.table_id,tm:Date.now()})			
+		}
+
 	},
 
 	close_btn_down(){
@@ -3018,10 +3076,11 @@ trnm={
 game = {
 
 	opponent : '',
-	selected_checker : 0,
+	selectedChecker : 0,
 	state : 'off',
 	move_processor:0,
 	trnm:0,
+	startLock:0,
 	
 	async activate(params={}) {
 
@@ -3056,7 +3115,14 @@ game = {
 		objects.home_cfg.clear()
 
 		//турнирная игра
-		this.trnm=params.t
+		this.trnm=params.t	
+		
+		//чуть ждем перед турниром
+		this.startLock=0
+		if (this.trnm) {
+			this.startLock=1
+			setTimeout(()=>{this.startLock=0},3000)
+		}
 
 		if (this.opponent!=='') this.opponent.clear()
 		if (objects.lbCont.visible) lb.close()
@@ -3095,15 +3161,14 @@ game = {
 		sound.play('note')
 
 		//это если перешли из бот игры
-		this.selected_checker=0
+		this.selectedChecker=0
 		objects.selected_frame.visible=false
 
 		//основные элементы игры
 		objects.board_cont.visible=true
 		objects.my_card_cont.visible=true
 		objects.opp_card_cont.visible=true
-
-		objects.cur_move_text.visible=true
+		
 
 		//обозначаем какой сейчас ход
 		made_moves=0
@@ -3168,6 +3233,12 @@ game = {
 			pmsg.add({t:["Не твоя очередь","Not your turn"][LANG]});
 			return;
 		}
+		
+		//чуть подождать перед началом
+		if (this.startLock){
+			pmsg.add({t:["Секунду...","Second..."][LANG]});
+			return
+		}
 
 		//координаты указателя
 		const mx = e.data.global.x/app.stage.scale.x;
@@ -3180,15 +3251,15 @@ game = {
 		if (pref.flipY) new_y=7-new_y
 
 		//если выбрана новая шашка
-		if (!this.selected_checker) {
+		if (!this.selectedChecker) {
 			//находим шашку по координатам
-			this.selected_checker=brd_func.get_checker_by_pos(new_x,new_y,objects.checkers);
+			this.selectedChecker=brd_func.getCheckerByPos(new_x,new_y,objects.checkers);
 
 			//если мою выбрали фишку
-			if (this.selected_checker.m_id===1)
+			if (this.selectedChecker.m_id===1)
 			{
-				objects.selected_frame.x=this.selected_checker.x+15;
-				objects.selected_frame.y=this.selected_checker.y+15;
+				objects.selected_frame.x=this.selectedChecker.x+15;
+				objects.selected_frame.y=this.selectedChecker.y+15;
 				objects.selected_frame.visible=true;
 
 				//воспроизводим соответствующий звук
@@ -3199,24 +3270,24 @@ game = {
 			else
 			{
 				pmsg.add({t:["Это не ваши шашки","Not your checkers"][LANG]});
-				this.selected_checker=0;
+				this.selectedChecker=0;
 				return;
 			}
 		}
 
-		if (this.selected_checker) {
+		if (this.selectedChecker) {
 
 			//если нажали на выделенную шашку то отменяем выделение
-			if (new_x===this.selected_checker.ix && new_y===this.selected_checker.iy)
+			if (new_x===this.selectedChecker.ix && new_y===this.selectedChecker.iy)
 			{
 				sound.play('move');
-				this.selected_checker=0;
+				this.selectedChecker=0;
 				objects.selected_frame.visible=false;
 				return;
 			}
 
 			//формируем объект содержащий информацию о ходе
-			const m_data={x1:this.selected_checker.ix,y1:this.selected_checker.iy,x2:new_x, y2:new_y};
+			const m_data=this.selectedChecker.ix +''+ this.selectedChecker.iy+''+new_x+''+new_y
 
 			//пытыемся получить последовательность ходов
 			const moves=brd_func.get_moves_path(m_data,g_board);
@@ -3233,7 +3304,7 @@ game = {
 				objects.selected_frame.visible=false;
 
 				//отменяем выделение
-				this.selected_checker=0;
+				this.selectedChecker=0;
 
 				//отправляем ход сопернику
 				game.move_processor(m_data, moves);
@@ -3248,21 +3319,23 @@ game = {
 	
 	async process_my_move(move_data, moves) {
 
-
-		//для проекта брэниак
+		//для проекта альфа
 		if (this.opponent===online_game&&my_data.rating>RATING_FOR_ALPHA){
 			const move_data_short=move_data.x1.toString()+move_data.y1.toString()+move_data.x2.toString()+move_data.y2.toString();
 			gameHistForNN.push({brd:brd_func.brd_to_str(g_board),m:move_data_short,made_moves})				
 		}		
 
 		//делаем перемещение шашки
-		await brd_func.start_gentle_move(move_data, moves, g_board);
+		brd_func.start_gentle_move(move_data, moves, g_board);
 
-		//сообщаем в игры о ходе
-		bot_game.make_move();
+		//making move without animation
+		brd_func.applyMove(move_data,g_board)
+
 		//bot_game.make_nn_move();
 		online_game.process_my_move(move_data, moves);
 
+		//сообщаем в игры о ходе
+		bot_game.make_move();
 
 		if (my_role === 'slave') {
 			made_moves++;
@@ -3296,10 +3369,9 @@ game = {
 
 	},
 
-	async receive_move2(data) {
+	async onReceiveMove(data) {
 
-		const move_data={x1:+data[0],y1:+data[1],x2:+data[2],y2:+data[3]}
-		//my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move'})
+		const moveStr=data.d
 
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
 		if (!['online','bot'].includes(game.state)) return;
@@ -3320,13 +3392,16 @@ game = {
 		this.opponent.reset_timer();
 
 		//считаем последовательность ходов
-		const moves = brd_func.get_moves_path(move_data,g_board);
-
-		//плавно перемещаем шашку
-		await brd_func.start_gentle_move(move_data, moves,g_board, objects.board, objects.checkers);
+		const moves = brd_func.get_moves_path(moveStr,g_board);
+		
+		//move chip over board
+		brd_func.start_gentle_move(moveStr, moves,g_board, objects.board, objects.checkers);		
+		
+		//applying move to chip and board data
+		brd_func.applyMove(moveStr,g_board)
 
 		//сообщаем в онлайн игру о ходе
-		online_game.process_incoming_move(move_data, moves);
+		online_game.onReceiveMove(moveStr,data.t);
 
 		if (my_role === 'master') {
 			made_moves++;
@@ -3342,7 +3417,6 @@ game = {
 			}
 		}
 
-		//my_log.add({name:my_data.name,move_data,opp_name:opp_data.name,made_moves,my_turn,state:game.state,game_id,connected,tm:Date.now(),info:'rec_move_ok'})
 	},
 
 	async stop(result) {
@@ -3355,7 +3429,6 @@ game = {
 		const res=await this.opponent.stop(result)
 		if (res==='forced') return
 
-		objects.cur_move_text.visible=false
 		objects.board_cont.visible=false
 		objects.opp_card_cont.visible=false
 		objects.my_card_cont.visible=false
@@ -3409,7 +3482,6 @@ game_watching={
 		objects.gw_back_button.visible=true;
 		objects.my_card_cont.visible = true;
 		objects.opp_card_cont.visible = true;
-		objects.cur_move_text.visible=true;
 		anim3.add(objects.board_cont, {alpha: [0, 1, 'linear']}, true, 0.3);
 		objects.board.interactive=false;
 		objects.gw_master_chip.visible=true;
@@ -3450,6 +3522,9 @@ game_watching={
 		
 		objects.gw_master_chip.texture=brd_func.chips_tex[1]=chips_tex[1]
 		objects.gw_slave_chip.texture=brd_func.chips_tex[2]=chips_tex[2]
+
+		objects.myThinkTime.text=''
+		objects.oppThinkTime.text=''
 
 		//устанаваем текстуру доски
 		objects.opp_avatar_frame.texture=assets.avatar_frame;
@@ -3567,27 +3642,29 @@ game_watching={
 
 		//опредеяем кто ушел
 		let fig_to_move,tx,ty;
-		let move_data={x1:0,y1:0,x2:0,y2:0};
+		let moveStr=[0,0,0,0];
 		for (let x = 0; x < 8; x++) {
 			for (let y = 0; y < 8; y++) {
 				const fig0 = old_board[y][x];
 				const fig1 = new_board[y][x];
 
 				if (fig0!==0 && fig1===0){
-					move_data.x1=x;
-					move_data.y1=y;
+					moveStr[0]=x;
+					moveStr[1]=y;
 				}
 
 				if (fig0===0 && fig1!==0){
-					move_data.x2=x;
-					move_data.y2=y;
+					moveStr[2]=x;
+					moveStr[3]=y;
 				}
 			}
 		}
-		const moves=brd_func.get_moves_path(move_data,g_board);
-		await brd_func.start_gentle_move(move_data,moves,g_board);
-		brd_func.update_board(new_board);
-		g_board=new_board;
+		
+		const moves=brd_func.get_moves_path(moveStr,g_board);		
+		await brd_func.start_gentle_move(moveStr,moves,g_board);
+		brd_func.applyMove(moveStr,g_board);		
+		brd_func.update_board(g_board);		
+
 		if (move) objects.cur_move_text.text=['сделано ходов: ','made moves: '][LANG]+move;
 
 	},
@@ -3622,7 +3699,6 @@ game_watching={
 		objects.my_avatar.texture=objects.id_avatar.texture;
 		objects.gw_back_button.visible=false;
 		objects.board_cont.visible=false;
-		objects.cur_move_text.visible=false;
 		objects.my_card_cont.visible = false;
 		objects.opp_card_cont.visible = false;
 		objects.gw_master_chip.visible=false;
@@ -4645,7 +4721,7 @@ function process_new_message(msg) {
 
 			//получение сообщение с ходом игорка оптимизированный вариант
 			if (msg.m==='M')
-				game.receive_move2(msg.d);
+				game.onReceiveMove(msg);
 
 		}
 
