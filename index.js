@@ -3342,7 +3342,7 @@ game = {
 		brd_func.applyMove(move_data,g_board)
 
 		//bot_game.make_nn_move();
-		online_game.process_my_move(move_data, moves);
+		online_game.process_my_move(move_data, moves)
 
 		//сообщаем в игры о ходе
 		bot_game.make_move();
