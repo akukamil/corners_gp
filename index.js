@@ -3332,8 +3332,7 @@ game = {
 
 		//для проекта альфа
 		if (this.opponent===online_game&&my_data.rating>RATING_FOR_ALPHA){
-			const move_data_short=move_data.x1.toString()+move_data.y1.toString()+move_data.x2.toString()+move_data.y2.toString();
-			gameHistForNN.push({brd:brd_func.brd_to_str(g_board),m:move_data_short,made_moves})				
+			gameHistForNN.push({brd:brd_func.brd_to_str(g_board),m:move_data,made_moves})				
 		}		
 
 		//делаем перемещение шашки
