@@ -1970,8 +1970,8 @@ online_game = {
 		
 		objects.myThinkTime.text=my+' сек.'
 		objects.oppThinkTime.text=opp+' сек.'
-		anim3.add(objects.myThinkTime,{alpha:[0,0.9,'easeBridge']}, true, 3.5,false);
-		anim3.add(objects.oppThinkTime,{alpha:[0, 0.9,'easeBridge']}, true, 3.5,false);
+		anim3.add(objects.myThinkTime,{alpha:[0,0.9,'easeBridge']}, false, 3.5,false);
+		anim3.add(objects.oppThinkTime,{alpha:[0, 0.9,'easeBridge']}, false, 3.5,false);
 	},
 
 	process_my_move(moveStr){
