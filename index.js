@@ -562,7 +562,7 @@ async function saveGameHist(data){
 	}
 }
 
-anim3={
+const anim3={
 
 	c1: 1.70158,
 	c2: 1.70158 * 1.525,
@@ -582,7 +582,15 @@ anim3={
 	},
 
 	wait(seconds){
-		return this.add(this.empty_spr,{x:[0,1,'linear']}, false, seconds);
+		
+		const timerObject = {
+			x: 0,
+			visible: false,
+			ready: true,
+			alpha: 0
+		};
+		
+		return this.add(timerObject,{x:[0,1,'linear']}, false, seconds);
 	},
 
 	linear(x) {
@@ -753,7 +761,7 @@ anim3={
 			slot.params_num=Object.keys(inp_params).length;
 			slot.obj=obj;
 			slot.vis_on_end=vis_on_end;
-			slot.block=block===undefined;
+			slot.block=block ?? true;
 			slot.t1=TM.s
 			slot.t=time
 
@@ -768,7 +776,7 @@ anim3={
 
 				//для возвратных функцие конечное значение равно начальному что в конце правильные значения присвоить
 				const func_name=inp_params[param][2];
-				const func=anim3[func_name].bind(anim3);
+				const func=this[func_name].bind(anim3);
 				if (func_name === 'ease2back'||func_name==='shake') f=s;
 
 				slot.params[ind].param=param;
@@ -828,9 +836,16 @@ anim3={
 
 				const progress=(TM.s-slot.t1)/slot.t
 
-				for (let i=0;i<slot.params_num;i++){
+				//если анимация завершилась то удаляем слот
+				if (progress>=0.999) {
+					this.finish_slot(slot)
+					slot.p_resolve(1)
+					continue
+				}
+				
+				for (let n=0;n<slot.params_num;n++){
 
-					const param_data=slot.params[i]
+					const param_data=slot.params[n]
 					const param=param_data.param
 					const s=param_data.s
 					const d=param_data.d
@@ -838,11 +853,7 @@ anim3={
 					slot.obj[param]=s+d*func(progress)
 				}
 
-				//если анимация завершилась то удаляем слот
-				if (progress>=0.999) {
-					this.finish_slot(slot)
-					slot.p_resolve(1)
-				}
+
 			}
 		}
 	}
@@ -1959,8 +1970,8 @@ online_game = {
 		
 		objects.myThinkTime.text=my+' сек.'
 		objects.oppThinkTime.text=opp+' сек.'
-		anim3.add(objects.myThinkTime,{alpha:[0,1,'linear']}, true, 2,false);
-		anim3.add(objects.oppThinkTime,{alpha:[0, 1,'linear']}, true, 2,false);
+		anim3.add(objects.myThinkTime,{alpha:[0,0.9,'easeBridge']}, true, 3.5,false);
+		anim3.add(objects.oppThinkTime,{alpha:[0, 0.9,'easeBridge']}, true, 3.5,false);
 	},
 
 	process_my_move(moveStr){
