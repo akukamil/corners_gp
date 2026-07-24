@@ -14,7 +14,7 @@ let TM={s:0,ms:0}
 DESIGN_DATA={
 	0:{name:'def',rating:0,games:0},
 	1:{name:'old',rating:0,games:0},
-	2:{name:'ice',rating:1500,games:1000},
+	2:{name:'box',rating:1500,games:1000},
 	3:{name:'grass',rating:1700,games:5000},
 	4:{name:'wood',rating:1900,games:15000},
 	5:{name:'neon',rating:0,games:0,trnm_winner:1},
