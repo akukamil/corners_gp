@@ -2312,10 +2312,7 @@ bot_game = {
 	  m_data[3] = max_logit_index & 7;
 	  
 	  game.receive_move2(m_data)
-		
-		
-		console.log(123)
-		
+			
 	},
 
 	reset_timer() {
