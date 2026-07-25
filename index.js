@@ -6,7 +6,7 @@ const MAX_NO_REP_RATING=1910;
 const MAX_NO_CONF_RATING=1950;
 const DAYS_TO_CONF_RATING=7;
 const COM_URL='https://akukamil.github.io/com'
-const RATING_FOR_ALPHA=1750
+const RATING_FOR_ALPHA=1699
 let gameHistForNN=[]
 
 let TM={s:0,ms:0}
