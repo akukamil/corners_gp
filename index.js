@@ -945,30 +945,40 @@ big_msg = {
 
 		anim3.add(objects.big_msg_cont, {y: [-180, objects.big_msg_cont.sy, 'easeOutBack']}, true, 0.6);
 
-		this.show_bonus_anim(objects.big_msg_energy,params.energy||0)
-		this.show_bonus_anim(objects.big_msg_crystals,params.crystals||0)
+		this.show_bonus_anim(objects.big_msg_energy,my_data.energy,my_data.energy+(params.energy||0))
+		//this.show_bonus_anim(objects.big_msg_crystals,params.crystals||0)
 
 		return new Promise(function(resolve, reject){
 			big_msg.p_resolve = resolve;
 		});
 	},
 
-	show_bonus_anim(text_obj,tar_val){
+	show_bonus_anim(text_obj,curVal,tarVal){
 
-		if (tar_val===0){
-			text_obj.text=0
-			return
+		if (curVal === tarVal) {
+			text_obj.text = tarVal;
+			return;
 		}
 
-		const interval_time=(tar_val*52+948)/tar_val
+		const d=tarVal - curVal
+		const duration = d<10?1000:3000
+		const interval = 16
 
-		let lights=0
-		const t=setInterval(()=>{
-			lights++
-			text_obj.text='+'+lights
-			if (lights===tar_val)
-				clearInterval(t)
-		},interval_time)
+		const frames = Math.ceil(duration / interval)
+		const increment = d / frames
+
+		let value = curVal
+
+		const timer = setInterval(() => {
+
+			value += increment;
+			text_obj.text = Math.round(value);
+			
+			if (value >= tarVal) {
+				text_obj.text = tarVal
+				clearInterval(timer)
+			}
+		}, interval);
 
 	},
 
@@ -1009,7 +1019,8 @@ big_msg = {
 	
 	close(reason){		
 		anim3.add(objects.big_msg_cont, {y: [objects.big_msg_cont.sy, 450, 'easeInBack']}, false, 0.4);
-		this.p_resolve(reason);		
+		if (this.p_resolve) this.p_resolve(reason)
+		this.p_resolve=0
 	}
 
 }
@@ -1100,8 +1111,8 @@ brd_func={
 					let tx=pref.flipX?7-x:x
 					let ty=pref.flipY?7-y:y
 					
-					objects.checkers[ind].x=tx*50+objects.board.x+20;
-					objects.checkers[ind].y=ty*50+objects.board.y+20;
+					objects.checkers[ind].x=tx*50+objects.board.x+55;
+					objects.checkers[ind].y=ty*50+objects.board.y+55;
 
 					objects.checkers[ind].ix=x;
 					objects.checkers[ind].iy=y;
@@ -1357,6 +1368,7 @@ brd_func={
 		const [sx,sy,tx,ty]=[+mData[0],+mData[1],+mData[2],+mData[3]]
 		const chipSpr = this.getCheckerByPos(sx, sy);
 
+	
 		for (let i = 1 ; i < moves.length; i++) {
 			
 			let tarXi=moves[i][0]
@@ -1366,9 +1378,8 @@ brd_func={
 			let tx=pref.flipX?7-tarXi:tarXi
 			let ty=pref.flipY?7-tarYi:tarYi
 					
-			const tar_x = tx*50+objects.board.x+20;
-			const tar_y = ty*50+objects.board.y+20;			
-			
+			const tar_x = tx*50+objects.board.x+55;
+			const tar_y = ty*50+objects.board.y+55;		
 			await anim3.add(chipSpr, {x:[chipSpr.x, tar_x,'linear'], y: [chipSpr.y, tar_y, 'linear']}, true, 0.16);
 			sound.play('move');
 		}
@@ -1711,6 +1722,7 @@ online_game = {
 
 
 		//фиксируем врему начала игры
+		this.energyCollected=0
 		this.startTime=tm
 		this.lastMoveTm=tm
 		my_data.totalThinkTime=0
@@ -1970,8 +1982,7 @@ online_game = {
 		
 		objects.myThinkTime.text=my+' сек.'
 		objects.oppThinkTime.text=opp+' сек.'
-		anim3.add(objects.myThinkTime,{alpha:[0,0.9,'easeBridge']}, false, 3.5,false);
-		anim3.add(objects.oppThinkTime,{alpha:[0, 0.9,'easeBridge']}, false, 3.5,false);
+		anim3.add(objects.thinkTimeCont,{alpha:[0,0.9,'easeBridge']}, false, 3.5,false);
 	},
 
 	process_my_move(moveStr){
@@ -3269,8 +3280,8 @@ game = {
 			//если мою выбрали фишку
 			if (this.selectedChecker.m_id===1)
 			{
-				objects.selected_frame.x=this.selectedChecker.x+15;
-				objects.selected_frame.y=this.selectedChecker.y+15;
+				objects.selected_frame.x=this.selectedChecker.x-20;
+				objects.selected_frame.y=this.selectedChecker.y-20;
 				objects.selected_frame.visible=true;
 
 				//воспроизводим соответствующий звук
