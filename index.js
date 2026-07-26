@@ -2210,15 +2210,15 @@ online_game = {
 
 		}
 		
-		pref.change_energy(this.energyCollected)
-		pref.change_crystals(crystals)
 				
-		//сообщение об изменении рейтинга
-		
+		//сообщение об изменении рейтинга		
 		if (this.trnm)
 			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,t3:'вернитесь в меню турнира для продолжения.',energy:this.energyCollected,crystals})
 		else
 			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,fb:1,t3:auth_msg,energy:this.energyCollected,crystals})
+
+		pref.change_energy(this.energyCollected)
+		pref.change_crystals(crystals)
 
 	},
 
@@ -3352,10 +3352,11 @@ game = {
 		//making move without animation
 		brd_func.applyMove(move_data,g_board)
 
-		//bot_game.make_nn_move();
+		
 		online_game.process_my_move(move_data, moves)
 
 		//сообщаем в игры о ходе
+		//bot_game.make_nn_move();
 		bot_game.make_move();
 
 		if (my_role === 'slave') {
