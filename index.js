@@ -2019,7 +2019,9 @@ online_game = {
 
 		//sending game watching Data
 		const moves_made=my_role==='slave'?made_moves+1:0;
-		fbs.ref('tables/'+this.gid+'/board').set({uid:my_data.uid,f_str:brd_func.brd_to_str(g_board,moves_made),tm:firebase.database.ServerValue.TIMESTAMP});
+		const gwData={uid:my_data.uid,f_str:brd_func.brd_to_str(g_board,moves_made),tm:firebase.database.ServerValue.TIMESTAMP}
+		if (my_role==='slave' && (moves_made%5===0)) gwData.tt=[opp_data.totalThinkTime,my_data.totalThinkTime]
+		fbs.ref('tables/'+this.gid+'/board').set(gwData);
 
 	},
 
@@ -2335,6 +2337,8 @@ bot_game = {
 	},
 
 	async make_nn_move(){
+		
+		if(!this.on) return;
 		
 		const brd_data=this.createBoardInput()
 		const made_moves_for_nn=new Float32Array([made_moves / 100.0]);
@@ -3628,6 +3632,12 @@ game_watching={
 				lobby.activate();
 			return;
 		}
+		
+		
+		//show thinking time if any
+		if (board_data.tt)
+			online_game.showThinkingTime(board_data.tt[0],board_data.tt[1])
+					
 
 		//если предыдущее движение не завершено то завершаем его и ждем
 		while (moving_chip&&!moving_chip.ready) {
