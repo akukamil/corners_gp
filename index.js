@@ -1726,7 +1726,7 @@ online_game = {
 		this.startTime=tm
 		this.lastMoveTm=tm
 		my_data.totalThinkTime=0
-		if (my_turn) my_data.totalThinkTime=-3
+		//if (my_turn) my_data.totalThinkTime=-3
 		
 		//сколько игрок играл с этим соперником
 		const prv_plays=this.count_in_arr(this.last_opps,opp_data.uid)
@@ -2122,7 +2122,6 @@ online_game = {
 			['my_stop',DRAW , ['Вы отменили игру.','You canceled the game']]
 		];
 				
-
 		clearTimeout(this.timer_id);
 		clearTimeout(this.no_rating_msg_timer);
 
@@ -2182,13 +2181,11 @@ online_game = {
 			saveGameHist(gameHistForNN)
 		}
 		
-		
 		//если это турнир
 		if (this.trnm){
 			this.energyCollected+=30
 			trnm.process_game_end(result_number,this.myThinkingTimeAdv)			
 		}
-
 
 		//также фиксируем данные стола
 		setTimeout(()=>{fbs.ref('tables/'+this.gid+'/board').set({uid:my_data.uid,fin:result,tm:firebase.database.ServerValue.TIMESTAMP})},400)
