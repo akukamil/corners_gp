@@ -6,7 +6,7 @@ const MAX_NO_REP_RATING=1910;
 const MAX_NO_CONF_RATING=1950;
 const DAYS_TO_CONF_RATING=7;
 const COM_URL='https://akukamil.github.io/com'
-const RATING_FOR_ALPHA=1699
+const RATING_FOR_ALPHA=91699
 let gameHistForNN=[]
 
 let TM={s:0,ms:0}
@@ -546,6 +546,7 @@ class trnm_precard_class extends PIXI.Container{
 
 async function saveGameHist(data){
 
+	
 	try {
 		const response = await fetch('https://mtserver2.ru:443/save', {
 			method: 'POST',
