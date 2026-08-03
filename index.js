@@ -2354,7 +2354,7 @@ bot_game = {
 		
 		const feeds = {'board':boardTensor,'move_number':moveNumberTensor};
 		const results = await this.onnx_session.run(feeds);
-		const logits = results['output_0'].data;		
+		const logits = results['policy'].data;		
 		
 		const brdUINT=brd_func.brd_to_Uint8Array(g_board)
 		const valid_moves=minimax_solver.get_childs(brdUINT,2,0)
@@ -4145,7 +4145,7 @@ minimax_solver = {
 
 				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
 
-				moves_hist.push([ix,iy]);
+				moves_hist.push([new_x,new_y]);
 				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
 				cur_boardU[iy*8+ix]=0;
 
@@ -4176,7 +4176,7 @@ minimax_solver = {
 
 				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
 
-				moves_hist.push([ix,iy]);
+				moves_hist.push([new_x,new_y]);
 				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
 				cur_boardU[iy*8+ix]=0;
 
@@ -4207,7 +4207,7 @@ minimax_solver = {
 
 				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
 
-				moves_hist.push([ix,iy]);
+				moves_hist.push([new_x,new_y]);
 				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
 				cur_boardU[iy*8+ix]=0;
 
@@ -4237,7 +4237,7 @@ minimax_solver = {
 			{
 				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
 
-				moves_hist.push([ix,iy]);
+				moves_hist.push([new_x,new_y]);
 				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
 				cur_boardU[iy*8+ix]=0;
 
