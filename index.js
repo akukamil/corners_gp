@@ -2322,6 +2322,8 @@ bot_game = {
 			if (anim3.any_on()===false) break
 			await new Promise(r=>setTimeout(r,250))				
 		}
+		
+		if(!this.on) return;
 
 		let m_data='';
 		const brdUINT=brd_func.brd_to_Uint8Array(g_board)
