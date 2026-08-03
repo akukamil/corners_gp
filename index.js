@@ -1368,7 +1368,6 @@ brd_func={
 
 		const [sx,sy,tx,ty]=[+mData[0],+mData[1],+mData[2],+mData[3]]
 		const chipSpr = this.getCheckerByPos(sx, sy);
-
 	
 		for (let i = 1 ; i < moves.length; i++) {
 			
@@ -2319,7 +2318,10 @@ bot_game = {
 
 		if(!this.on) return;
 
-		await new Promise(r=>setTimeout(r,150))
+		for (let i=0;i<10;i++){
+			if (anim3.any_on()===false) break
+			await new Promise(r=>setTimeout(r,250))				
+		}
 
 		let m_data='';
 		const brdUINT=brd_func.brd_to_Uint8Array(g_board)
