@@ -6091,8 +6091,8 @@ pref={
 			safe_ls('corners_energy',my_data.energy)
 			
 			//reset bot level
-			bot_game.level=0
-			safe_ls('cornersBotLevel',0)
+			//bot_game.level=0
+			//safe_ls('cornersBotLevel',0)
 			
 		}
 
