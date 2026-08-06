@@ -2259,7 +2259,7 @@ bot_game = {
 		game.state='bot'
 		
 		//для проекта брэниак		
-		gameHistForNN=[{role:params.role,gid:this.gid,name:my_data.name}]
+		gameHistForNN=[{rating:my_data.rating,name:my_data.name}]
 								
 		objects.myThinkTime.text=''
 		objects.oppThinkTime.text=''
