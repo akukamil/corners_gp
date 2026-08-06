@@ -1741,8 +1741,6 @@ online_game = {
 			fbs.ref('tables/'+this.gid+'/slave').set(my_data.uid)			
 		}
 
-		//для проекта брэниак		
-		gameHistForNN=[{role:params.role,gid:this.gid,name:my_data.name}]
 
 		//вычиcляем рейтинг при проигрыше и устанавливаем его в базу он потом изменится
 		const lose_rating = this.calc_new_rating(my_data.rating, LOSE)
@@ -2174,13 +2172,7 @@ online_game = {
 		
 		this.energyCollected+=result_number===WIN?5:3
 		
-		//для проекта альфа
-		if (my_data.rating>RATING_FOR_ALPHA&&result_number === WIN&&gameHistForNN.length>10){			
-			const timeStr=new Date(SERVER_TM||9999).toLocaleTimeString()
-			gameHistForNN[0].timeStr=timeStr
-			gameHistForNN[0].result=result
-			saveGameHist(gameHistForNN)
-		}
+
 		
 		//если это турнир
 		if (this.trnm){
@@ -2261,17 +2253,14 @@ bot_game = {
 
 		//инициируем доску в зависимости от рейтинга
 		g_board = [[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
-		if (this.level===4)
-			g_board = [[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[2,2,0,2,0,0,0,0],[0,0,2,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
-
 
 		this.temp=[5,3,1,0.5,0.1][this.level]
 
 		game.state='bot'
 		
-		if(!my_turn)
-			this.make_move()
-				
+		//для проекта брэниак		
+		gameHistForNN=[{role:params.role,gid:this.gid,name:my_data.name}]
+								
 		objects.myThinkTime.text=''
 		objects.oppThinkTime.text=''
 		
@@ -2319,11 +2308,23 @@ bot_game = {
 		}else{						
 			sound.play('win')
 			this.level++
-			if (this.level>4)
-				this.level=4
+			if (this.level>4){
+				this.level=4			
+				
+				//для проекта альфа
+				if (gameHistForNN.length>10){			
+					const timeStr=new Date(SERVER_TM||9999).toLocaleTimeString()
+					gameHistForNN[0].timeStr=timeStr
+					gameHistForNN[0].result=result
+					saveGameHist(gameHistForNN)
+				}
+			}
+
 			else
 				energyCollected=this.level*10
 			safe_ls('cornersBotLevel',this.level)
+			
+			
 			
 		}
 
@@ -3474,7 +3475,7 @@ game = {
 	async process_my_move(move_data, moves) {
 
 		//для проекта альфа
-		if (this.opponent===online_game&&my_data.rating>RATING_FOR_ALPHA){
+		if (this.opponent===bot_game){
 			gameHistForNN.push({brd:brd_func.brd_to_str(g_board),m:move_data,made_moves})				
 		}		
 
