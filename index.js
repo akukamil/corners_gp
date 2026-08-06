@@ -2521,7 +2521,6 @@ bot_game = {
 
 	reset_timer() {
 
-
 	},
 
 	createBoardInput() {
