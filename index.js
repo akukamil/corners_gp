@@ -2535,7 +2535,6 @@ bot_game = {
 		data[index] = value;
 	  }
 
-
 	  for (let y = 0; y < 3; y++) {
 		for (let x = 0; x < 4; x++) {
 		  setValue(y, x, 0, 1.0);
