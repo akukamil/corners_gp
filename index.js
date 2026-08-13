@@ -2367,7 +2367,7 @@ bot_game = {
 	async make_move() {
 		
 		if (this.onnx_session) {
-			this.make_nn_move2(this.temp)
+			this.make_nn_move(this.temp)
 			return
 		}
 
