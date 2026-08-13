@@ -1093,6 +1093,16 @@ brd_func={
 				b[y*8+x]=brd[y][x]
 		return b
 	},
+	
+	Uint8Array_to_brd(brdU){
+		
+		const brd = [[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]]
+		for (let y=0;y<8;y++)
+			for (let x=0;x<8;x++)
+				brd[y][x]=brdU[y*8+x]
+		return brd
+		
+	},
 		
 	update_board(board) {
 
@@ -2357,7 +2367,7 @@ bot_game = {
 	async make_move() {
 		
 		if (this.onnx_session) {
-			this.make_nn_move(this.temp)
+			this.make_nn_move2(this.temp)
 			return
 		}
 
@@ -2395,7 +2405,7 @@ bot_game = {
 		//провряем конечные ходы
 		if(this.check_fin_moves(brd_func.brd_to_Uint8Array(g_board))) return
 		
-		const brd_data=this.createBoardInput()
+		const brd_data=this.createBoardInput(g_board)
 		const made_moves_for_nn=new Float32Array([made_moves / 100.0]);
 		const boardTensor = new ort.Tensor(
 			"float32",
@@ -2450,6 +2460,59 @@ bot_game = {
 		m_data[2] = (max_logit_index >> 3) & 7;
 		m_data[3] = max_logit_index & 7;
 	  
+		game.onReceiveMove({d:m_data})
+			
+	},
+
+	async test_nn(move,brd_str){
+		
+		let brd=brd_func.str_to_brd(brd_str)
+		
+		const made_moves_for_nn=new Float32Array([move/100.0])
+		const moveNumberTensor = new ort.Tensor("float32",made_moves_for_nn,[1,1])
+		
+		const brd_data=this.createBoardInput(brd)
+		const boardTensor = new ort.Tensor("float32",brd_data,[1, 8, 8, 3])
+		const feeds = {'board':boardTensor,'move_number':moveNumberTensor}
+		const results = await this.onnx_session.run(feeds)
+		const stateValue = results['value'].data
+		return stateValue
+	},
+
+	async make_nn_move2(temp=1){
+		
+		if(!this.on) return;
+		
+		for (let i=0;i<10;i++){
+			if (anim3.any_on()===false) break
+			await new Promise(r=>setTimeout(r,250))				
+		}
+		
+		//провряем конечные ходы
+		if(this.check_fin_moves(brd_func.brd_to_Uint8Array(g_board))) return
+		
+		const made_moves_for_nn=new Float32Array([made_moves/100.0])
+		const moveNumberTensor = new ort.Tensor("float32",made_moves_for_nn,[1,1])
+
+		const childs=minimax_solver.get_childs(brd_func.brd_to_Uint8Array(g_board),2,0)
+		let max_val=-999
+		let bestChild=0
+		for (const child of childs){
+			
+			const brd_data=this.createBoardInput(brd_func.Uint8Array_to_brd(child[0]))
+			const boardTensor = new ort.Tensor("float32",brd_data,[1, 8, 8, 3])
+			const feeds = {'board':boardTensor,'move_number':moveNumberTensor}
+			const results = await this.onnx_session.run(feeds)
+			const stateValue = results['value'].data[0]
+			
+			if (stateValue>max_val){
+				max_val=stateValue
+				bestChild=child
+			}
+			
+		}
+			
+		const m_data=bestChild[1]+''+bestChild[2]+''+bestChild[3]+''+bestChild[4]
 		game.onReceiveMove({d:m_data})
 			
 	},
@@ -2524,7 +2587,7 @@ bot_game = {
 
 	},
 
-	createBoardInput() {
+	createBoardInput(brd) {
 	  const BOARD_SIZE = 8;
 	  const CHANNELS = 3;
 
@@ -2546,7 +2609,7 @@ bot_game = {
 
 	  for (let y = 0; y < 8; y++) {
 		for (let x = 0; x < 8; x++) {
-		  const piece = g_board[y][x];
+		  const piece = brd[y][x];
 
 		  if (piece === 2)
 			setValue(y, x, 1, 1.0)
@@ -5683,7 +5746,12 @@ gif_sel={
 	
 	activate(){
 		
-		if (!this.ids) this.ids=this.get_unique_int(100,typeof MAX_GIF_ID_INC !== 'undefined' ? MAX_GIF_ID_INC : 200,new Date(SERVER_TM).getDate(),my_data.uid)
+		if (!this.ids){
+			const millisecondsInDay = 24 * 60 * 60 * 1000
+			const daysSinceEpoch = Math.floor(Date.now() / millisecondsInDay)
+			const str=my_data.uid+daysSinceEpoch
+			this.ids=this.get_unique_int(100,typeof MAX_GIF_ID_INC !== 'undefined' ? MAX_GIF_ID_INC : 200,str,4)
+		}
 		this.sel_id=-1
 		objects.gif_sel_hl.visible=false
 		objects.gif_sel_send_btn.visible=false
@@ -5760,9 +5828,9 @@ gif_sel={
 		
 	},
 		
-	get_unique_int(min, max,day,uid) {//inclusive
+	get_unique_int(min,max,str,len=4) {//inclusive
 		
-		let seed = hf.hash(`${day}-${uid}`);
+		let seed = hf.hash(str);
 
 		function random() {
 			seed |= 0;
@@ -5778,12 +5846,12 @@ gif_sel={
 		const arr = Array.from({ length: size }, (_, i) => i + min);
 
 		// Partial Fisher–Yates (only 4 picks)
-		for (let i = 0; i < 4; i++) {
+		for (let i = 0; i < len; i++) {
 			const j = i + Math.floor(random() * (size - i));
 			[arr[i], arr[j]] = [arr[j], arr[i]];
 		}
 
-		return arr.slice(0, 4);
+		return arr.slice(0, len);
 	},
 	
 	send_btn_down(){
