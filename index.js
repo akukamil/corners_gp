@@ -7831,8 +7831,8 @@ lobby={
 			sound.play('locked');
 			return
 		};
-		sound.play('click');
-		this.close();
+		sound.play('click')
+		this.close()
 
 		//активируем просмотр игры
 		game_watching.activate({gid})
