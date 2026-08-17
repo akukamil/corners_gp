@@ -2689,7 +2689,7 @@ bot_game = {
 		brd_func.update_board(g_board);
 		
 		if (!this.nn) return
-		this.nn.init('bestRPwithState.onnx')
+		this.nn.init('bestRP.onnx')
 	},
 
 	async stop(result) {
