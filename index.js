@@ -2775,8 +2775,8 @@ bot_game = {
 	async make_move() {
 		
 		if (this.nn) {
-			Minimax.nn=this.nn
-			this.make_nn_moveMinimax(this.temp)
+			//Minimax.nn=this.nn
+			this.make_nn_move(this.temp)
 			return
 		}
 
