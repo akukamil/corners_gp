@@ -5,7 +5,7 @@ const MAX_NO_AUTH_RATING=1950;
 const MAX_NO_REP_RATING=1910;
 const MAX_NO_CONF_RATING=1900;
 const DAYS_TO_CONF_RATING=7;
-const COM_URL='https://akukamil.github.io/com'
+const COM_URL='https://mtg.gitverse.site/com'
 const RATING_FOR_ALPHA=91699
 let gameHistForNN=[]
 
@@ -5558,7 +5558,7 @@ players_cache={
 		if(!player) alert('Не загружены базовые параметры '+uid);
 
 		if(pic_url==='https://vk.com/images/camera_100.png')
-			pic_url='https://akukamil.github.io/domino/vk_icon.png';
+			pic_url='vk_icon.png';
 
 		//сохраняем
 		player.pic_url=pic_url;
