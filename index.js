@@ -8445,7 +8445,7 @@ main_loader={
 
 		//добавляем текстуры стикеров
 		for (let i=0;i<27;i++)
-			loader.add('sticker_texture_'+i, 'https://akukamil.github.io/com/stickers/'+i+'.png');
+			loader.add('sticker_texture_'+i, COM_URL+'/stickers/'+i+'.png');
 
 		//добавляем из листа загрузки
 		const load_list=eval(assets.main_load_list);
