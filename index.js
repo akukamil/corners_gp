@@ -5,7 +5,7 @@ const MAX_NO_AUTH_RATING=1950;
 const MAX_NO_REP_RATING=1910;
 const MAX_NO_CONF_RATING=1900;
 const DAYS_TO_CONF_RATING=7;
-const COM_URL='https://mtg.gitverse.site/com'
+const COM_URL='https://akukamil.github.io/com'
 const RATING_FOR_ALPHA=91699
 let gameHistForNN=[]
 
@@ -8445,7 +8445,7 @@ main_loader={
 
 		//добавляем текстуры стикеров
 		for (let i=0;i<27;i++)
-			loader.add('sticker_texture_'+i, 'https://mtg.gitverse.site/com/stickers/'+i+'.png');
+			loader.add('sticker_texture_'+i, 'https://akukamil.github.io/com/stickers/'+i+'.png');
 
 		//добавляем из листа загрузки
 		const load_list=eval(assets.main_load_list);
@@ -8777,6 +8777,10 @@ async function init_game_env(lang) {
 	
 	//lobby.perm_room='statesNIGHT'
 	lobby.activate()
+	
+	//ready api yandex
+	if (game_platform==='YANDEX')
+		window.ysdk.features.LoadingAPI.ready()
 }
 
 main_loop={
