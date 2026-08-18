@@ -8355,7 +8355,7 @@ main_loader={
 
 		//добавляем фон отдельно
 		loader.add('loader_bcg',git_src+`res/common/loader_bcg_${['ru','en'][LANG]}_img.jpg`);
-		loader.add('loader_bar_frame',git_src+'res/common//loader_bar_frame_img.png');
+		loader.add('loader_bar_frame',git_src+'res/common/loader_bar_frame_img.png');
 		loader.add('loader_bar_bcg',git_src+'res/common/loader_bar_bcg_img.png');
 
 		//добавляем основной загрузочный манифест
