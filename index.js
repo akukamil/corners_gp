@@ -3304,7 +3304,7 @@ game = {
 		//фиксируем айди соперника
 		opp_data.uid=params.opp_uid
 
-		objects.bcg.texture=assets.bcg;
+		objects.bcg.texture=assets.bcg
 		anim3.add(objects.bcg, {alpha: [0, 1, 'linear']}, true, 0.5)
 
 		if (my_role==='master') {
