@@ -5,7 +5,7 @@ const MAX_NO_AUTH_RATING=1950;
 const MAX_NO_REP_RATING=1910;
 const MAX_NO_CONF_RATING=1900;
 const DAYS_TO_CONF_RATING=7;
-const COM_URL='https://mtg.gitverse.site/com'
+const COM_URL='https://akukamil.github.io/com'
 const RATING_FOR_ALPHA=91699
 let gameHistForNN=[]
 
