@@ -2186,16 +2186,20 @@ online_game = {
 		//проект альфа
 		if (my_data.rating>1500&&my_role==='slave'){
 			
+			gameHistForNN[0].res=result
+			
 			if (['my_finished_first','opp_left_after_30','my_more_fin_after_80'].includes(result)){
 				for (let i=1;i<gameHistForNN.length;i++)
 					gameHistForNN[i].res=1
+				saveGameHist(gameHistForNN)
 			}			
 			
 			if (['opp_finished_first','my_left_after_30','opp_more_fin_after_80'].includes(result)){
 				for (let i=1;i<gameHistForNN.length;i++)
 					gameHistForNN[i].res=-1
+				saveGameHist(gameHistForNN)
 			}	
-			saveGameHist(gameHistForNN)
+			
 		}
 
 		
