@@ -546,6 +546,7 @@ class trnm_precard_class extends PIXI.Container{
 
 async function saveGameHist(data){
 	
+	return;
 	try {
 		const response = await fetch('https://mtserver2.ru:443/save', {
 			method: 'POST',
