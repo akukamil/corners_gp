@@ -3523,7 +3523,7 @@ game = {
 		brd_func.start_gentle_move(move_data, moves, g_board);
 
 		//для проекта альфа
-		gameHistForNN.push({brd:brd_func.brd_to_str(g_board),m:move_data,r:game.round})
+		gameHistForNN.push({brd:brd_func.brd_to_str(g_board),m:move_data})
 		
 		//making move without animation
 		brd_func.applyMove(move_data,g_board)
