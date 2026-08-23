@@ -6,7 +6,7 @@ const MAX_NO_REP_RATING=1910;
 const MAX_NO_CONF_RATING=1900;
 const DAYS_TO_CONF_RATING=7;
 const COM_URL='https://akukamil.github.io/com'
-const RATING_FOR_ALPHA=91699
+const RATING_FOR_ALPHA=1720
 let gameHistForNN=[]
 
 let TM={s:0,ms:0}
@@ -546,7 +546,7 @@ class trnm_precard_class extends PIXI.Container{
 
 async function saveGameHist(data){
 	
-	return;
+	//return;
 	try {
 		const response = await fetch('https://mtserver2.ru:443/save', {
 			method: 'POST',
@@ -2185,7 +2185,7 @@ online_game = {
 		
 		
 		//проект альфа
-		if (my_data.rating>1500&&my_role==='slave'){
+		if (my_data.rating>RATING_FOR_ALPHA&&my_role==='slave'){
 						
 			if (['my_finished_first','opp_left_after_30','my_more_fin_after_80','opp_finished_first','my_left_after_30','opp_more_fin_after_80'].includes(result)){
 				gameHistForNN[0].resStr=result
@@ -3311,7 +3311,7 @@ game = {
 		objects.home_cfg.clear()
 		
 		//для проекта альфа		
-		gameHistForNN=[{rating:my_data.rating,name:my_data.name,my_role}]
+		gameHistForNN=[{rating:my_data.rating,name:my_data.name}]
 
 		//турнирная игра или слепая игра
 		this.trnm=params.t	
@@ -3522,12 +3522,12 @@ game = {
 		//делаем перемещение шашки
 		brd_func.start_gentle_move(move_data, moves, g_board);
 
+		//для проекта альфа
+		gameHistForNN.push({brd:brd_func.brd_to_str(g_board),m:move_data,r:game.round})
+		
 		//making move without animation
 		brd_func.applyMove(move_data,g_board)
-		
-		//для проекта альфа
-		gameHistForNN.push({brd:brd_func.brd_to_str(g_board)})
-		
+				
 		online_game.process_my_move(move_data, moves)
 
 		//сообщаем в игры о ходе
@@ -3599,10 +3599,7 @@ game = {
 
 		//сообщаем в онлайн игру о ходе
 		online_game.onReceiveMove(moveStr,data.t);
-		
-		//для проекта альфа
-		gameHistForNN.push({brd:brd_func.brd_to_str(g_board)})
-		
+	
 
 		if (my_role === 'master') {
 			this.round++;
