@@ -2187,7 +2187,7 @@ online_game = {
 		//проект альфа
 		if (my_data.rating>RATING_FOR_ALPHA&&my_role==='slave'){
 						
-			if (['my_finished_first','opp_left_after_30','my_more_fin_after_80','opp_finished_first','my_left_after_30','opp_more_fin_after_80'].includes(result)){
+			if (['my_finished_first','opp_left_after_30','my_more_fin_after_80'].includes(result)){
 				gameHistForNN[0].resStr=result
 				gameHistForNN[0].res=result_number
 				saveGameHist(gameHistForNN)
