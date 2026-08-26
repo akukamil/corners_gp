@@ -3,7 +3,7 @@ let app ={stage:{},renderer:{}}, assets={}, SERVER_TM=0,fbs,client_id, objects={
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 const MAX_NO_AUTH_RATING=1950;
 const MAX_NO_REP_RATING=1910;
-const MAX_NO_CONF_RATING=1900;
+const MAX_NO_CONF_RATING=1800;
 const DAYS_TO_CONF_RATING=7;
 const COM_URL='https://akukamil.github.io/com'
 const RATING_FOR_ALPHA=1720
@@ -1679,7 +1679,6 @@ online_game = {
 	unique_opps:[],
 	my_moves_hist:[],
 	opp_moves_hist:[],
-	energyCollected:0,
 	trnm:0,
 	bgame:0,
 	gid:0,
@@ -1733,7 +1732,7 @@ online_game = {
 		objects.oppThinkTime.text=''
 
 		//фиксируем врему начала игры
-		this.energyCollected=0
+		this.crystalsCollected=0
 		this.startTime=tm
 		this.lastMoveTm=tm
 		my_data.totalThinkTime=0
@@ -2108,6 +2107,7 @@ online_game = {
 	async stop(result) {
 
 		this.on=0
+		let energyCollected=0
 		let crystalsCollected=0
 
 		const res_array = [
@@ -2181,9 +2181,8 @@ online_game = {
 		else
 			sound.play('win');
 		
-		this.energyCollected+=result_number===WIN?5:3
-		
-		
+		crystalsCollected+=result_number===WIN?5:3
+				
 		//проект альфа
 		if (my_data.rating>RATING_FOR_ALPHA&&my_role==='slave'){
 						
@@ -2194,11 +2193,10 @@ online_game = {
 			}			
 		
 		}
-
 		
 		//если это турнир
 		if (this.trnm){
-			this.energyCollected+=30
+			crystalsCollected+=30
 			trnm.process_game_end(result_number,this.myThinkingTimeAdv)			
 		}
 
@@ -2215,8 +2213,8 @@ online_game = {
 			my_data.games++;
 			fbs.ref('players/'+my_data.uid+'/games').set(my_data.games);
 			
-			//кристаллы за слепую игру
-			if (this.bgame) crystalsCollected+=10
+			//энергия за слепую игру
+			if (this.bgame) energyCollected+=10
 
 			//контрольные концовки логируем на виртуальной машине
 			if (my_data.rating>1800 || opp_data.rating>1800){
@@ -2224,17 +2222,16 @@ online_game = {
 				const data={uid:my_data.uid,p1:objects.my_card_name.text,p2:objects.opp_card_name.text,res:result_number,f:result,d:duration,games:my_data.games,r:[old_rating,my_data.rating],g:this.gid,cid:client_id,tm:'TMS'}
 				my_ws.safe_send({cmd:'log',logger:'corners_games',data});
 			}
-
 		}
 		
 				
 		//сообщение об изменении рейтинга		
 		if (this.trnm)
-			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,t3:'вернитесь в меню турнира для продолжения.',energy:this.energyCollected,crystals:crystalsCollected})
+			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,t3:'вернитесь в меню турнира для продолжения.',energy:energyCollected,crystals:crystalsCollected})
 		else
-			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,fb:1,t3:auth_msg,energy:this.energyCollected,crystals:crystalsCollected})
+			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,fb:1,t3:auth_msg,energy:energyCollected,crystals:crystalsCollected})
 
-		pref.change_energy(this.energyCollected)
+		pref.change_energy(energyCollected)
 		pref.change_crystals(crystalsCollected)
 
 	},
@@ -2312,7 +2309,7 @@ bot_game = {
 
 		let result_number = res_array.find( p => p[0] === result)[1];
 		let result_info = res_array.find( p => p[0] === result)[2][LANG];
-		let energyCollected=0
+		let crystalsCollected=0
 
 		//выключаем элементы
 		objects.stop_bot_button.visible = false
@@ -2329,13 +2326,13 @@ bot_game = {
 			if (this.level>4)
 				this.level=4	
 			else
-				energyCollected=this.level*10
+				crystalsCollected=this.level*10
 			safe_ls('cornersBotLevel',this.level)
 			
 		}
 
-		await big_msg.show({t1:result_info, t2:')))',t3:'',fb:1,energy:energyCollected})
-		pref.change_energy(energyCollected)		
+		await big_msg.show({t1:result_info, t2:')))',t3:'',fb:1,crystals:crystalsCollected})
+		pref.change_crystals(crystalsCollected)		
 
 	},
 
@@ -2586,16 +2583,11 @@ bot_game = {
 		}
 	  }
 
-
 	  for (let y = 0; y < 8; y++) {
 		for (let x = 0; x < 8; x++) {
-		  const piece = brd[y][x];
-
-		  if (piece === 2)
-			setValue(y, x, 1, 1.0)
-		  if (piece === 1)
-			setValue(y, x, 2, 1.0)
-
+		  const piece = brd[y][x]
+		  if (piece === 1) setValue(y, x, 1, 1.0)
+		  if (piece === 2) setValue(y, x, 2, 1.0)
 		}
 	  }
 
@@ -3321,7 +3313,7 @@ game = {
 		this.startLock=0
 		if (this.trnm||this.bg) {
 			this.startLock=1
-			setTimeout(()=>{this.startLock=0},3000)
+			setTimeout(()=>{this.startLock=0},3000)			
 		}
 
 		if (this.opponent!=='') this.opponent.clear()
@@ -3369,7 +3361,11 @@ game = {
 		objects.my_card_cont.visible=true
 		objects.opp_card_cont.visible=true
 		
-
+		//цвет доски
+		objects.bcg.tint=0xffffff
+		if (this.bg) objects.bcg.tint=0xcccc00
+		if (this.trnm) objects.bcg.tint=0xffccff
+		
 		//обозначаем какой сейчас ход
 		this.round=0
 		objects.cur_move_text.text=['Ход: ','Move: '][LANG]+this.round
@@ -6042,9 +6038,9 @@ pref={
 		setInterval(()=>{
 
 			if(i===25) this.update_server_tm()
-			if(i===3) this.check_crystals2()
-			if(i===6) this.check_energy2()
-
+			if(i===3) this.check_energy()
+			if(i===6) this.check_crystals()
+			
 			i = (i + 1) % 60
 
 		},1000)
@@ -6098,89 +6094,81 @@ pref={
 
 	},
 
-	change_crystals(amount){
+	change_energy(amount){
 
-		my_data.crystals+=amount
-		if (my_data.crystals>120) my_data.crystals=120
-		if (my_data.crystals<0) my_data.crystals=0
+		my_data.energy+=amount
+		if (my_data.energy>120) my_data.energy=120
+		if (my_data.energy<0) my_data.energy=0
 
-		objects.pref_crystals_info.text=my_data.crystals
-		fbs.ref('players/'+my_data.uid+'/crystals').set(my_data.crystals)
+		objects.pref_energy_info.text=my_data.energy
+		fbs.ref('players/'+my_data.uid+'/energy').set(my_data.energy)
 
 	},
 
-	change_energy(amount){
+	change_crystals(amount){
 
 		if (amount===0) return
 
-		my_data.energy+=amount
-		objects.pref_energy_info.text=my_data.energy
-		safe_ls('corners_energy',my_data.energy)
+		my_data.crystals+=amount
+		objects.pref_crystals_info.text=my_data.crystals
+		safe_ls('corners_crystals',my_data.crystals)
 
 		//отправляем в топ3
-		my_ws.safe_send({cmd:'top3',path:'_day_top3',val:{uid:my_data.uid,val:my_data.energy}})
+		my_ws.safe_send({cmd:'top3',path:'_day_top3',val:{uid:my_data.uid,val:my_data.crystals}})
 
 	},
 
-	check_energy2(){
+	check_crystals(){
 
 		//нужно удалит первую версию
 
 		if(!SERVER_TM) return
-		const prv_tm=safe_ls('corners_energy_prv_tm')
+		const prv_tm=safe_ls('corners_crystals_prv_tm')
 
 		const cur_msk_day=+new Date(SERVER_TM).toLocaleString('en-US', {timeZone: 'Europe/Moscow',day:'numeric'})
 		const prv_msk_day=+new Date(prv_tm).toLocaleString('en-US', {timeZone: 'Europe/Moscow',day:'numeric'})
 
+		//день поменялся начинаем заново
 		if (cur_msk_day!==prv_msk_day){
-
-			//день поменялся начинаем заново
-			my_data.energy=0
-			objects.pref_energy_info.text=my_data.energy
-			safe_ls('corners_energy',my_data.energy)
-			
-			//reset bot level
-			//bot_game.level=0
-			//safe_ls('cornersBotLevel',0)
-			
+			my_data.crystals=0
+			objects.pref_crystals_info.text=my_data.crystals
+			safe_ls('corners_crystals',my_data.crystals)
 		}
 
-		safe_ls('corners_energy_prv_tm',SERVER_TM)
+		safe_ls('corners_crystals_prv_tm',SERVER_TM)
 
 	},
 
-	check_crystals2(){
-		
-		return
+	check_energy(){
 
 		if(!SERVER_TM) return
 		
 		//если нет данных (новый игрок)
-		if (!my_data.c_prv_tm) {
-			my_data.c_prv_tm=SERVER_TM
-			fbs.ref('players/'+my_data.uid+'/c_prv_tm').set(SERVER_TM)
+		if (!my_data.e_prv_tm) {
+			my_data.e_prv_tm=SERVER_TM
+			fbs.ref('players/'+my_data.uid+'/e_prv_tm').set(SERVER_TM)
 			return
 		}
 			
-		const d=SERVER_TM-my_data.c_prv_tm
+		const d=SERVER_TM-my_data.e_prv_tm
 		const int_passed=Math.floor(d/(1000*60*60))
 		if (int_passed>0){
 
 			//уменьшаем только для рейтинговых игроков
 			if (my_data.rating>MAX_NO_CONF_RATING){
 				
-				this.change_crystals(-int_passed)	
+				this.change_energy(-int_passed)	
 				
 				//закончились монеты
 				if (my_data.crystals<=0){	
-					pmsg.add({t:`У вас закончились кристаллы. Ваш рейтинг понижен до ${MAX_NO_CONF_RATING}`,timeout:6000})
+					pmsg.add({t:`У вас закончилась энергия. Ваш рейтинг понижен до ${MAX_NO_CONF_RATING}`,timeout:6000})
 					my_data.rating=MAX_NO_CONF_RATING
 					fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating)
 				}
 			}
 			
-			my_data.c_prv_tm=SERVER_TM
-			fbs.ref('players/'+my_data.uid+'/c_prv_tm').set(SERVER_TM)
+			my_data.e_prv_tm=SERVER_TM
+			fbs.ref('players/'+my_data.uid+'/e_prv_tm').set(SERVER_TM)
 		}	
 	},
 
@@ -6747,7 +6735,7 @@ lobby={
 	state_listener_timeout:0,
 	perm_room:'',
 	trnm_check_tm:0,
-	INFO_MSG_ID:1,
+	INFO_MSG_ID:4,
 
 	activate() {
 
@@ -6812,9 +6800,9 @@ lobby={
 		if(!(info_data?.id===this.INFO_MSG_ID)){
 			info_data={read:0,id:this.INFO_MSG_ID}
 			safe_ls('corners_info',info_data)
-		}
-		objects.lobby_info_btn.alpha=info_data.read?0.25:1
-		
+			objects.lobby_info_btn.alpha=info_data.read?0.25:1
+			//this.info_btn_down(1)
+		}	
 
 	},
 
@@ -7617,7 +7605,7 @@ lobby={
 
 	bgBtnDown(){		
 		
-		return
+		//return
 		
 		if (anim3.any_on()) {
 			sound.play('locked');
@@ -7739,17 +7727,16 @@ lobby={
 
 	},
 
-	info_btn_down(){
+	info_btn_down(force_show){
 
-		if (anim3.any_on()) {
+		if (!force_show&&anim3.any_on()) {
 			sound.play('locked');
 			return
 		};
 		sound.play('click');
 
-		//objects.info_msg.text=`Новые правила:\n1.Игрокам начислено 120 кристаллов,но для игроков с рейтингом выше ${MAX_NO_CONF_RATING} они расходуются со скоростью 1 кристалл в час. Если количество кристаллов достигнет 0, то рейтинг игрока понизится до ${MAX_NO_CONF_RATING}. Чтобы заработать кристаллы, необходимо принять участие в слепых играх с 18:45 до 19:45 (Мск). За каждую партию будет начислено 10 кристаллов.`
-		objects.info_msg.text=')))'
-		safe_ls('durak_info',{read:1,id:this.INFO_MSG_ID})
+		objects.info_msg.text=`Новые правила:\n1.Игрокам начислено 120 кристаллов,но для игроков с рейтингом выше ${MAX_NO_CONF_RATING} они расходуются со скоростью 1 кристалл в час. Если количество кристаллов достигнет 0, то рейтинг игрока понизится до ${MAX_NO_CONF_RATING}. Чтобы заработать кристаллы, необходимо принять участие в слепых играх с 18:45 до 19:45 (Мск). За каждую партию будет начислено 10 кристаллов.`
+		objects.info_msg_date.text='25.08.2026'
 		anim3.add(objects.info_cont, {alpha: [0, 1, 'linear']}, true, 0.25);
 
 	},
@@ -8659,11 +8646,11 @@ async function init_game_env(lang) {
 	my_data.name = (other_data?.name) || my_data.name
 	my_data.nick_tm = other_data?.nick_tm || 0
 	my_data.avatar_tm = other_data?.avatar_tm || 0;
-	my_data.crystals = 120//other_data?.crystals ?? 120
-	my_data.c_prv_tm = other_data?.c_prv_tm ||0
+	my_data.energy = 120//other_data?.energy??120
+	my_data.e_prv_tm = other_data?.e_prv_tm ||0
 	my_data.trnm = other_data?.trnm ||0
 	
-	my_data.energy=safe_ls('corners_energy')||0
+	my_data.crystals=safe_ls('corners_crystals')||0
 	my_data.design_id = safe_ls('corners_design_id') || 0
 
 	//правильно определяем аватарку
@@ -8697,7 +8684,7 @@ async function init_game_env(lang) {
 	await pref.load_design(my_data.design_id)
 
 	//проверяем блокировку
-	my_data.blocked=await fbs_once('blocked/'+my_data.uid)
+	my_data.blocked=await fbs_once('blocked/'+my_data.uid)||0
 
 	//подписываемся на новые сообщения
 	fbs.ref('inbox/'+my_data.uid).set({tm:Date.now()})
@@ -8712,7 +8699,7 @@ async function init_game_env(lang) {
 		auth_mode:my_data.auth_mode,
 		nick_tm:my_data.nick_tm,
 		avatar_tm:my_data.avatar_tm,
-		c_prv_tm:my_data.c_prv_tm,
+		e_prv_tm:my_data.e_prv_tm,
 		crystals:my_data.crystals,
 		tm:firebase.database.ServerValue.TIMESTAMP,
 		session_start:firebase.database.ServerValue.TIMESTAMP
