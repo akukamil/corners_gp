@@ -6140,7 +6140,9 @@ pref={
 	},
 
 	check_energy(){
-
+		
+		return
+		
 		if(!SERVER_TM) return
 		
 		//если нет данных (новый игрок)
