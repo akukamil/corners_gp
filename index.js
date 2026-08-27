@@ -945,8 +945,13 @@ big_msg = {
 		objects.big_msg_fb_btn.visible = (!my_data.blocked)&&params.fb&&my_data.games>=200
 
 		anim3.add(objects.big_msg_cont, {y: [-180, objects.big_msg_cont.sy, 'easeOutBack']}, true, 0.6);
-
-		this.show_bonus_anim(objects.big_msg_energy,my_data.energy,my_data.energy+(params.energy||0))
+		
+		
+		//энергия максимум 120
+		let tarEnergy=my_data.energy+(params.energy||0)
+		if (tarEnergy>120) tarEnergy=120
+		this.show_bonus_anim(objects.big_msg_energy,my_data.energy,tarEnergy)
+				
 		this.show_bonus_anim(objects.big_msg_crystals,my_data.crystals,my_data.crystals+params.crystals||0)
 
 		return new Promise(function(resolve, reject){
@@ -1091,6 +1096,256 @@ brd_func={
 			for (let x=0;x<8;x++)
 				b[y*8+x]=brd[y][x]
 		return b
+	},
+	
+	moveToStr(moveData){		
+		return moveData.x1+''+moveData.y1+''+moveData.x2+''+moveData.y2
+	},
+	
+	get_childs(board_dataU, checkers, forward){
+
+		function check_in_hist(x,y, hist) {
+			for (let i=0;i<hist.length;i++)
+				if (x===hist[i][0] && y===hist[i][1])
+					return true;
+			return false;
+		}
+
+		function left(ix,iy,cur_boardU,moves_hist,boards_array) {
+
+			let new_x=ix-1;
+			let new_y=iy;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
+
+			if (cur_boardU[new_y*8+new_x]===0) {
+				cur_boardU[iy*8+ix]=0;
+				cur_boardU[new_y*8+new_x]=checkers;
+				boards_array.push({brd:new Uint8Array(cur_boardU),x1:ix,y1:iy,x2:new_x,y2:new_y});
+				return;
+			}
+			else {
+				left_combo(ix,iy,cur_boardU,moves_hist,boards_array);
+			}
+		}
+
+		function right(ix,iy,cur_boardU,moves_hist,boards_array) {
+			let new_x=ix+1;
+			let new_y=iy;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
+
+			if (cur_boardU[new_y*8+new_x]===0) {
+				cur_boardU[iy*8+ix]=0;
+				cur_boardU[new_y*8+new_x]=checkers;
+				boards_array.push({brd:new Uint8Array(cur_boardU),x1:ix,y1:iy,x2:new_x,y2:new_y});
+				return
+			} else {
+				right_combo(ix,iy,cur_boardU,moves_hist,boards_array);
+			}
+		}
+
+		function up(ix,iy,cur_boardU,moves_hist,boards_array){
+			let new_x=ix;
+			let new_y=iy-1;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
+
+			if (cur_boardU[new_y*8+new_x]===0) {
+				cur_boardU[iy*8+ix]=0;
+				cur_boardU[new_y*8+new_x]=checkers;
+				boards_array.push({brd:new Uint8Array(cur_boardU),x1:ix,y1:iy,x2:new_x,y2:new_y});
+				return
+			} else {
+				up_combo(ix,iy,cur_boardU,moves_hist,boards_array);
+			}
+		}
+
+		function down(ix,iy,cur_boardU,moves_hist,boards_array){
+			let new_x=ix;
+			let new_y=iy+1;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
+
+			if (cur_boardU[new_y*8+new_x]===0) {
+				cur_boardU[iy*8+ix]=0;
+				cur_boardU[new_y*8+new_x]=checkers;
+				boards_array.push({brd:new Uint8Array(cur_boardU),x1:ix,y1:iy,x2:new_x,y2:new_y});
+				return
+			} else {
+				down_combo(ix,iy,cur_boardU,moves_hist,boards_array);
+			}
+		}
+
+		function left_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
+
+			let new_x=ix-2;
+			let new_y=iy;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
+			if (cur_boardU[iy*8+ix-1]===0) return;
+
+			if (cur_boardU[new_y*8+new_x]===0)
+			{
+
+				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
+
+				moves_hist.push([new_x,new_y]);
+				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
+				cur_boardU[iy*8+ix]=0;
+
+				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
+				if (cur_boardU[new_y*8+new_x]===1)
+					d_move=-d_move;
+
+				if (d_move>min_move_amount)
+					boards_array.push({brd:new Uint8Array(cur_boardU),x1:moves_hist[0][0],y1:moves_hist[0][1],x2:new_x,y2:new_y});
+
+				//продолжаем попытки комбо
+				left_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				up_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				down_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+			}
+		}
+
+		function right_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
+
+			let new_x=ix+2;
+			let new_y=iy;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
+			if (cur_boardU[iy*8+ix+1]===0) return;
+
+			if (cur_boardU[new_y*8+new_x]===0)
+			{
+
+				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
+
+				moves_hist.push([new_x,new_y]);
+				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
+				cur_boardU[iy*8+ix]=0;
+
+				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
+				if (cur_boardU[new_y*8+new_x]===1)
+					d_move=-d_move;
+
+				if (d_move>min_move_amount)
+					boards_array.push({brd:new Uint8Array(cur_boardU),x1:moves_hist[0][0],y1:moves_hist[0][1],x2:new_x,y2:new_y});
+
+				//продолжаем попытки комбо
+				right_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				up_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				down_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+			}
+		}
+
+		function up_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
+
+			let new_x=ix;
+			let new_y=iy-2;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
+			if (cur_boardU[(iy-1)*8+ix]===0) return;
+
+			if (cur_boardU[new_y*8+new_x]===0)
+			{
+
+				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
+
+				moves_hist.push([new_x,new_y]);
+				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
+				cur_boardU[iy*8+ix]=0;
+
+				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
+				if (cur_boardU[new_y*8+new_x]===1)
+					d_move=-d_move;
+
+				if (d_move>min_move_amount)
+					boards_array.push({brd:new Uint8Array(cur_boardU),x1:moves_hist[0][0],y1:moves_hist[0][1],x2:new_x,y2:new_y});
+				
+
+				//продолжаем попытки комбо
+				right_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				up_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				left_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+			}
+		}
+
+		function down_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
+
+			let new_x=ix;
+			let new_y=iy+2;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
+			if (cur_boardU[(iy+1)*8+ix]===0) return;
+
+			if (cur_boardU[new_y*8+new_x]===0)
+			{
+				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
+
+				moves_hist.push([new_x,new_y]);
+				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
+				cur_boardU[iy*8+ix]=0;
+
+				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
+				if (cur_boardU[new_y*8+new_x]===1)
+					d_move=-d_move;
+
+				if (d_move>min_move_amount)
+					boards_array.push({brd:new Uint8Array(cur_boardU),x1:moves_hist[0][0],y1:moves_hist[0][1],x2:new_x,y2:new_y});
+
+				//продолжаем попытки комбо
+				right_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				down_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				left_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+			}
+		}
+
+		let boards_array=[];
+
+		if (forward===1) {
+
+			if (checkers===1) {
+				for (let y=0;y<8;y++) {
+					for (let x=0;x<8;x++) {
+						if (board_dataU[y*8+x]===checkers) {
+							let moves_hist=[[x,y]];
+							left	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+							up		(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+						}
+					}
+				}
+			}
+
+			if (checkers===2) {
+
+				for (let y=0;y<8;y++) {
+					for (let x=0;x<8;x++) {
+						if (board_dataU[y*8+x]===checkers) {
+							let moves_hist=[[x,y]];
+							right	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+							down	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+						}
+					}
+				}
+			}
+		} else {
+
+			for (let y=0;y<8;y++) {
+				for (let x=0;x<8;x++) {
+					if (board_dataU[y*8+x]===checkers) {
+						let moves_hist=[[x,y]];
+						right	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+						down	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+						left	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+						up		(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+					}
+				}
+			}
+		}
+
+		return boards_array;
+
 	},
 	
 	Uint8Array_to_brd(brdU){
@@ -2051,25 +2306,6 @@ online_game = {
 		opp_data.totalThinkTime=oppThinkingTime
 	},
 
-	check_bonuses(moves,whos_move){
-
-		//проверяем бонусы
-		for (let i=0;i<objects.bonuses.length;i++){
-			const bonus=objects.bonuses[i]
-			if (!bonus.visible) continue
-			const intersect=moves.find(m=>{
-				return m[0]===bonus.ix&&m[1]===bonus.iy
-			})
-			if (intersect){
-				sound.play('bonus')
-				if (whos_move==='my_move') this.energyCollected+=10
-				const tar_x=whos_move==='my_move'?-80:560
-				anim3.add(bonus,{scale_xy:[0.6666,2,'linear'],angle:[0,40,'linear'],alpha:[1,0,'linear'],x:[bonus.x,tar_x,'linear'],y:[bonus.y,70,'linear']}, false, 0.5,false);
-			}
-		}
-
-	},
-
 	validate_move(m_data){
 
 		if (!this.on||my_role==='master') return 1;
@@ -2224,7 +2460,6 @@ online_game = {
 			}
 		}
 		
-				
 		//сообщение об изменении рейтинга		
 		if (this.trnm)
 			await big_msg.show({t1:result_info,t2:`${['Рейтинг: ','Rating: '][LANG]} ${old_rating} > ${my_data.rating}`,t3:'вернитесь в меню турнира для продолжения.',energy:energyCollected,crystals:crystalsCollected})
@@ -2272,7 +2507,7 @@ bot_game = {
 		objects.stop_bot_button.visible = true;
 
 		//инициируем доску в зависимости от рейтинга
-		g_board = [[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
+		g_board = brd_func.get_def_brd()
 
 		this.temp=[5,3,1,0.5,0.1][this.level]
 
@@ -2369,18 +2604,17 @@ bot_game = {
 			await new Promise(r=>setTimeout(r,250))				
 		}
 		
-		if(!this.on) return;
-	
+		if(!this.on) return;	
 
-		let m_data='';
+
 		const brdUINT=brd_func.brd_to_Uint8Array(g_board)
 		
 		if(this.check_fin_moves(brdUINT)) return
 		
-		m_data=minimax_solver.minimax_3_single(brdUINT, game.round)
+		const moveStr=minimax_solver.minimax_3_single(brdUINT, game.round)
 		
 		await new Promise(r=>setTimeout(r,150))
-		game.onReceiveMove({d:m_data})
+		game.onReceiveMove({d:moveStr})
 
 	},
 
@@ -2397,7 +2631,7 @@ bot_game = {
 		if(this.check_fin_moves(brd_func.brd_to_Uint8Array(g_board))) return
 		
 		const brd_data=this.createBoardInput(g_board)
-		const made_moves_for_nn=new Float32Array([game.round / 100.0]);
+		const made_moves_for_nn=new Float32Array([(29-game.round) /29.0]);
 		const boardTensor = new ort.Tensor(
 			"float32",
 			brd_data,
@@ -2417,33 +2651,24 @@ bot_game = {
 		const logits = results['policy'].data;		
 		
 		const brdUINT=brd_func.brd_to_Uint8Array(g_board)
-		const valid_moves=minimax_solver.get_childs(brdUINT,2,0)
+		const valid_moves=brd_func.get_childs(brdUINT,2,0)
 		const valid_moves_id=[]
 
-		for (const move of valid_moves){	
-
-			const x1=move[1]
-			const y1=move[2]
-			const x2=move[3]
-			const y2=move[4]
-			const move_id=(x1 << 9) | (y1 << 6) | (x2 << 3) | y2			
+		for (const move of valid_moves){
+			const move_id=(move.x1 << 9) | (move.y1 << 6) | (move.x2 << 3) | move.y2			
 			valid_moves_id.push(move_id)
-		}
-				
-
-		const validLogitsInd=[]
-		const validLogitsVals=[]
+		}			
 		
-		//masking invalid moves
-		for (let i=0;i<4096;i++){
-			if (valid_moves_id.includes(i)){
-				validLogitsVals.push(logits[i])						
-				validLogitsInd.push(i)									
-			}			
-		}
+		//getting valid moves and their values
+		const validLogits=[]		
+		for (let i=0;i<4096;i++)
+			if (valid_moves_id.includes(i))
+				validLogits.push({val:logits[i],index:i})						
 		
-		const prob=this.softmax(validLogitsVals,temp)
-		const max_logit_index=validLogitsInd[this.sample(prob)]
+		validLogits.sort((a,b)=>b.val-a.val)	
+		
+		const prob=this.softmax(validLogits,'val',temp)
+		const max_logit_index=validLogits[this.sample(prob)].index
 
 		const m_data=[]
 		m_data[0] = (max_logit_index >> 9) & 7;
@@ -2454,55 +2679,14 @@ bot_game = {
 		game.onReceiveMove({d:m_data})
 			
 	},
-/*
-	async make_nn_move2(temp=1){
-		
-		if(!this.on) return;
-		
-		for (let i=0;i<10;i++){
-			if (anim3.any_on()===false) break
-			await new Promise(r=>setTimeout(r,250))				
-		}
-		
-		//провряем конечные ходы
-		if(this.check_fin_moves(brd_func.brd_to_Uint8Array(g_board))) return
-		
-		const made_moves_for_nn=new Float32Array([game.round/100.0])
-		const moveNumberTensor = new ort.Tensor("float32",made_moves_for_nn,[1,1])
 
-		const childs=minimax_solver.get_childs(brd_func.brd_to_Uint8Array(g_board),2,0)
-		let max_val=-999
-		let bestChild=0
-		for (const child of childs){
-			
-			const brd_data=this.createBoardInput(brd_func.Uint8Array_to_brd(child[0]))
-			const boardTensor = new ort.Tensor("float32",brd_data,[1, 8, 8, 3])
-			const feeds = {'board':boardTensor,'move_number':moveNumberTensor}
-			const results = await this.onnx_session.run(feeds)
-			const stateValue = results['value'].data[0]
-			
-			if (stateValue>max_val){
-				max_val=stateValue
-				bestChild=child
-			}
-			
-		}
-			
-		const m_data=bestChild[1]+''+bestChild[2]+''+bestChild[3]+''+bestChild[4]
-		game.onReceiveMove({d:m_data})
-			
-	},
-*/
-
-	softmax(logits, temperature = 1.0) {
-		// Numerical stability
-		let max = Math.max(...logits);
-
-		let exps = logits.map(x => Math.exp((x - max) / temperature));
-
-		let sum = exps.reduce((a, b) => a + b, 0);
-
-		return exps.map(x => x / sum);
+	softmax(items,prop,temp=1.0) {		
+		const values = items.map(item => item[prop]);
+		const maxValue = Math.max(...values);
+		const expValues = values.map(value =>Math.exp((value - maxValue) / temp))
+		const sumExpValues = expValues.reduce((sum, exp) => sum + exp, 0);
+		const prob = expValues.map(exp => exp / sumExpValues);
+		return prob
 	},
 	
 	sample(probs) {
@@ -2519,19 +2703,19 @@ bot_game = {
 
 	check_fin_moves(brd){
 		
-		const childs0=minimax_solver.get_childs(brd,2)
+		const childs0=brd_func.get_childs(brd,2)
 		
 		let bestToFinNum=9999
 		let bestToFinMove=''
 		
 		for (let c0=0;c0<childs0.length;c0++){			
 			const moveData0=childs0[c0]
-			const brd0=childs0[c0][0]
+			const brd0=moveData0.brd
 			
 			const finNum=this.isBrdOnFinLine(brd0)
 			if (finNum && finNum<bestToFinNum){	
 				bestToFinNum=finNum
-				bestToFinMove=moveData0[1]+''+moveData0[2]+''+moveData0[3]+''+moveData0[4]
+				bestToFinMove=brd_func.moveToStr(moveData0)
 			}
 		}
 		if (bestToFinMove) {game.onReceiveMove({d:bestToFinMove});return 1}
@@ -2540,15 +2724,15 @@ bot_game = {
 		bestToFinMove=''
 		for (let c0=0;c0<childs0.length;c0++){			
 			const moveData0=childs0[c0]
-			const childs1=minimax_solver.get_childs(moveData0[0],2)
+			const childs1=brd_func.get_childs(moveData0.brd,2)
 			
 			for (let c1=0;c1<childs1.length;c1++){
 				
-				const brd1=childs1[c1][0]
+				const brd1=childs1[c1].brd
 				const finNum=this.isBrdOnFinLine(brd1)
 				if (finNum && finNum<bestToFinNum){	
 					bestToFinNum=finNum
-					bestToFinMove=moveData0[1]+''+moveData0[2]+''+moveData0[3]+''+moveData0[4]
+					bestToFinMove=brd_func.moveToStr(moveData0)
 				}			
 			}					
 		}
@@ -2684,6 +2868,7 @@ trnm={
 		objects.trnm_cards.forEach(c=>c.visible=false)
 		
 		objects.trnm_reg_btn.visible=false
+		objects.bg_rules_icon.visible=false
 		
 		objects.trnm_info1.text='Загрузка данных...'
 		objects.trnm_info2.text='...'
@@ -3201,7 +3386,7 @@ trnm={
 			return
 		}
 		
-		sound.play('close')
+		sound.play('close');
 		this.close()
 		lobby.activate()
 
@@ -4247,250 +4432,6 @@ minimax_solver = {
 
 	},
 
-	get_childs(board_dataU, checkers, forward){
-
-		function check_in_hist(x,y, hist) {
-			for (let i=0;i<hist.length;i++)
-				if (x===hist[i][0] && y===hist[i][1])
-					return true;
-			return false;
-		}
-
-		function left(ix,iy,cur_boardU,moves_hist,boards_array) {
-
-			let new_x=ix-1;
-			let new_y=iy;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0) {
-				cur_boardU[iy*8+ix]=0;
-				cur_boardU[new_y*8+new_x]=checkers;
-				boards_array.push([cur_boardU,ix,iy,new_x,new_y]);
-				return;
-			}
-			else {
-				left_combo(ix,iy,cur_boardU,moves_hist,boards_array);
-			}
-		}
-
-		function right(ix,iy,cur_boardU,moves_hist,boards_array) {
-			let new_x=ix+1;
-			let new_y=iy;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0) {
-				cur_boardU[iy*8+ix]=0;
-				cur_boardU[new_y*8+new_x]=checkers;
-				boards_array.push([cur_boardU,ix,iy,new_x,new_y]);
-				return
-			} else {
-				right_combo(ix,iy,cur_boardU,moves_hist,boards_array);
-			}
-		}
-
-		function up(ix,iy,cur_boardU,moves_hist,boards_array){
-			let new_x=ix;
-			let new_y=iy-1;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0) {
-				cur_boardU[iy*8+ix]=0;
-				cur_boardU[new_y*8+new_x]=checkers;
-				boards_array.push([cur_boardU,ix,iy,new_x,new_y]);
-				return
-			} else {
-				up_combo(ix,iy,cur_boardU,moves_hist,boards_array);
-			}
-		}
-
-		function down(ix,iy,cur_boardU,moves_hist,boards_array){
-			let new_x=ix;
-			let new_y=iy+1;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0) {
-				cur_boardU[iy*8+ix]=0;
-				cur_boardU[new_y*8+new_x]=checkers;
-				boards_array.push([cur_boardU,ix,iy,new_x,new_y]);
-				return
-			} else {
-				down_combo(ix,iy,cur_boardU,moves_hist,boards_array);
-			}
-		}
-
-		function left_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
-
-			let new_x=ix-2;
-			let new_y=iy;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-			if (cur_boardU[iy*8+ix-1]===0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0)
-			{
-
-				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
-
-				moves_hist.push([new_x,new_y]);
-				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
-				cur_boardU[iy*8+ix]=0;
-
-				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
-				if (cur_boardU[new_y*8+new_x]===1)
-					d_move=-d_move;
-
-				if (d_move>min_move_amount)
-					boards_array.push([new Uint8Array(cur_boardU),moves_hist[0][0],moves_hist[0][1],new_x,new_y]);
-
-				//продолжаем попытки комбо
-				left_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				up_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				down_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-			}
-		}
-
-		function right_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
-
-			let new_x=ix+2;
-			let new_y=iy;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-			if (cur_boardU[iy*8+ix+1]===0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0)
-			{
-
-				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
-
-				moves_hist.push([new_x,new_y]);
-				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
-				cur_boardU[iy*8+ix]=0;
-
-				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
-				if (cur_boardU[new_y*8+new_x]===1)
-					d_move=-d_move;
-
-				if (d_move>min_move_amount)
-					boards_array.push([new Uint8Array(cur_boardU),moves_hist[0][0],moves_hist[0][1],new_x,new_y]);
-
-				//продолжаем попытки комбо
-				right_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				up_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				down_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-			}
-		}
-
-		function up_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
-
-			let new_x=ix;
-			let new_y=iy-2;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-			if (cur_boardU[(iy-1)*8+ix]===0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0)
-			{
-
-				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
-
-				moves_hist.push([new_x,new_y]);
-				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
-				cur_boardU[iy*8+ix]=0;
-
-				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
-				if (cur_boardU[new_y*8+new_x]===1)
-					d_move=-d_move;
-
-				if (d_move>min_move_amount)
-					boards_array.push([new Uint8Array(cur_boardU),moves_hist[0][0],moves_hist[0][1],new_x,new_y]);
-
-				//продолжаем попытки комбо
-				right_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				up_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				left_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-			}
-		}
-
-		function down_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
-
-			let new_x=ix;
-			let new_y=iy+2;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-			if (cur_boardU[(iy+1)*8+ix]===0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0)
-			{
-				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
-
-				moves_hist.push([new_x,new_y]);
-				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
-				cur_boardU[iy*8+ix]=0;
-
-				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
-				if (cur_boardU[new_y*8+new_x]===1)
-					d_move=-d_move;
-
-				if (d_move>min_move_amount)
-					boards_array.push([new Uint8Array(cur_boardU),moves_hist[0][0],moves_hist[0][1],new_x,new_y]);
-
-				//продолжаем попытки комбо
-				right_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				down_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				left_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-			}
-		}
-
-		let boards_array=[];
-
-		if (forward===1) {
-
-			if (checkers===1) {
-				for (let y=0;y<8;y++) {
-					for (let x=0;x<8;x++) {
-						if (board_dataU[y*8+x]===checkers) {
-							let moves_hist=[[x,y]];
-							left	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-							up		(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-						}
-					}
-				}
-			}
-
-			if (checkers===2) {
-
-				for (let y=0;y<8;y++) {
-					for (let x=0;x<8;x++) {
-						if (board_dataU[y*8+x]===checkers) {
-							let moves_hist=[[x,y]];
-							right	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-							down	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-						}
-					}
-				}
-			}
-		} else {
-
-			for (let y=0;y<8;y++) {
-				for (let x=0;x<8;x++) {
-					if (board_dataU[y*8+x]===checkers) {
-						let moves_hist=[[x,y]];
-						right	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-						down	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-						left	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-						up		(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-					}
-				}
-			}
-		}
-
-		return boards_array;
-
-	},
 
 	board_val(boardU, moves) {
 
@@ -4603,13 +4544,13 @@ minimax_solver = {
 		const tb=[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]]
 		const tbUint8=brd_func.brd_to_Uint8Array(tb)
 		
-		const childs0=this.get_childs(tbUint8,1)
+		const childs0=brd_func.get_childs(tbUint8,1)
 		for (let c0=0;c0<childs0.length;c0++) {			
 			fin_brds.push(childs0[c0][0])			
 		}
 		
 		for (let c0=0;c0<childs0.length;c0++) {			
-			const childs1=this.get_childs(childs0[c0][0],1)	
+			const childs1=brd_func.get_childs(childs0[c0][0],1)	
 			for (let c1=0;c1<childs1.length;c1++) {			
 				fin_brds.push(childs1[c1][0])			
 			}
@@ -4638,127 +4579,55 @@ minimax_solver = {
 		min_move_amount=-3;
 
 		//this.update_weights_board();
-		let m_data={};
-		let min_bad=999999;
-		let min_moves_to_win=9999;
+		let m_data=''
+		let min_bad=999999
+		let min_moves_to_win=9999
 
-
-		let childs0=this.get_childs(brdU,2,0);
+		let childs0=brd_func.get_childs(brdU,2,0);
 		for (let c0=0;c0<childs0.length;c0++) {
-			let ret=this.how_bad_board_2(childs0[c0][0]);
+			let ret=this.how_bad_board_2(childs0[c0].brd);
 			let moves_to_win=ret[1]+1;
 			let val=ret[0];
 
 			if (val===-999999 && min_moves_to_win>moves_to_win) {
 				min_moves_to_win=moves_to_win;
-				m_data={x1:childs0[c0][1],y1:childs0[c0][2],x2:childs0[c0][3], y2:childs0[c0][4]};
+				m_data=brd_func.moveToStr(childs0[c0])
 			}
 
-			let childs1=this.get_childs(childs0[c0][0],2,0);
+			let childs1=brd_func.get_childs(childs0[c0].brd,2,0);
 			for (let c1=0;c1<childs1.length;c1++) {
-				let ret=this.how_bad_board_2(childs1[c1][0]);
+				let ret=this.how_bad_board_2(childs1[c1].brd);
 				let moves_to_win=ret[1]+2;
 				let val=ret[0];
 
 				if (val===-999999 && min_moves_to_win>moves_to_win) {
 					min_moves_to_win=moves_to_win;
-					m_data={x1:childs0[c0][1],y1:childs0[c0][2],x2:childs0[c0][3], y2:childs0[c0][4]};
+					m_data=brd_func.moveToStr(childs0[c0])
 				}
 
-				let childs2=this.get_childs(childs1[c1][0],2,0);
+				let childs2=brd_func.get_childs(childs1[c1].brd,2,0);
 				for (let c2=0;c2<childs2.length;c2++) {
-					let ret=this.how_bad_board_2(childs2[c2][0]);
+					let ret=this.how_bad_board_2(childs2[c2].brd);
 					let moves_to_win=ret[1]+3;
 					let val=ret[0];
 
 					if (val===-999999 && min_moves_to_win>moves_to_win) {
 						min_depth=3;
-						m_data={x1:childs0[c0][1],y1:childs0[c0][2],x2:childs0[c0][3], y2:childs0[c0][4]};
+						m_data=brd_func.moveToStr(childs0[c0])
 					}
 
 					if (val<min_bad && min_moves_to_win>moves_to_win) {
 						min_bad=val;
 						min_depth=3;
-						m_data={x1:childs0[c0][1],y1:childs0[c0][2],x2:childs0[c0][3], y2:childs0[c0][4]};
+						m_data=brd_func.moveToStr(childs0[c0])
 					}
 				}
 			}
 		}
 
 		//короткая версия
-		return m_data.x1.toString()+m_data.y1.toString()+m_data.x2.toString()+m_data.y2.toString();
-	},
-/*
-	minimax_4_single(board) {
-
-		//this.update_weights_board(15);
-		min_move_amount=-3;
-
-		//this.update_weights_board();
-		let m_data={};
-		let min_bad=999999;
-		let min_depth=999;
-
-		let childs0=this.get_childs(board,2,0);
-		for (let c0=0;c0<childs0.length;c0++) {
-			let val=this.how_bad_board_2(childs0[c0][0]);
-			if (val===-999999 && min_depth>1) {
-				min_depth=1;
-				m_data={x1:childs0[c0][1],y1:childs0[c0][2],x2:childs0[c0][3], y2:childs0[c0][4]};
-			}
-			if (val<min_bad) {
-				min_bad=val;
-				m_data={x1:childs0[c0][1],y1:childs0[c0][2],x2:childs0[c0][3], y2:childs0[c0][4]};
-			}
-
-
-			let childs1=this.get_childs(childs0[c0][0],2,0);
-			for (let c1=0;c1<childs1.length;c1++) {
-				let val=this.how_bad_board_2(childs1[c1][0]);
-				if (val===-999999 && min_depth>2) {
-					min_depth=2;
-					m_data={x1:childs0[c0][1],y1:childs0[c0][2],x2:childs0[c0][3], y2:childs0[c0][4]};
-				}
-				if (val<min_bad) {
-					min_bad=val;
-					m_data={x1:childs0[c0][1],y1:childs0[c0][2],x2:childs0[c0][3], y2:childs0[c0][4]};
-				}
-
-
-				let childs2=this.get_childs(childs1[c1][0],2,0);
-				for (let c2=0;c2<childs2.length;c2++) {
-					let val=this.how_bad_board_2(childs2[c2][0]);
-
-					if (val===-999999 && min_depth>3) {
-						min_depth=3;
-						m_data={x1:childs0[c0][1],y1:childs0[c0][2],x2:childs0[c0][3], y2:childs0[c0][4]};
-					}
-					if (val<min_bad) {
-						min_bad=val;
-						m_data={x1:childs0[c0][1],y1:childs0[c0][2],x2:childs0[c0][3], y2:childs0[c0][4]};
-					}
-
-
-					let childs3=this.get_childs(childs2[c2][0],2,1);
-					for (let c3=0;c3<childs3.length;c3++) {
-						let val=this.how_bad_board_2(childs3[c3][0]);
-						if (val<min_bad) {
-							min_bad=val;
-							min_depth=4;
-							m_data={x1:childs0[c0][1],y1:childs0[c0][2],x2:childs0[c0][3], y2:childs0[c0][4]};
-						}
-
-					}
-
-				}
-
-			}
-
-		}
-
-		return m_data;
+		return m_data
 	}
-*/
 
 }
 
@@ -5884,6 +5753,8 @@ bg={
 		objects.trnm_info3_cont.y=objects.trnm_info3_cont.sy
 		objects.trnm_info3.text='...'
 		
+		objects.bg_rules_icon.visible=true
+		
 		
 		objects.trnm_close_btn.pointerdown=()=>{this.close_btn_down()};
 		
@@ -5959,6 +5830,7 @@ bg={
 			return
 		};
 		
+		sound.play('close');
 		this.close()
 		lobby.activate()	
 		
@@ -6141,7 +6013,7 @@ pref={
 
 	check_energy(){
 		
-		return
+		//return
 		
 		if(!SERVER_TM) return
 		
@@ -6238,8 +6110,7 @@ pref={
 		
 		//только если текущая доска не твоя
 		objects.pref_conf_brd_btn.visible=next_design_id!==my_data.design_id
-		
-		
+				
 		this.cur_design_id=next_design_id
 		const cur_design_data=DESIGN_DATA[next_design_id]
 		objects.design_img.texture=assets[cur_design_data.name]
@@ -6803,7 +6674,7 @@ lobby={
 			info_data={read:0,id:this.INFO_MSG_ID}
 			safe_ls('corners_info',info_data)
 			objects.lobby_info_btn.alpha=info_data.read?0.25:1
-			//this.info_btn_down(1)
+			this.info_btn_down(1)
 		}	
 
 	},
@@ -6841,12 +6712,22 @@ lobby={
 		this.trnm_check_tm=tm
 		
 		const data=await fbs_once('trnm/state_data/state')
+		const bg_tm=await my_ws.get('bg/t')
+		
 		if (data==='reg')
-			some_process.blinkTrnm=()=>{objects.lobby_trnm_btn.alpha=0.5+0.5*Math.abs(Math.sin(TM.s*2))}
+			some_process.blinkTrnm=()=>{objects.lobby_trnm_btn.alpha=0.5+0.5*Math.abs(Math.sin(TM.s*2.5))}
 		else{
 			some_process.blinkTrnm=()=>{}
 			objects.lobby_trnm_btn.alpha=0.5
 		}
+		
+		if (bg_tm<600)
+			some_process.blinkBg=()=>{objects.lobbyBgBtn.alpha=0.5+0.5*Math.abs(Math.sin(TM.s*2.5))}
+		else{
+			some_process.blinkBg=()=>{}
+			objects.lobbyBgBtn.alpha=0.5
+		}
+		
 			
 	},
 	
@@ -7607,7 +7488,7 @@ lobby={
 
 	bgBtnDown(){		
 		
-		return
+		//return
 		
 		if (anim3.any_on()) {
 			sound.play('locked');
@@ -7736,10 +7617,6 @@ lobby={
 			return
 		};
 		sound.play('click');
-
-		objects.info_msg.text=`Новые правила:\n1.Каждый игрок имеет энергию на уровне 120,но для игроков с рейтингом выше ${MAX_NO_CONF_RATING} она уменьшается каждый час на еденицу. Если энергия упадет до 0, то рейтинг игрока понизится до ${MAX_NO_CONF_RATING}. Чтобы пополнить энергию, необходимо принять участие в слепых играх с 18:45 до 19:45 (Мск). За каждую результативную партию энергию будет восстановлена на 10 едениц.`
-		objects.info_msg_date.text='26.08.2026'
-		objects.info_msg.text=''
 		anim3.add(objects.info_cont, {alpha: [0, 1, 'linear']}, true, 0.25);
 
 	},
@@ -7751,7 +7628,6 @@ lobby={
 			return
 		};
 		sound.play('close');
-
 		anim3.add(objects.info_cont, {alpha: [1, 0, 'linear']}, false, 0.25);
 
 	}
@@ -8703,7 +8579,7 @@ async function init_game_env(lang) {
 		nick_tm:my_data.nick_tm,
 		avatar_tm:my_data.avatar_tm,
 		e_prv_tm:my_data.e_prv_tm,
-		crystals:my_data.crystals,
+		energy:my_data.energy,
 		tm:firebase.database.ServerValue.TIMESTAMP,
 		session_start:firebase.database.ServerValue.TIMESTAMP
 	})	
