@@ -3444,6 +3444,7 @@ trnm={
 		fbs.ref('trnm/state_data').off()
 		fbs.ref('trnm/tables').off()
 		fbs.ref('trnm/players').off()
+		clearInterval(this.sec_to_start_timer)
 	}
 
 }
