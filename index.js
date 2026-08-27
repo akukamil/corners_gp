@@ -7500,8 +7500,8 @@ lobby={
 		};
 
 
-		if (my_data.rating<1600){
-			pmsg.add({t:'Только для игроков с рейтингом более 1600'});
+		if (my_data.rating<1500){
+			pmsg.add({t:'Только для игроков с рейтингом более 1500'});
 			sound.play('locked');
 			return
 		}
