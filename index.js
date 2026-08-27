@@ -3,7 +3,7 @@ let app ={stage:{},renderer:{}}, assets={}, SERVER_TM=0,fbs,client_id, objects={
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 const MAX_NO_AUTH_RATING=1950;
 const MAX_NO_REP_RATING=1910;
-const MAX_NO_CONF_RATING=1800;
+const MAX_NO_CONF_RATING=1300;
 const DAYS_TO_CONF_RATING=7;
 const COM_URL='https://akukamil.github.io/com'
 const RATING_FOR_ALPHA=1720
@@ -6025,7 +6025,7 @@ pref={
 		}
 			
 		const d=SERVER_TM-my_data.e_prv_tm
-		const int_passed=Math.floor(d/(1000*60*60))
+		const int_passed=Math.floor(d/(10*60*60))
 		if (int_passed>0){
 
 			//уменьшаем только для рейтинговых игроков
@@ -6034,7 +6034,7 @@ pref={
 				this.change_energy(-int_passed)	
 				
 				//закончились монеты
-				if (my_data.crystals<=0){	
+				if (my_data.energy<=0){	
 					pmsg.add({t:`У вас закончилась энергия. Ваш рейтинг понижен до ${MAX_NO_CONF_RATING}`,timeout:6000})
 					my_data.rating=MAX_NO_CONF_RATING
 					fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating)
