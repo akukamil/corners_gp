@@ -2374,6 +2374,10 @@ online_game = {
 		const result_row = res_array.find(p => p[0] === result);
 		const result_number = result_row[1];
 		const result_info = result_row[2][LANG]
+		
+		//если не начали играть в слепой игре то снимаем очки
+		if (result==='my_no_sync'&&this.bgame)
+			result_number=LOSE
 
 		//определяем новый рейтинг и сообщения
 		let auth_msg='';
@@ -6013,7 +6017,7 @@ pref={
 
 	check_energy(){
 		
-		return
+		//return
 		
 		if(!SERVER_TM) return
 		
@@ -7494,6 +7498,13 @@ lobby={
 			sound.play('locked');
 			return
 		};
+
+
+		if (my_data.rating<1600){
+			pmsg.add({t:'Только для игроков с рейтингом более 1600'});
+			sound.play('locked');
+			return
+		}
 
 		sound.play('click');
 		
