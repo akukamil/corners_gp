@@ -2806,6 +2806,8 @@ trnm={
 	winner_uid:0,
 	info3_close_timer:0,
 	rules_shown:0,
+	myBlocked:null,
+	regDown:0,
 
 	send_info3(t){
 	
@@ -2856,6 +2858,11 @@ trnm={
 		
 	},
 	
+	async checkBlocked(){		
+		if (this.myBlocked===null)
+			this.myBlocked=await fbs_once('trnm/blocked/'+my_data.uid)||0			
+	},
+	
 	async activate(){
 		
 		
@@ -2863,7 +2870,8 @@ trnm={
 			anim3.add(objects.trnm_rules_cont,{alpha:[0,1,'linear']}, true, 0.3);			
 			this.rules_shown=1
 		}
-
+		
+		this.checkBlocked()
 
 		this.on=1
 		anim3.add(objects.trnm_cont, {alpha: [0, 1, 'linear']}, true, 0.25)
@@ -3300,12 +3308,19 @@ trnm={
 
 	reg_btn_down(){
 
-		if (anim3.any_on()) {
+		if (anim3.any_on()||this.myBlocked===null||this.regDown) {
 			sound.play('locked')
 			return
 		}		
 		
+		if (this.myBlocked===1){
+			this.send_info3('Участие в турнире недоступно!')
+			return
+		}		
+		
 		if (this.state!=='reg') return
+		
+		this.regDown=1		
 		fbs.ref('trnm/_players/'+my_data.uid).set(my_data.rating)
 		anim3.add(objects.trnm_reg_btn, {alpha: [1, 0, 'linear']}, false, 0.25)
 
