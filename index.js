@@ -3476,6 +3476,7 @@ game = {
 	bgame:0,
 	startLock:0,
 	round:0,
+	errPushed:0,
 	
 	async activate(params={}) {
 
@@ -3509,7 +3510,8 @@ game = {
 		objects.board.texture=brd_tex
 		objects.home_cfg.clear()
 		
-		//для проекта альфа		
+		//для проекта альфа	
+		this.errPushed=0
 		gameHistForNN=[{rating:my_data.rating,name:my_data.name}]
 
 		//турнирная игра или слепая игра
@@ -3835,6 +3837,8 @@ game = {
 
 	check_move(moveStr,moves,brd){
 		
+		if (this.errPushed) return
+		
 		if (moveStr.length!==4){
 			fbs.ref('mErrors').push({uid:my_data.uid,moveStr,moves,brd})
 			return
@@ -3849,6 +3853,7 @@ game = {
 
 			
 		if (moves[0]===0){
+			this.errPushed=1
 			fbs.ref('mErrors2').push(gameHistForNN)
 			return
 		}	
