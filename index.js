@@ -1037,6 +1037,7 @@ brd_func={
 	target_point:0,
 	chips_tex:[0,0,0],
 	moves:[],
+	moveOn:0,
 	base64:'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789()',
 
 	move_end_callback(){},
@@ -1630,7 +1631,8 @@ brd_func={
 	},
 
 	async start_gentle_move(mData, moves, board) {
-
+		
+		this.moveOn=1;
 		const [sx,sy,tx,ty]=[+mData[0],+mData[1],+mData[2],+mData[3]]
 		const chipSpr = this.getCheckerByPos(sx, sy);
 	
@@ -1650,7 +1652,7 @@ brd_func={
 		}
 
 		chipSpr.ready=true;
-
+		this.moveOn=0
 	},
 
 	brd_to_str(brd,move){
@@ -3770,6 +3772,10 @@ game = {
 	async onReceiveMove(data) {
 
 		const moveStr=data.d
+		
+		if (brd_func.moveOn){
+			fbs.ref('mErrors').push({uid:my_data.uid,moveOn:1})			
+		}
 
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
 		if (!['online','bot'].includes(game.state)) return;
@@ -3817,6 +3823,29 @@ game = {
 		}
 
 	},
+
+	check_move(moveStr,moves,brd){
+		
+		if (moveStr.length!==4){
+			fbs.ref('mErrors').push({uid:my_data.uid,moveStr,moves,brd})
+			return
+		}
+		
+		for (let i=0;i<4;i++){
+			if ((+moveStr[i])>7 || (+moveStr[i])<0){
+				fbs.ref('mErrors').push({uid:my_data.uid,moveStr,moves,brd})
+				return
+			}
+		}
+
+			
+		if (moves[0]===0){
+			fbs.ref('mErrors').push({uid:my_data.uid,moveStr,moves,brd})
+			return
+		}	
+		
+	},
+
 
 	async stop(result) {
 
@@ -8691,4 +8720,3 @@ main_loop={
 	}	
 	
 }
-
