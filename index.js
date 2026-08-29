@@ -3798,6 +3798,8 @@ game = {
 		//считаем последовательность ходов
 		const moves = brd_func.get_moves_path(moveStr,g_board);
 		
+		this.check_move(moveStr,moves,g_board)
+		
 		//move chip over board
 		brd_func.start_gentle_move(moveStr, moves,g_board, objects.board, objects.checkers);		
 		
