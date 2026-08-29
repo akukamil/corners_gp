@@ -546,7 +546,7 @@ class trnm_precard_class extends PIXI.Container{
 
 async function saveGameHist(data){
 	
-	//return;
+	return;
 	try {
 		const response = await fetch('https://mtserver2.ru:443/save', {
 			method: 'POST',
@@ -2426,7 +2426,7 @@ online_game = {
 		crystalsCollected+=result_number===WIN?5:3
 				
 		//проект альфа
-		if (my_data.rating>RATING_FOR_ALPHA&&my_role==='slave'){
+		/*if (my_data.rating>RATING_FOR_ALPHA&&my_role==='slave'){
 						
 			if (['my_finished_first','opp_left_after_30','my_more_fin_after_80'].includes(result)){
 				gameHistForNN[0].resStr=result
@@ -2434,7 +2434,7 @@ online_game = {
 				saveGameHist(gameHistForNN)
 			}			
 		
-		}
+		}*/
 		
 		//если это турнир
 		if (this.trnm){
@@ -3726,7 +3726,7 @@ game = {
 		brd_func.start_gentle_move(move_data, moves, g_board);
 
 		//для проекта альфа
-		gameHistForNN.push({brd:brd_func.brd_to_str(g_board),m:move_data})
+		gameHistForNN.push({brd:g_board,my_move:move_data})
 		
 		//making move without animation
 		brd_func.applyMove(move_data,g_board)
@@ -3776,12 +3776,19 @@ game = {
 		if (brd_func.moveOn){
 			fbs.ref('mErrors').push({uid:my_data.uid,moveOn:1})			
 		}
+		
+		
+		
 
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
 		if (!['online','bot'].includes(game.state)) return;
 
+
 		//защита от двойных ходов
-		if (my_turn === 1) return;
+		if (my_turn === 1) return
+		
+
+		gameHistForNN.push({brd:g_board,opp_move:moveStr})		
 
 		//воспроизводим уведомление о том что соперник произвел ход
 		sound.play('receive_move');
@@ -3842,7 +3849,7 @@ game = {
 
 			
 		if (moves[0]===0){
-			fbs.ref('mErrors').push({uid:my_data.uid,moveStr,moves,brd})
+			fbs.ref('mErrors2').push(gameHistForNN)
 			return
 		}	
 		
