@@ -3533,7 +3533,7 @@ game = {
 		
 		//для проекта альфа	
 		this.errPushed=0
-		gameHistForNN=[{rating:my_data.rating,name:my_data.name,opp_uid:opp_data.uid}]
+		gameHistForNN=[{rating:my_data.rating,name:my_data.name,opp_name:opp_data.name}]
 
 		//турнирная игра или слепая игра
 		this.trnm=params.t	
