@@ -2641,7 +2641,7 @@ bot_game = {
 		const moveStr=minimax_solver.minimax_3_single(brdUINT, game.round)
 		
 		await new Promise(r=>setTimeout(r,150))
-		game.onReceiveMove({d:moveStr})
+		game.onReceiveMove({d:moveStr,source:'bot'})
 
 	},
 
@@ -2703,7 +2703,7 @@ bot_game = {
 		m_data[2] = (max_logit_index >> 3) & 7;
 		m_data[3] = max_logit_index & 7;
 	  
-		game.onReceiveMove({d:m_data})
+		game.onReceiveMove({d:m_data,source:'bot'})
 			
 	},
 
@@ -2745,7 +2745,7 @@ bot_game = {
 				bestToFinMove=brd_func.moveToStr(moveData0)
 			}
 		}
-		if (bestToFinMove) {game.onReceiveMove({d:bestToFinMove});return 1}
+		if (bestToFinMove) {game.onReceiveMove({d:bestToFinMove,source:'bot'});return 1}
 		
 		bestToFinNum=9999
 		bestToFinMove=''
@@ -2764,7 +2764,7 @@ bot_game = {
 			}					
 		}
 		
-		if (bestToFinMove) {game.onReceiveMove({d:bestToFinMove});return 1}
+		if (bestToFinMove) {game.onReceiveMove({d:bestToFinMove,source:'bot'});return 1}
 		
 		return 0
 		
@@ -3795,6 +3795,7 @@ game = {
 	async onReceiveMove(data) {
 
 		const moveStr=data.d
+		const source=data.source||'online'
 		
 		if (brd_func.moveOn){
 			saveToFileOnServer('cornersFail','moveon'+hf.randIntInc(1000,9999),{uid:my_data.uid,opp_uid:opp_data.uid,moveOn:1})
@@ -3809,7 +3810,7 @@ game = {
 		if (my_turn === 1) return
 		
 
-		gameHistForNN.push({tm:Date.now(),brd:brd_func.copyBrd(g_board),opp_move:moveStr})		
+		gameHistForNN.push({tm:Date.now(),brd:brd_func.copyBrd(g_board),opp_move:moveStr,source})		
 
 		//воспроизводим уведомление о том что соперник произвел ход
 		sound.play('receive_move');
@@ -4763,9 +4764,10 @@ function process_new_message(msg) {
 		if (msg.s&&msg.s===opp_data.uid.substring(0,8)) {
 
 			//получение сообщение с ходом игорка оптимизированный вариант
-			if (msg.m==='M')
-				game.onReceiveMove(msg);
-
+			if (msg.m==='M'){
+				msg.source='online'
+				game.onReceiveMove(msg);				
+			}
 		}
 
 		//учитываем только сообщения от соперника
