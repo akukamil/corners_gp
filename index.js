@@ -1630,7 +1630,7 @@ brd_func={
 		return g_archive;
 	},
 
-	async start_gentle_move(mData, moves, board) {
+	async start_gentle_move(mData, moves) {
 		
 		this.moveOn=1;
 		const [sx,sy,tx,ty]=[+mData[0],+mData[1],+mData[2],+mData[3]]
@@ -3512,7 +3512,7 @@ game = {
 		
 		//для проекта альфа	
 		this.errPushed=0
-		gameHistForNN=[{rating:my_data.rating,name:my_data.name}]
+		gameHistForNN=[{rating:my_data.rating,name:my_data.name,opp_uid:opp_data.uid}]
 
 		//турнирная игра или слепая игра
 		this.trnm=params.t	
@@ -3725,10 +3725,10 @@ game = {
 	async process_my_move(move_data, moves) {
 
 		//делаем перемещение шашки
-		brd_func.start_gentle_move(move_data, moves, g_board);
+		brd_func.start_gentle_move(move_data, moves);
 
 		//для проекта альфа
-		gameHistForNN.push({brd:g_board,my_move:move_data})
+		gameHistForNN.push({brd:brd_func.copyBrd(g_board),my_move:move_data})
 		
 		//making move without animation
 		brd_func.applyMove(move_data,g_board)
@@ -3778,9 +3778,7 @@ game = {
 		if (brd_func.moveOn){
 			fbs.ref('mErrors').push({uid:my_data.uid,moveOn:1})			
 		}
-		
-		
-		
+				
 
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
 		if (!['online','bot'].includes(game.state)) return;
@@ -3790,7 +3788,7 @@ game = {
 		if (my_turn === 1) return
 		
 
-		gameHistForNN.push({brd:g_board,opp_move:moveStr})		
+		gameHistForNN.push({brd:brd_func.copyBrd(g_board),opp_move:moveStr})		
 
 		//воспроизводим уведомление о том что соперник произвел ход
 		sound.play('receive_move');
@@ -3810,7 +3808,7 @@ game = {
 		this.check_move(moveStr,moves,g_board)
 		
 		//move chip over board
-		brd_func.start_gentle_move(moveStr, moves,g_board, objects.board, objects.checkers);		
+		brd_func.start_gentle_move(moveStr, moves);		
 		
 		//applying move to chip and board data
 		brd_func.applyMove(moveStr,g_board)
@@ -3859,7 +3857,6 @@ game = {
 		}	
 		
 	},
-
 
 	async stop(result) {
 
@@ -4494,7 +4491,6 @@ minimax_solver = {
 		}
 
 	},
-
 
 	board_val(boardU, moves) {
 
