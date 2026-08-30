@@ -3533,7 +3533,7 @@ game = {
 		
 		//для проекта альфа	
 		this.errPushed=0
-		gameHistForNN=[{rating:my_data.rating,name:my_data.name,opp_name:opp_data.name}]
+		gameHistForNN=[{rating:my_data.rating,name:my_data.name}]
 
 		//турнирная игра или слепая игра
 		this.trnm=params.t	
@@ -3580,6 +3580,8 @@ game = {
 		objects.my_avatar.texture=players_cache[my_data.uid].texture
 		anim3.add(objects.my_card_cont, {x:[-100, objects.my_card_cont.sx, 'linear'],alpha: [0, 1, 'linear']}, true, 0.5)
 
+
+		gameHistForNN[0].opp_name=player_data.name
 		sound.play('note')
 
 		//это если перешли из бот игры
