@@ -3873,7 +3873,8 @@ game = {
 			
 		if (moves[0]===0){
 			this.errPushed=1
-			saveToFileOnServer('cornersFail',hf.randIntInc(1000,9999),gameHistForNN)
+			saveToFileOnServer('cornersFail',my_role+this.game_id,gameHistForNN)
+			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'ERR',tm:Date.now()});
 			//fbs.ref('mErrors2').push(gameHistForNN)
 			return
 		}	
@@ -4785,7 +4786,11 @@ function process_new_message(msg) {
 			//получение сообщение с сдаче
 			if (msg.message==='END')
 				game.stop('opp_giveup');
-
+			
+			//получение сообщение с сдаче
+			if (msg.message==='ERR')
+				saveToFileOnServer('cornersFail',my_role+this.game_id,gameHistForNN)
+			
 			//запрос на ничью
 			if (msg.message==='DRAWREQ')
 				online_game.draw_request();
