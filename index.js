@@ -3797,7 +3797,7 @@ game = {
 		const moveStr=data.d
 		
 		if (brd_func.moveOn){
-			saveToFileOnServer('cornersFail',hf.randIntInc(1000,9999),{uid:my_data.uid,opp_uid:opp_data.uid,moveOn:1})
+			saveToFileOnServer('cornersFail','moveon'+hf.randIntInc(1000,9999),{uid:my_data.uid,opp_uid:opp_data.uid,moveOn:1})
 		}
 				
 
@@ -3873,7 +3873,7 @@ game = {
 			
 		if (moves[0]===0){
 			this.errPushed=1
-			saveToFileOnServer('cornersFail',my_role+this.game_id,gameHistForNN)
+			saveToFileOnServer('cornersFail',my_role+online_game.gid,gameHistForNN)
 			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'ERR',tm:Date.now()});
 			//fbs.ref('mErrors2').push(gameHistForNN)
 			return
@@ -4789,7 +4789,7 @@ function process_new_message(msg) {
 			
 			//получение сообщение с сдаче
 			if (msg.message==='ERR')
-				saveToFileOnServer('cornersFail',my_role+this.game_id,gameHistForNN)
+				saveToFileOnServer('cornersFail',my_role+online_game.gid,gameHistForNN)
 			
 			//запрос на ничью
 			if (msg.message==='DRAWREQ')
