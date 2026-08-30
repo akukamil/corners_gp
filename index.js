@@ -11,6 +11,27 @@ let gameHistForNN=[]
 
 let TM={s:0,ms:0}
 
+async function saveToFileOnServer(folderName,fileName,data){
+	
+	try {
+		const response = await fetch('https://mtserver2.ru:443/save', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				saveData: data,
+				folderName,
+				fileName
+			})
+		});
+
+	} catch (error) {
+
+	}
+	
+}
+
 DESIGN_DATA={
 	0:{name:'def',rating:0,games:0},
 	1:{name:'old',rating:0,games:0},
@@ -3728,7 +3749,7 @@ game = {
 		brd_func.start_gentle_move(move_data, moves);
 
 		//для проекта альфа
-		gameHistForNN.push({brd:brd_func.copyBrd(g_board),my_move:move_data})
+		gameHistForNN.push({tm:Date.now(),brd:brd_func.copyBrd(g_board),my_move:move_data})
 		
 		//making move without animation
 		brd_func.applyMove(move_data,g_board)
@@ -3776,7 +3797,7 @@ game = {
 		const moveStr=data.d
 		
 		if (brd_func.moveOn){
-			fbs.ref('mErrors').push({uid:my_data.uid,moveOn:1})			
+			saveToFileOnServer('cornersFail',hf.randIntInc(1000,9999),{uid:my_data.uid,opp_uid:opp_data.uid,moveOn:1})
 		}
 				
 
@@ -3788,7 +3809,7 @@ game = {
 		if (my_turn === 1) return
 		
 
-		gameHistForNN.push({brd:brd_func.copyBrd(g_board),opp_move:moveStr})		
+		gameHistForNN.push({tm:Date.now(),brd:brd_func.copyBrd(g_board),opp_move:moveStr})		
 
 		//воспроизводим уведомление о том что соперник произвел ход
 		sound.play('receive_move');
@@ -3852,7 +3873,8 @@ game = {
 			
 		if (moves[0]===0){
 			this.errPushed=1
-			fbs.ref('mErrors2').push(gameHistForNN)
+			saveToFileOnServer('cornersFail',hf.randIntInc(1000,9999),gameHistForNN)
+			//fbs.ref('mErrors2').push(gameHistForNN)
 			return
 		}	
 		
