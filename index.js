@@ -1079,6 +1079,7 @@ brd_func={
 	},
 	
 	copyBrd(brd){
+		if(!brd) return null
 		const copy = new Array(8);
 		for (let i = 0; i < 8; i++) {
 			copy[i] = brd[i].slice();
@@ -2641,7 +2642,9 @@ bot_game = {
 		const moveStr=minimax_solver.minimax_3_single(brdUINT, game.round)
 		
 		await new Promise(r=>setTimeout(r,150))
-		game.onReceiveMove({d:moveStr,source:'bot'})
+		
+		if(this.on)
+			game.onReceiveMove({d:moveStr,source:'bot'})
 
 	},
 
@@ -2702,8 +2705,9 @@ bot_game = {
 		m_data[1] = (max_logit_index >> 6) & 7;
 		m_data[2] = (max_logit_index >> 3) & 7;
 		m_data[3] = max_logit_index & 7;
-	  
-		game.onReceiveMove({d:m_data,source:'bot'})
+		
+		if(this.on)
+			game.onReceiveMove({d:m_data,source:'bot'})
 			
 	},
 
@@ -3799,10 +3803,10 @@ game = {
 		const moveStr=data.d
 		const source=data.source||'online'
 		
+		
 		if (brd_func.moveOn){
 			saveToFileOnServer('cornersFail','moveon'+hf.randIntInc(1000,9999),{uid:my_data.uid,opp_uid:opp_data.uid,moveOn:1})
-		}
-				
+		}				
 
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
 		if (!['online','bot'].includes(game.state)) return;
@@ -4008,15 +4012,12 @@ game_watching={
 
 	async new_move(board_data){
 
-		console.log('Data size GW:', JSON.stringify(board_data).length);
+		//console.log('Data size GW:', JSON.stringify(board_data).length);
 
 		if(!this.on) return;
 
-		if((!board_data || !board_data.f_str || board_data?.f_str?.length>35)&&(!board_data.fin)){
-			//g_board = [[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[2,2,2,2,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]];
-			//brd_func.update_board(g_board);
+		if((!board_data || !board_data.f_str || board_data?.f_str?.length>35)&&(!board_data.fin))
 			return;
-		}
 
 		if(board_data.fin&&this.on){
 
@@ -4056,7 +4057,6 @@ game_watching={
 				winner_name=players_cache[winner_uid].name;
 			}
 
-
 			const name=players_cache[board_data.uid].name;
 			if (res===WIN||res===LOSE)
 				await big_msg.show({t1:[`Эта игра завершена\nПобедитель: ${winner_name}.`,'This game is over'][LANG],t2:')))',t3:'',fb:0});
@@ -4072,19 +4072,17 @@ game_watching={
 			return;
 		}
 		
-		
 		//show thinking time if any
 		if (board_data.tt)
 			online_game.showThinkingTime(board_data.tt[0],board_data.tt[1])
 					
-
 		//если предыдущее движение не завершено то завершаем его и ждем
-		while (moving_chip&&!moving_chip.ready) {
-			//anim3.kill_anim(moving_chip);
-			await new Promise(resolve => setTimeout(resolve, 100)); // wait for 1 second
-		}
-
-		const old_board=JSON.parse(JSON.stringify(g_board));
+		for (let i=0;i<30;i++)
+			if (brd_func.moveOn)
+				await new Promise(resolve => setTimeout(resolve, 100)); // wait for 1 second
+		if(!this.on) return
+				
+		const old_board=brd_func.copyBrd(g_board)
 
 		const b_str = board_data.f_str.slice(0, 24);
 		const move = +board_data.f_str.slice(24);
@@ -8719,7 +8717,7 @@ async function init_game_env(lang) {
 	objects.id_loup.visible=false
 	
 	//отображаем лидеров вчерашнего дня
-	//top3.activate()
+	top3.activate()
 	
 	//lobby.perm_room='statesNIGHT'
 	lobby.activate()
