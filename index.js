@@ -2522,22 +2522,20 @@ bot_game = {
 		this.on=1;
 
 		//устанавливаем локальный и удаленный статус
-		set_state({state : 'b'});
+		set_state({state:'b'});
 		
-		this.level=safe_ls('cornersBotLevel')||0
-
 		//очереди
 		my_turn=1;
 
 		//таймер уже не нужен
-		objects.timer_cont.visible = false;
-		objects.game_buttons_cont.visible = false;
-		objects.stop_bot_button.visible = true;
+		objects.timer_cont.visible = false
+		objects.game_buttons_cont.visible = false
+		objects.stop_bot_button.visible = true
 
 		//инициируем доску в зависимости от рейтинга
 		g_board = brd_func.get_def_brd()
 
-		this.temp=[5,3,1,0.5,0.1][this.level]
+		this.temp=[2,1,0.1,0.1][this.level]
 
 		game.state='bot'
 								
@@ -2585,13 +2583,8 @@ bot_game = {
 			sound.play('lose');			
 		}else{						
 			sound.play('win')
-			this.level++
-			if (this.level>4)
-				this.level=4	
-			else
-				crystalsCollected=this.level*10
-			safe_ls('cornersBotLevel',this.level)
-			
+			if (this.level===2)
+				crystalsCollected=1
 		}
 
 		await big_msg.show({t1:result_info, t2:')))',t3:'',fb:1,crystals:crystalsCollected})
@@ -3557,6 +3550,11 @@ game = {
 		if (lobby.on) lobby.close()
 		if (trnm.on) trnm.close()
 		if (bg.on) bg.close()
+			
+		this.opponent=params.opp
+		this.opponent.activate(params)
+		this.move_processor=this.process_my_move
+		
 
 		//убираем бонусы
 		//objects.bonuses.forEach(b=>b.visible=false)
@@ -3573,9 +3571,6 @@ game = {
 		objects.opp_avatar.texture=players_cache[opp_data.uid].texture
 		anim3.add(objects.opp_card_cont, {x:[800, objects.opp_card_cont.sx, 'linear'],alpha: [0, 1, 'linear']}, true, 0.5)
 
-		this.opponent=params.opp
-		this.opponent.activate(params)
-		this.move_processor=this.process_my_move
 
 		//показываем и заполняем мою карточку
 		objects.my_card_name.set2(my_data.name,150)
@@ -6998,9 +6993,8 @@ lobby={
 		card.uid='bot';
 		card.name=card.name_text.text=['Бот','Bot'][LANG];
 
-		const botLevel=safe_ls('cornersBotLevel')||0
-		card.rating=[1300,1400,1500,1600,1700][botLevel]
-		card.rating_text.text = card.rating;
+		card.rating=1400
+		card.rating_text.text = '';
 		card.avatar.set_texture(assets.pc_icon);
 
 		//также сразу включаем его в кэш
@@ -7277,13 +7271,26 @@ lobby={
 		//предварительные данные
 		lobby.opp_uid=uid
 		const opp_data=players_cache[uid]
-
-
+		
 		this.show_feedbacks(uid);
 
 		let invite_available=uid !== my_data.uid
 		invite_available=invite_available || lobby.opp_uid==='bot'
 		invite_available=invite_available && opp_data.rating >= 50 && my_data.rating >= 50
+
+		if (lobby.opp_uid==='bot'){
+			objects.invite_rating.visible=false
+			objects.invite_icon.visible=false
+			objects.inviteBotLev.visible=true			
+			bot_game.level=safe_ls('cornersBotLevel')||0
+			if (bot_game.level>2) bot_game.level=2			
+			objects.inviteBotLev.texture=assets.botLevelsImg[bot_game.level]
+		}else{
+			objects.invite_rating.visible=true
+			objects.invite_icon.visible=true
+			objects.inviteBotLev.visible=false
+		}
+
 
 		//иконка если есть
 		objects.invite_icon.texture=opp_data.icon?assets.cup_icon:null
@@ -7310,6 +7317,22 @@ lobby={
 		objects.invite_name.set2(opp_data.name,230)
 		objects.invite_rating.text=opp_data.rating
 
+	},
+	
+	botLevDown(e){
+		
+		//координаты указателя внутри
+		const mx = e.data.global.x/app.stage.scale.x-objects.invite_cont.x-objects.inviteBotLev.x;
+		const my = e.data.global.y/app.stage.scale.y-objects.invite_cont.y-objects.inviteBotLev.y;
+		
+		
+		if (mx<0) return
+		if (my<0) return
+		if (mx>objects.inviteBotLev.width) return
+		if (my>objects.inviteBotLev.height) return
+		
+		bot_game.level=Math.floor(3*my/objects.inviteBotLev.height)		
+		objects.inviteBotLev.texture=assets.botLevelsImg[bot_game.level]
 	},
 
 	fb_delete_down(){
@@ -7546,7 +7569,7 @@ lobby={
 		if (lobby.opp_uid==='bot')
 		{
 			this.close()
-			const bot_level=safe_ls('cornersBotLevel')||0
+			safe_ls('cornersBotLevel',bot_game.level)
 			game.activate({opp:bot_game, role:'master',opp_uid:'bot'});
 		} else {
 			sound.play('click');
@@ -8411,6 +8434,7 @@ main_loader={
 		this.divide_texture(assets.cards_design_pack,140,140,Object.values(DESIGN_DATA).map(v=>v.name))
 		this.divide_texture(assets.mini_cards_pack,300,135,['table_rating_hl','mini_player_card','mini_player_card_ai','mini_player_card_table','mini_player_card_bot'])
 		this.divide_texture(assets.trnm_cards_pack,210,120,['trnm_card_empty_bcg','trnm_card_bcg','trnm_card_playing_bcg','trnm_card_set_bcg','trnm_card_frame'])
+		this.divide_texture(assets.botLevelsPack,135,195,'botLevelsImg')
 
 		//создаем спрайты и массивы спрайтов и запускаем первую часть кода
 		for (let i = 0; i < load_list.length; i++) {
