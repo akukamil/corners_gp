@@ -4129,7 +4129,7 @@ game_watching={
 		brd_func.applyMove(moveStr,g_board);		
 		brd_func.update_board(g_board);		
 		
-		gameHistForNN.push({tm:Date.now(),gameWatchEvent:1})
+		gameHistForNN.push({tm:Date.now(),gameWatchEvent:1,on:this.on})
 
 		if (move) objects.cur_move_text.text=['сделано ходов: ','made moves: '][LANG]+move;
 
