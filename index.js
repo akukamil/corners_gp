@@ -3551,6 +3551,11 @@ game = {
 		if (trnm.on) trnm.close()
 		if (bg.on) bg.close()
 			
+		//если предыдущее движение не завершено то завершаем его и ждем
+		for (let i=0;i<30;i++)
+			if (brd_func.moveOn)
+				await new Promise(resolve => setTimeout(resolve, 100)); // wait for 1 second
+		
 		this.opponent=params.opp
 		this.opponent.activate(params)
 		this.move_processor=this.process_my_move
