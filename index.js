@@ -1445,7 +1445,7 @@ brd_func={
 		const move_data={x1:+mData[0],y1:+mData[1],x2:+mData[2],y2:+mData[3]}
 
 		let g_archive=[0,0,0,0,0,0,0,0,0,0,0]
-		let move_archive=[[+move_data[0],+move_data[1]]]
+		let move_archive=[[move_data.x1,move_data.y1]]
 
 		function left(move_data,cur_board, m_archive) {
 
@@ -1652,10 +1652,13 @@ brd_func={
 		return g_archive;
 	},
 
-	async start_gentle_move(mData, moves) {
+	async start_gentle_move(moves) {
 		
 		this.moveOn=1;
-		const [sx,sy,tx,ty]=[+mData[0],+mData[1],+mData[2],+mData[3]]
+		const sx=moves[0][0]
+		const sy=moves[0][1]
+		const tx=moves[moves.length-1][0]
+		const ty=moves[moves.length-1][1]
 		const chipSpr = this.getCheckerByPos(sx, sy);
 	
 		for (let i = 1 ; i < moves.length; i++) {
@@ -3752,7 +3755,7 @@ game = {
 	async process_my_move(move_data, moves) {
 
 		//делаем перемещение шашки
-		brd_func.start_gentle_move(move_data, moves);
+		brd_func.start_gentle_move(moves);
 
 		//для проекта альфа
 		gameHistForNN.push({tm:Date.now(),brd:brd_func.copyBrd(g_board),my_move:move_data})
@@ -3760,7 +3763,7 @@ game = {
 		//making move without animation
 		brd_func.applyMove(move_data,g_board)
 				
-		online_game.process_my_move(move_data, moves)
+		online_game.process_my_move(move_data)
 
 		//сообщаем в игры о ходе
 		//bot_game.make_nn_move();
@@ -3836,7 +3839,7 @@ game = {
 		this.check_move(moveStr,moves,g_board)
 		
 		//move chip over board
-		brd_func.start_gentle_move(moveStr, moves);		
+		brd_func.start_gentle_move(moves);		
 		
 		//applying move to chip and board data
 		brd_func.applyMove(moveStr,g_board)
@@ -4130,7 +4133,7 @@ game_watching={
 		}
 		
 		const moves=brd_func.get_moves_path(moveStr,g_board);		
-		await brd_func.start_gentle_move(moveStr,moves,g_board);
+		await brd_func.start_gentle_move(moves);
 		brd_func.applyMove(moveStr,g_board);		
 		brd_func.update_board(g_board);		
 		
