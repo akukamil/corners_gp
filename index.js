@@ -3808,7 +3808,7 @@ game = {
 		
 		
 		if (brd_func.moveOn){
-			saveToFileOnServer('cornersFail','moveon'+hf.randIntInc(1000,9999),{uid:my_data.uid,opp_uid:opp_data.uid,moveOn:1})
+			saveToFileOnServer('cornersFail','moveon'+hf.randIntInc(1000,9999),{name:my_data.name,opp_uid:opp_data.uid,moveOn:1,round:this.round,source})
 		}				
 
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
