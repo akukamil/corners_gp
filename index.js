@@ -1,5 +1,5 @@
 let M_WIDTH=800, M_HEIGHT=450;
-let app ={stage:{},renderer:{}}, assets={}, SERVER_TM=0,fbs,client_id, objects={}, state="", my_role="", game_tick=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=-5, h_state=0, game_platform="",git_src='', ROOM_NAME = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process={}, my_data={opp_id : ''},opp_data={}, game_name='corners';
+let app ={stage:{},renderer:{}}, assets={}, SERVER_TM=0,fbs,client_id, objects={}, state="", my_role="", game_tick=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=-5, h_state=0, gamePlatform="",git_src='', ROOM_NAME = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process={}, my_data={opp_id : ''},opp_data={}, game_name='corners';
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 const MAX_NO_AUTH_RATING=1950;
 const MAX_NO_REP_RATING=1910;
@@ -4422,7 +4422,7 @@ ad={
 
 		PIXI.sound.muteAll()
 
-		if (game_platform==="YANDEX") {
+		if (gamePlatform==="YANDEX") {
 			await new Promise(res=>{
 				const timeout=setTimeout(()=>{res()},5000)
 				window.ysdk.adv.showFullscreenAdv({
@@ -4434,7 +4434,7 @@ ad={
 			})
 		}
 
-		if (game_platform==='VK' || game_platform==='OK') {
+		if (gamePlatform==='VK' || gamePlatform==='OK') {
 
 			await new Promise(res => {
 				const timeoutId = setTimeout(() => {res(1)}, 5000)
@@ -4450,7 +4450,7 @@ ad={
 			})
 		}
 
-		if (game_platform==='GOOGLE_PLAY') {
+		if (gamePlatform==='GOOGLE_PLAY') {
 			if (typeof Android !== 'undefined') {
 				Android.showAdFromJs();
 			}
@@ -4464,7 +4464,7 @@ ad={
 	async show2() {
 
 
-		if (game_platform ==="YANDEX") {
+		if (gamePlatform ==="YANDEX") {
 
 			let res = await new Promise(function(resolve, reject){
 				window.ysdk.adv.showRewardedVideo({
@@ -4480,7 +4480,7 @@ ad={
 			return res;
 		}
 
-		if (game_platform === "VK") {
+		if (gamePlatform === "VK") {
 
 			let data = '';
 			try {
@@ -5098,7 +5098,7 @@ chat={
 
 	init_yandex_payments(){
 
-		if (game_platform!=='YANDEX') return;
+		if (gamePlatform!=='YANDEX') return;
 
 		if(this.payments) return;
 
@@ -5370,7 +5370,7 @@ chat={
 			block_num=Math.min(9,block_num);
 			const item_id='unblock'+block_num
 			
-			if(game_platform==='YANDEX'){
+			if(gamePlatform==='YANDEX'){
 				
 				
 				this.payments.purchase({id:item_id}).then(purchase => {
@@ -5381,7 +5381,7 @@ chat={
 				})
 			}
 
-			if (game_platform==='VK') {
+			if (gamePlatform==='VK') {
 
 				vkBridge.send('VKWebAppShowOrderBox', {type:'item',item:item_id}).then(data =>{
 					this.unblock_chat(block_num)
@@ -7586,6 +7586,10 @@ lobby={
 				return 'statesNIGHT'		
 		}	
 		
+		
+		if(gamePlatform==='PIKABU')
+			return 'statesPIKABU'
+		
 		//номер комнаты в зависимости от рейтинга игрока
 		const rooms_bins=[0,1366,1437,1580,9999];
 		for (let i=1;i<rooms_bins.length;i++){
@@ -8083,7 +8087,7 @@ auth2 = {
 
 	async init() {
 
-		if (game_platform === 'YANDEX') {
+		if (gamePlatform === 'YANDEX') {
 
 			try {await this.load_script('https://yandex.ru/games/sdk/v2')} catch (e) {alert(e)};
 
@@ -8109,7 +8113,7 @@ auth2 = {
 			return;
 		}
 
-		if (game_platform === 'VK' || game_platform==='OK') {
+		if (gamePlatform === 'VK' || gamePlatform==='OK') {
 
 			await this.load_script('https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js')||await this.load_script('https://akukamil.github.io/common/vkbridge.js');
 
@@ -8121,13 +8125,13 @@ auth2 = {
 
 			my_data.name=_player.first_name + ' ' + _player.last_name
 			my_data.name=this.replace_bad_letter(my_data.name)
-			my_data.uid=game_platform.toLowerCase()+_player.id
+			my_data.uid=gamePlatform.toLowerCase()+_player.id
 			my_data.orig_pic_url=_player.photo_100
 			my_data.auth_mode=1
 			return;
 		}
 
-		if (game_platform === 'DEBUG') {
+		if (gamePlatform === 'DEBUG') {
 
 			my_data.name = my_data.uid = 'debug' + prompt('Отладка. Введите ID', 100);
 			my_data.orig_pic_url = 'mavatar'+my_data.uid;
@@ -8135,7 +8139,7 @@ auth2 = {
 			return;
 		}
 
-		if (game_platform === 'UNKNOWN') {
+		if (gamePlatform === 'UNKNOWN') {
 
 			//если не нашли платформу
 			alert('Неизвестная платформа. Кто Вы?')
@@ -8313,7 +8317,7 @@ async function define_platform_and_language() {
 
 	if (s.includes('yandex')||s.includes('app-id=163940')) {
 
-		game_platform = 'YANDEX';
+		gamePlatform = 'YANDEX';
 
 		if (s.match(/yandex\.ru|yandex\.by|yandex\.kg|yandex\.kz|yandex\.tj|yandex\.ua|yandex\.uz/))
 			LANG = 0;
@@ -8324,40 +8328,40 @@ async function define_platform_and_language() {
 
 	if (s.includes('vk_ok_app_id')||s.includes('vk_ok_user_id')) {
 
-		game_platform = 'OK';
+		gamePlatform = 'OK';
 		LANG = 0;
 		return;
 	}
 
 	if (s.includes('vk.com')||s.includes('vk.ru')||s.includes('vk_app_id')) {
 
-		game_platform = 'VK';
+		gamePlatform = 'VK';
 		LANG = 0;
 		return;
 	}
 
 	if (s.includes('google_play')) {
 
-		game_platform = 'GOOGLE_PLAY';
+		gamePlatform = 'GOOGLE_PLAY';
 		LANG = await language_dialog.show();
 		return;
 	}
 
 	if (s.includes('pikabu')) {
 
-		game_platform = 'PIKABU';
+		gamePlatform = 'PIKABU';
 		LANG = 0;
 		return;
 	}
 
 	if (s.includes('192.168.')||s.includes('127.0.')) {
 
-		game_platform = 'DEBUG';
+		gamePlatform = 'DEBUG';
 		LANG = await language_dialog.show();
 		return;
 	}
 
-	game_platform = 'UNKNOWN';
+	gamePlatform = 'UNKNOWN';
 	LANG = await language_dialog.show();
 
 }
@@ -8584,7 +8588,7 @@ async function init_game_env(lang) {
 	git_src=""
 
 	await define_platform_and_language();
-	console.log(game_platform, LANG);
+	console.log(gamePlatform, LANG);
 
 	//авторизация
 	await auth2.init()
@@ -8824,7 +8828,7 @@ async function init_game_env(lang) {
 	lobby.activate()
 	
 	//ready api yandex
-	if (game_platform==='YANDEX')
+	if (gamePlatform==='YANDEX')
 		window.ysdk.features.LoadingAPI.ready()
 }
 
