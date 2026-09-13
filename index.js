@@ -32,6 +32,25 @@ async function saveToFileOnServer(folderName,fileName,data){
 	
 }
 
+function sortByProp(items,prop){		
+	items.sort((a,b)=>b[prop]-a[prop])		
+}
+
+function getMaxByProp(items,prop){
+	
+	let maxVal=-999999
+	let maxItem=0
+	for (const item of items){
+		
+		if (item[prop]>maxVal){
+			maxItem=item
+			maxVal=item[prop]
+		}		
+	}	
+	return maxItem	
+	
+}
+
 DESIGN_DATA={
 	0:{name:'def',rating:0,games:0},
 	1:{name:'old',rating:0,games:0},
@@ -1125,7 +1144,7 @@ brd_func={
 		return moveData.x1+''+moveData.y1+''+moveData.x2+''+moveData.y2
 	},
 	
-	get_childs(board_dataU, checkers, forward){
+	getChilds(board_dataU, checkers, forward){
 
 		function check_in_hist(x,y, hist) {
 			for (let i=0;i<hist.length;i++)
@@ -1381,6 +1400,21 @@ brd_func={
 		
 	},
 		
+	invBrdU(brdU) {
+
+		const invBrd = new Uint8Array(64)		
+		for (let y=0;y<8;y++){
+			for (let x=0;x<8;x++){				
+				const invId=63-8*y-x
+				invBrd[invId]=brdU[y*8+x]						
+				if (invBrd[invId]!== 0)
+					invBrd[invId]=3-invBrd[invId]
+			}			
+		}
+		return invBrd	
+
+	},
+		
 	update_board(board) {
 
 		this.target_point=0;
@@ -1426,7 +1460,7 @@ brd_func={
 		return 0;
 	},
 
-	applyMove(mData,brd){
+	applyMoveStr(mData,brd){
 			
 		//just exchanging old and new checker position
 		const [sx,sy,tx,ty]=[+mData[0],+mData[1],+mData[2],+mData[3]];
@@ -1436,8 +1470,13 @@ brd_func={
 		const chip=this.getCheckerByPos(sx,sy)
 		chip.ix=tx
 		chip.iy=ty
-		
-		
+				
+	},
+	
+	applyMove(mData,brd){
+					
+		[brd[mData.y2][mData.x2],brd[mData.y1][mData.x1]]=[brd[mData.y1][mData.x1],brd[mData.y2][mData.x2]]
+				
 	},
 
 	get_moves_path(mData,board){
@@ -2551,7 +2590,7 @@ bot_game = {
 		
 		if (this.onnx_loading) return
 		this.onnx_loading=1
-		this.onnx_session = await ort.InferenceSession.create('bestRP.onnx');
+		this.onnx_session = await ort.InferenceSession.create('bestRP.onnx', {executionProviders: ['webgpu', 'wasm']});
 	},
 
 	async stop(result) {
@@ -2677,7 +2716,7 @@ bot_game = {
 		const logits = results['policy'].data;		
 		
 		const brdUINT=brd_func.brd_to_Uint8Array(g_board)
-		const valid_moves=brd_func.get_childs(brdUINT,2,0)
+		const valid_moves=brd_func.getChilds(brdUINT,2,0)
 		const valid_moves_id=[]
 
 		for (const move of valid_moves){
@@ -2730,7 +2769,7 @@ bot_game = {
 
 	check_fin_moves(brd){
 		
-		const childs0=brd_func.get_childs(brd,2)
+		const childs0=brd_func.getChilds(brd,2)
 		
 		let bestToFinNum=9999
 		let bestToFinMove=''
@@ -2751,7 +2790,7 @@ bot_game = {
 		bestToFinMove=''
 		for (let c0=0;c0<childs0.length;c0++){			
 			const moveData0=childs0[c0]
-			const childs1=brd_func.get_childs(moveData0.brd,2)
+			const childs1=brd_func.getChilds(moveData0.brd,2)
 			
 			for (let c1=0;c1<childs1.length;c1++){
 				
@@ -2789,14 +2828,44 @@ bot_game = {
 
 	  for (let y = 0; y < 3; y++) {
 		for (let x = 0; x < 4; x++) {
-		  setValue(y, x, 0, 1.0);
-		  setValue(7 - y, 7 - x, 0, -1.0);
+		  setValue(y,x,0,1.0);
+		  setValue(7-y,7-x,0,-1.0);
 		}
 	  }
 
 	  for (let y = 0; y < 8; y++) {
 		for (let x = 0; x < 8; x++) {
 		  const piece = brd[y][x]
+		  if (piece === 1) setValue(y, x, 1, 1.0)
+		  if (piece === 2) setValue(y, x, 2, 1.0)
+		}
+	  }
+
+	  return data;
+	},
+	
+	createBoardInputU(brdU) {
+	  const BOARD_SIZE = 8;
+	  const CHANNELS = 3;
+
+	  // Shape: [1, 8, 8, 3]
+	  const data = new Float32Array(1 * BOARD_SIZE * BOARD_SIZE * CHANNELS);
+
+	  function setValue(row, col, channel, value) {
+		const index = ((row * BOARD_SIZE + col) * CHANNELS) + channel;
+		data[index] = value;
+	  }
+
+	  for (let y = 0; y < 3; y++) {
+		for (let x = 0; x < 4; x++) {
+		  setValue(y,x,0,1.0);
+		  setValue(7-y,7-x,0,-1.0);
+		}
+	  }
+
+	  for (let y = 0; y < 8; y++) {
+		for (let x = 0; x < 8; x++) {
+		  const piece = brdU[y*8+x]
 		  if (piece === 1) setValue(y, x, 1, 1.0)
 		  if (piece === 2) setValue(y, x, 2, 1.0)
 		}
@@ -3761,7 +3830,7 @@ game = {
 		gameHistForNN.push({tm:Date.now(),brd:brd_func.copyBrd(g_board),my_move:move_data})
 		
 		//making move without animation
-		brd_func.applyMove(move_data,g_board)
+		brd_func.applyMoveStr(move_data,g_board)
 				
 		online_game.process_my_move(move_data)
 
@@ -3842,7 +3911,7 @@ game = {
 		brd_func.start_gentle_move(moves);		
 		
 		//applying move to chip and board data
-		brd_func.applyMove(moveStr,g_board)
+		brd_func.applyMoveStr(moveStr,g_board)
 
 		//сообщаем в онлайн игру о ходе
 		online_game.onReceiveMove(moveStr,data.t);
@@ -4134,7 +4203,7 @@ game_watching={
 		
 		const moves=brd_func.get_moves_path(moveStr,g_board);		
 		await brd_func.start_gentle_move(moves);
-		brd_func.applyMove(moveStr,g_board);		
+		brd_func.applyMoveStr(moveStr,g_board);		
 		brd_func.update_board(g_board);		
 		
 		gameHistForNN.push({tm:Date.now(),gameWatchEvent:1,on:this.on})
@@ -4632,13 +4701,13 @@ minimax_solver = {
 		const tb=[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]]
 		const tbUint8=brd_func.brd_to_Uint8Array(tb)
 		
-		const childs0=brd_func.get_childs(tbUint8,1)
+		const childs0=brd_func.getChilds(tbUint8,1)
 		for (let c0=0;c0<childs0.length;c0++) {			
 			fin_brds.push(childs0[c0][0])			
 		}
 		
 		for (let c0=0;c0<childs0.length;c0++) {			
-			const childs1=brd_func.get_childs(childs0[c0][0],1)	
+			const childs1=brd_func.getChilds(childs0[c0][0],1)	
 			for (let c1=0;c1<childs1.length;c1++) {			
 				fin_brds.push(childs1[c1][0])			
 			}
@@ -4671,7 +4740,7 @@ minimax_solver = {
 		let min_bad=999999
 		let min_moves_to_win=9999
 
-		let childs0=brd_func.get_childs(brdU,2,0);
+		let childs0=brd_func.getChilds(brdU,2,0);
 		for (let c0=0;c0<childs0.length;c0++) {
 			let ret=this.how_bad_board_2(childs0[c0].brd);
 			let moves_to_win=ret[1]+1;
@@ -4682,7 +4751,7 @@ minimax_solver = {
 				m_data=brd_func.moveToStr(childs0[c0])
 			}
 
-			let childs1=brd_func.get_childs(childs0[c0].brd,2,0);
+			let childs1=brd_func.getChilds(childs0[c0].brd,2,0);
 			for (let c1=0;c1<childs1.length;c1++) {
 				let ret=this.how_bad_board_2(childs1[c1].brd);
 				let moves_to_win=ret[1]+2;
@@ -4693,7 +4762,7 @@ minimax_solver = {
 					m_data=brd_func.moveToStr(childs0[c0])
 				}
 
-				let childs2=brd_func.get_childs(childs1[c1].brd,2,0);
+				let childs2=brd_func.getChilds(childs1[c1].brd,2,0);
 				for (let c2=0;c2<childs2.length;c2++) {
 					let ret=this.how_bad_board_2(childs2[c2].brd);
 					let moves_to_win=ret[1]+3;
@@ -7512,7 +7581,7 @@ lobby={
 		
 		//московское время и ночная комната
 		if (SERVER_TM){
-			const msk_hour=+new Date(SERVER_TM).toLocaleString('en-US', {timeZone: 'Europe/Moscow',hour:'numeric',hourCycle:'h23'})
+			const msk_hour=+new Date(SERVER_TM).toLocaleString('en-US',{timeZone:'Europe/Moscow',hour:'numeric',hourCycle:'h23'})
 			if (msk_hour>=0&&msk_hour<6)
 				return 'statesNIGHT'		
 		}	
@@ -8274,9 +8343,9 @@ async function define_platform_and_language() {
 		return;
 	}
 
-	if (s.includes('my_games')) {
+	if (s.includes('pikabu')) {
 
-		game_platform = 'MY_GAMES';
+		game_platform = 'PIKABU';
 		LANG = 0;
 		return;
 	}
