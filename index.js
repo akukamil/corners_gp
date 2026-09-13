@@ -4456,6 +4456,14 @@ ad={
 			}
 		}
 		
+		if (gamePlatform==='PIKABU') {
+			const canShowAd = await sdk.ads.fullscreen.canShow();
+			if (canShowAd)
+				await sdk.ads.fullscreen.show()
+		}
+		
+		
+		
 		PIXI.sound.unmuteAll()
 		
 
