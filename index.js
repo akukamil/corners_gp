@@ -8130,6 +8130,18 @@ auth2 = {
 			my_data.auth_mode=1
 			return;
 		}
+		
+		if (gamePlatform === 'PIKABU') {
+
+			await this.load_script('https://games.pikabu.ru/sdk/sdk.js');
+			const sdk = await PkbSDK.init();
+
+			my_data.name=sdk.player.name
+			my_data.uid=sdk.player.id
+			my_data.orig_pic_url=sdk.player.avatar
+			my_data.auth_mode=+sdk.player.isAuthorized
+			return;
+		}
 
 		if (gamePlatform === 'DEBUG') {
 
