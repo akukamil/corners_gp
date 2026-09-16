@@ -2553,7 +2553,8 @@ bot_game = {
 	on:0,
 	me_conf_play : 0,
 	opp_conf_play : 0,
-	onnx_session:0,
+	bestPnet:0,
+	bestVnet:0,
 	onnx_loading:0,
 	level:0,
 	temp:1,
@@ -2590,7 +2591,23 @@ bot_game = {
 		
 		if (this.onnx_loading) return
 		this.onnx_loading=1
-		this.onnx_session = await ort.InferenceSession.create('bestRP.onnx', {executionProviders: ['webgpu', 'wasm']});
+		this.bestPnet = await ort.InferenceSession.create('bestRP.onnx', {executionProviders: ['webgpu', 'wasm']});
+		//this.bestVnet = await ort.InferenceSession.create('bestV.onnx', {executionProviders: ['webgpu', 'wasm']});
+	},
+	
+	async getNNstateVal(brd,round){
+		
+		const brd_data=this.createBoardInputU(brd)
+		const made_moves_for_nn=new Float32Array([(29-round) /29.0])
+		const boardTensor = new ort.Tensor("float32",brd_data,[1, 8, 8, 3])		
+		const moveNumberTensor = new ort.Tensor("float32",made_moves_for_nn,[1, 1])
+		
+		
+		const feeds = {'board':boardTensor,'move_number':moveNumberTensor}
+		const res = await this.bestVnet.run(feeds)
+		return res.output_0.data[0]
+		//console.log(res.output_0.data[0])
+		
 	},
 
 	async stop(result) {
@@ -2654,8 +2671,8 @@ bot_game = {
 	},
 
 	async make_move() {
-		
-		if (this.onnx_session) {
+			
+		if (this.bestPnet) {
 			this.make_nn_move(this.temp)
 			return
 		}
@@ -2668,7 +2685,6 @@ bot_game = {
 		}
 		
 		if(!this.on) return;	
-
 
 		const brdUINT=brd_func.brd_to_Uint8Array(g_board)
 		
@@ -2696,25 +2712,15 @@ bot_game = {
 		if(this.check_fin_moves(brd_func.brd_to_Uint8Array(g_board))) return
 		
 		const brd_data=this.createBoardInput(g_board)
-		const made_moves_for_nn=new Float32Array([(29-game.round) /29.0]);
-		const boardTensor = new ort.Tensor(
-			"float32",
-			brd_data,
-			[1, 8, 8, 3]
-		);
-		
-		const moveNumberTensor = new ort.Tensor(
-			"float32",
-			made_moves_for_nn,
-			[1, 1]
-		);
+		const made_moves_for_nn=new Float32Array([(29-game.round) /29.0])
+		const boardTensor = new ort.Tensor("float32",brd_data,[1, 8, 8, 3])		
+		const moveNumberTensor = new ort.Tensor("float32",made_moves_for_nn,[1, 1])
 		
 		if (game.round>30) temp=0.3
 		
 		const feeds = {'board':boardTensor,'move_number':moveNumberTensor};
-		const results = await this.onnx_session.run(feeds);
+		const results = await this.bestPnet.run(feeds);
 		const logits = results['policy'].data;		
-		
 		const brdUINT=brd_func.brd_to_Uint8Array(g_board)
 		const valid_moves=brd_func.getChilds(brdUINT,2,0)
 		const valid_moves_id=[]
@@ -2744,6 +2750,23 @@ bot_game = {
 		if(this.on)
 			game.onReceiveMove({d:m_data,source:'bot'})
 			
+	},
+	
+	async makeValueNetMove(){
+		
+		const brdU=brd_func.brd_to_Uint8Array(g_board)
+		const childs=brd_func.getChilds(brdU,2)
+		for (const child of childs){
+			
+			child.val=await this.getNNstateVal(child.brd,game.round)
+		}
+		
+		sortByProp(childs,'val')
+		const moveStr=brd_func.moveToStr(childs[0])
+		console.log(childs[0].val)
+		await new Promise(r=>setTimeout(r,150))
+		if(this.on)
+			game.onReceiveMove({d:moveStr,source:'bot'})
 	},
 
 	softmax(items,prop,temp=1.0) {		
@@ -8747,7 +8770,7 @@ async function init_game_env(lang) {
 	my_data.name = (other_data?.name) || my_data.name
 	my_data.nick_tm = other_data?.nick_tm || 0
 	my_data.avatar_tm = other_data?.avatar_tm || 0;
-	my_data.energy = 120//other_data?.energy??120
+	my_data.energy = other_data?.energy??120
 	my_data.e_prv_tm = other_data?.e_prv_tm ||0
 	my_data.trnm = other_data?.trnm ||0
 	
