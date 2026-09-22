@@ -3659,7 +3659,7 @@ game = {
 			
 		//если предыдущее движение не завершено то завершаем его и ждем
 		for (let i=0;i<30;i++)
-			if (brd_funcU.moveOn)
+			if (brd_func.moveOn)
 				await new Promise(resolve => setTimeout(resolve, 100)); // wait for 1 second
 		
 		this.opponent=params.opp
@@ -3909,8 +3909,12 @@ game = {
 		const moveStr=data.d
 		const source=data.source||'online'
 		
+		for (let i=0;i<10;i++){
+			if (!brd_func.moveOn) break
+			await new Promise(r=>setTimeout(r,250))				
+		}
 		
-		if (brd_funcU.moveOn){
+		if (brd_func.moveOn){
 			saveToFileOnServer('cornersFail','moveon'+hf.randIntInc(1000,9999),{name:my_data.name,opp_uid:opp_data.uid,moveOn:1,round:this.round,source})
 		}				
 
@@ -4184,7 +4188,7 @@ game_watching={
 					
 		//если предыдущее движение не завершено то завершаем его и ждем
 		for (let i=0;i<30;i++)
-			if (brd_funcU.moveOn)
+			if (brd_func.moveOn)
 				await new Promise(resolve => setTimeout(resolve, 100)); // wait for 1 second
 		if(!this.on) return
 				
