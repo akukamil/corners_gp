@@ -2443,7 +2443,7 @@ online_game = {
 		
 		//если это турнир
 		if (this.trnm){
-			crystalsCollected+=30
+			crystalsCollected=crystalsCollected+30+this.trnm_round*20
 			trnm.process_game_end(result_number,this.myThinkingTimeAdv)			
 		}
 
@@ -2461,7 +2461,7 @@ online_game = {
 			fbs.ref('players/'+my_data.uid+'/games').set(my_data.games);
 			
 			//энергия за слепую игру
-			if (this.bgame) energyCollected+=10
+			if (this.bgame||this.trnm) energyCollected+=10
 
 			//контрольные концовки логируем на виртуальной машине
 			if (my_data.rating>1800 || opp_data.rating>1800){
@@ -2540,7 +2540,7 @@ bot_game = {
 		if (this.onnx_loading) return
 		this.onnx_loading=1
 		this.bestPnet = await ort.InferenceSession.create('bestRP.onnx', {executionProviders: ['webgpu', 'wasm']});
-		//this.bestVnet = await ort.InferenceSession.create('bestV.onnx', {executionProviders: ['webgpu', 'wasm']});
+		//this.bestVnet = await ort.InferenceSession.create('bestV_escape.onnx', {executionProviders: ['webgpu', 'wasm']});
 	},
 	
 	async getNNstateVal(brd,round){
@@ -2567,7 +2567,7 @@ bot_game = {
 		const boardTensor = new ort.Tensor("float32",brd_data,[1, 8, 8, 3])		
 		const globalDataTensor  = new ort.Tensor("float32",globalData,[1, 6])
 		
-		const feeds = {'board':boardTensor,'global_features':globalDataTensor}
+		const feeds = {'brd':boardTensor,'global_features':globalDataTensor}
 		const res = await this.bestVnet.run(feeds)
 		return res.output_0.data[0]
 		//console.log(res.output_0.data[0])
@@ -2618,8 +2618,7 @@ bot_game = {
 	async test_nn(){
 		
 		const brd_data=this.createBoardInputU(brd_func.str_to_brd('Mbdklnsu018(ACIJOQRUWXcj'),7)
-		
-		
+				
 		const roundInp = Math.min(7, 29) / 29   
 		const raceFlag = 0
 		const home1num=1		
@@ -8191,7 +8190,7 @@ auth2 = {
 
 			my_data.name=sdk.player.name
 			my_data.uid=sdk.player.id
-			my_data.orig_pic_url=sdk.player.avatar
+			my_data.orig_pic_url='mavatar'+my_data.uid;
 			my_data.auth_mode=+sdk.player.isAuthorized
 			return;
 		}
