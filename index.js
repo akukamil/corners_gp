@@ -4494,9 +4494,9 @@ ad={
 		}
 		
 		if (gamePlatform==='PIKABU') {
-			const canShowAd = await sdk.ads.fullscreen.canShow();
+			const canShowAd = await window.pikabuSDK.ads.fullscreen.canShow();
 			if (canShowAd)
-				await sdk.ads.fullscreen.show()
+				await window.pikabuSDK.ads.fullscreen.show()
 		}
 		
 		
@@ -8187,7 +8187,7 @@ auth2 = {
 
 			await this.load_script('https://games.pikabu.ru/sdk/sdk.js');
 			const sdk = await PkbSDK.init();
-
+			window.pikabuSDK=sdk
 			my_data.name=sdk.player.name
 			my_data.uid=sdk.player.id
 			my_data.orig_pic_url='mavatar'+my_data.uid;
