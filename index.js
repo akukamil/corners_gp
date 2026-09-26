@@ -2007,9 +2007,14 @@ online_game = {
 		this.opp_conf_play = params.t||0
 
 		//турнирная или слепая игра
-		this.trnm=params.t
+		this.trnm=params.trnm
 		this.trnm_round=params.round
 		this.bgame=params.bgame
+		
+		//индикатор участия
+		if (params.trnm&&params.round===0)
+			fbs.ref('trnm/events').push({confPlay:my_data.uid});
+
 
 		//счетчик времени
 		this.prv_tick_time=tm
@@ -2540,7 +2545,7 @@ bot_game = {
 		if (this.onnx_loading) return
 		this.onnx_loading=1
 		this.bestPnet = await ort.InferenceSession.create('bestRP.onnx', {executionProviders: ['webgpu', 'wasm']});
-		//this.bestVnet = await ort.InferenceSession.create('bestV_escape.onnx', {executionProviders: ['webgpu', 'wasm']});
+		//this.bestVnet = await ort.InferenceSession.create('bestV.onnx', {executionProviders: ['webgpu', 'wasm']});
 	},
 	
 	async getNNstateVal(brd,round){
@@ -2567,9 +2572,26 @@ bot_game = {
 		const boardTensor = new ort.Tensor("float32",brd_data,[1, 8, 8, 3])		
 		const globalDataTensor  = new ort.Tensor("float32",globalData,[1, 6])
 		
-		const feeds = {'brd':boardTensor,'global_features':globalDataTensor}
+		const CONVERSION_MAP=[
+			'fin2_30',
+			'fin1_30',
+			'fin_30',
+			'fin2',
+			'fin1',
+			'fin1_fin2'
+		]
+		
+		const feeds = {'board':boardTensor,'global_features':globalDataTensor}
 		const res = await this.bestVnet.run(feeds)
-		return res.output_0.data[0]
+		const finProbs=res.output_0.data
+		const origProbs=Object.fromEntries(CONVERSION_MAP.map((key, index) => [key, +finProbs[index].toFixed(3)]))
+		const origProbsSorted = Object.fromEntries(Object.entries(origProbs).sort(([, a], [, b]) => b-a));
+		
+		const valP2 = origProbs.fin2_30+origProbs.fin2-origProbs.fin1_30-origProbs.fin1
+
+		const bestVal=Math.max(...finProbs)
+		const bestInd=finProbs.indexOf(bestVal)
+		return [valP2,origProbsSorted]
 		//console.log(res.output_0.data[0])
 		
 	},
@@ -2754,13 +2776,17 @@ bot_game = {
 		
 		const brdU=brd_funcU.brdToU(g_board)
 		const childs=brd_funcU.getChilds(brdU,2)
-		for (const child of childs)		
-			child.val=await this.getNNstateVal(child.brd,game.round)
+		for (const child of childs){
+			const [val,origProbs]=await this.getNNstateVal(child.brd,game.round)		
+			child.val=val	
+			child.origProbs=origProbs		
+		}
+
 		
 		
 		sortByProp(childs,'val')
 		const moveStr=brd_funcU.moveToStr(childs[0])
-		console.log(childs[0].val)
+		console.log(childs[0].val,childs[0].origProbs)
 		await new Promise(r=>setTimeout(r,150))
 		if(this.on)
 			game.onReceiveMove({d:moveStr,source:'bot'})
@@ -3156,8 +3182,8 @@ trnm={
 			objects.trnm_reg_btn.visible=false
 			objects.trnm_info1.text='Турнир начался!'
 			objects.trnm_info2.text=`Раунд ${state_data.r+1}`
-			if (state_data.r==2) objects.trnm_info2.text+=' (полуфинал)'
-			if (state_data.r==3) objects.trnm_info2.text+=' (финал)'
+			if (state_data.r===2) objects.trnm_info2.text+=' (полуфинал)'
+			if (state_data.r===3) objects.trnm_info2.text+=' (финал)'
 			
 			this.send_info3('Не выходите из меню турнира, чтобы не пропустить приглашение!')
 			
@@ -3165,11 +3191,7 @@ trnm={
 			objects.trnm_precards.forEach(c=>c.visible=false)
 			this.init_cards()
 			this.tables_updated(this.cached_trnm_data.tables)
-			
-			//подтверждаем участие
-			if (state_data.r==0)
-				fbs.ref('trnm/events').push({confPlay:my_data.uid});
-			
+						
 			objects.trnm_info1.alpha=1
 			some_process.trnm_reg=()=>{}
 		}
@@ -3638,7 +3660,7 @@ game = {
 		gameHistForNN=[{rating:my_data.rating,name:my_data.name}]
 
 		//турнирная игра или слепая игра
-		this.trnm=params.t	
+		this.trnm=params.trnm	
 		this.bgame=params.bgame	
 		
 		//чуть ждем перед турниром и слепой игрой
