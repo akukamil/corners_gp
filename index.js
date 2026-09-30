@@ -2119,7 +2119,7 @@ online_game = {
 
 		if (move_time_left < 0 && my_turn === 1)	{
 
-			if (this.me_conf_play === 1)
+			if (this.me_conf_play||this.trnm||this.bgame)
 				game.stop('my_timeout');
 			else
 				game.stop('my_no_sync');
@@ -2487,7 +2487,7 @@ online_game = {
 		
 		//победитель турнира
 		if (this.trnm&&this.trnm_round===3){
-			if (result_number===WIN || (result_number === DRAW&&this.myThinkingTimeAdv>0)){
+			if (result_number===WIN || result_number===NOSYNC || (result_number === DRAW&&this.myThinkingTimeAdv>0)){
 				trnm.show_winner_bonuses()
 			}			
 		}
@@ -3522,7 +3522,7 @@ trnm={
 				big_msg.close('forced')
 			this.table_id=e.table_id
 			const role=e.r===1?'master':'slave'
-			game.activate({opp:online_game,role,t:1,opp_uid:e.opp_uid,gid:e.gid,brd_cfg:e.brd_cfg,round:e.round})
+			game.activate({opp:online_game,role,trnm:1,opp_uid:e.opp_uid,gid:e.gid,brd_cfg:e.brd_cfg,round:e.round})
 			this.close()
 
 		}
@@ -3532,11 +3532,11 @@ trnm={
 		
 		//перенаправляем в турнир
 		if (e===WIN)
-			fbs.ref('trnm/events').push({game_end:online_game.gid,winner:my_data.uid,table_id:this.table_id,tm:Date.now()})
+			fbs.ref('trnm/events').push({game_end:online_game.gid,winner:my_data.uid,table_id:this.table_id})
 		if (e===LOSE)
-			fbs.ref('trnm/events').push({game_end:online_game.gid,winner:opp_data.uid,table_id:this.table_id,tm:Date.now()})
+			fbs.ref('trnm/events').push({game_end:online_game.gid,winner:opp_data.uid,table_id:this.table_id})
 		if (e===NOSYNC)
-			fbs.ref('trnm/events').push({game_end:online_game.gid,winner:0,table_id:this.table_id,tm:Date.now()})
+			fbs.ref('trnm/events').push({game_end:online_game.gid,winner:my_data.uid,table_id:this.table_id})
 		if (e===DRAW){
 			const winner=myThinkingTimeAdv>0?my_data.uid:opp_data.uid
 			fbs.ref('trnm/events').push({game_end:online_game.gid,winner,table_id:this.table_id,tm:Date.now()})			
@@ -3590,7 +3590,7 @@ trnm={
 		]
 		
 		for (const p of pdata){
-			fbs.ref('players/'+p).set({name:p,pic_url:'mavatar'+p,rating:1400})
+			fbs.ref('players/'+p).set({name:p,pic_url:'mavatar'+p,rating:hf.randIntInc(1300,1500)})
 			fbs.ref('trnm/_players/'+p).set(hf.randIntInc(1300,1400))
 			await new Promise(res => setTimeout(res, 1000));
 		}
@@ -4057,7 +4057,7 @@ game = {
 			lobby.activate()
 
 		//устанавливаем статус в базе данных а если мы не видны то установливаем только скрытое состояние
-		set_state ({state : 'o'})
+		set_state ({state:'o'})
 	}
 
 }
