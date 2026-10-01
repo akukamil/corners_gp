@@ -7956,7 +7956,6 @@ tut={
 
 		const nextPicID=this.activePicID+dir
 		
-
 		if (nextPicID<0 || nextPicID>this.header1data.length-1) return
 
 		objects.tutHeader1.text=this.header1data[nextPicID][LANG]
@@ -7988,6 +7987,7 @@ tut={
 	
 	close(){
 		
+		sound.play('close')
 		anim3.add(objects.tutCont, {alpha: [1, 0, 'linear']}, false, 1)
 		
 	},
@@ -7998,6 +7998,8 @@ tut={
 			sound.play('locked');
 			return;
 		}
+		
+		sound.play('click')
 		
 		const mx=e.data.global.x/app.stage.scale.x
 		if(mx<210) this.switch_down(-1)
