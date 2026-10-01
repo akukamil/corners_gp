@@ -7663,8 +7663,8 @@ lobby={
 		}	
 		
 		
-		if(gamePlatform==='PIKABU')
-			return 'statesPIKABU'
+		if(gamePlatform==='PIKABU') return 'statesPIKABU'
+		if(gamePlatform==='CRAZYGAMES') return 'statesCRAZYGAMES'
 		
 		//номер комнаты в зависимости от рейтинга игрока
 		const rooms_bins=[0,1366,1437,1580,9999];
@@ -8538,12 +8538,17 @@ async function define_platform_and_language() {
 	}
 
 	if (s.includes('pikabu')) {
-
 		gamePlatform = 'PIKABU';
 		LANG = 0;
 		return;
 	}
-
+	
+	if (s.includes('crazygames')) {
+		gamePlatform = 'CRAZYGAMES';
+		LANG = 1;
+		return;
+	}
+	
 	if (s.includes('192.168.')||s.includes('127.0.')) {
 
 		gamePlatform = 'DEBUG';
