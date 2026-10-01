@@ -8329,6 +8329,32 @@ auth2 = {
 			return;
 		}
 
+		if (game_platform === 'CRAZYGAMES') {			
+			
+			try {await this.load_script('https://sdk.crazygames.com/crazygames-sdk-v3.js')} catch (e) {alert(e)};	
+			try {await this.load_script('https://akukamil.github.io/quoridor/jwt-decode.js')} catch (e) {alert(e)};		
+			await window.CrazyGames.SDK.init()
+
+			const cg_user_data=await this.search_in_crazygames();			
+			my_data.uid = cg_user_data.__dangerousUserId || this.search_in_local_storage() || this.get_random_uid_for_local('CG_');
+			my_data.name = cg_user_data.username || this.get_random_name(my_data.uid);
+			my_data.orig_pic_url = cg_user_data.profilePictureUrl || ('mavatar'+my_data.uid);	
+					
+			//перезапускаем если авторизация прошла		
+			window.CrazyGames.SDK.user.addAuthListener(function(user){	
+				if (user?.id&&user.id!==my_data.uid){
+					console.log('user changed',user);
+					location.reload();	
+				}	
+			});
+			
+			window.CrazyGames.SDK.game.addSettingsChangeListener((newSettings)=>{
+				console.log("Settings updated", newSettings);
+			});
+					
+			return;
+		}
+
 		if (gamePlatform === 'UNKNOWN') {
 
 			//если не нашли платформу
