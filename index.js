@@ -2428,10 +2428,13 @@ online_game = {
 		objects.board.pointerdown = function() {};
 
 		//воспроизводим звук
-		if (result_number === DRAW || result_number === LOSE || result_number === NOSYNC )
-			sound.play('lose');
-		else
-			sound.play('win');
+		if (result_number === DRAW || result_number === LOSE || result_number === NOSYNC ){
+			sound.play('lose');			
+		}else{
+			if(gamePlatform==='CRAZYGAMES') window.CrazyGames.SDK.game.happytime();
+			sound.play('win');			
+		}
+
 		
 		crystalsCollected+=result_number===WIN?5:3
 				
@@ -2628,8 +2631,8 @@ bot_game = {
 			sound.play('lose');			
 		}else{						
 			sound.play('win')
-			if (this.level===2)
-				crystalsCollected=1
+			if (this.level===2)	crystalsCollected=1;
+			if(gamePlatform==='CRAZYGAMES') window.CrazyGames.SDK.game.happytime();
 		}
 
 		await big_msg.show({t1:result_info, t2:')))',t3:'',fb:1,crystals:crystalsCollected})
