@@ -8352,7 +8352,8 @@ auth2 = {
 			my_data.uid = cg_user_data.__dangerousUserId || this.search_in_local_storage() || this.get_random_uid_for_local('CG_');
 			my_data.name = cg_user_data.username || this.get_random_name(my_data.uid);
 			my_data.orig_pic_url = cg_user_data.profilePictureUrl || ('mavatar'+my_data.uid);	
-					
+			my_data.auth_mode=1
+			
 			//перезапускаем если авторизация прошла		
 			window.CrazyGames.SDK.user.addAuthListener(function(user){	
 				if (user?.id&&user.id!==my_data.uid){
