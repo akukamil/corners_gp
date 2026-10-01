@@ -8329,7 +8329,7 @@ auth2 = {
 			return;
 		}
 
-		if (game_platform === 'CRAZYGAMES') {			
+		if (gamePlatform === 'CRAZYGAMES') {			
 			
 			try {await this.load_script('https://sdk.crazygames.com/crazygames-sdk-v3.js')} catch (e) {alert(e)};	
 			try {await this.load_script('https://akukamil.github.io/quoridor/jwt-decode.js')} catch (e) {alert(e)};		
