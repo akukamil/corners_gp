@@ -2384,7 +2384,7 @@ online_game = {
 		clearTimeout(this.no_rating_msg_timer);
 
 		const result_row = res_array.find(p => p[0] === result);
-		const result_number = result_row[1];
+		let result_number = result_row[1];
 		const result_info = result_row[2][LANG]
 		
 		//если не начали играть в слепой игре то снимаем очки
@@ -3027,7 +3027,7 @@ trnm={
 		objects.trnm_reg_btn.visible=false
 		objects.bg_rules_icon.visible=false
 		
-		objects.trnm_info1.text='Загрузка данных...'
+		objects.trnm_info1.text=['Загрузка данных...','Loading!'][LANG]
 		objects.trnm_info2.text='...'
 		
 		objects.trnm_close_btn.pointerdown=()=>{this.close_btn_down()};
@@ -3123,7 +3123,7 @@ trnm={
 
 		if (state==='reg'){
 			objects.trnm_reg_btn.visible=true
-			objects.trnm_info1.text='Идет регистрация участников...'
+			objects.trnm_info1.text=['Идет регистрация участников...','Registration...'][LANG]
 			objects.trnm_info2.text='...'
 			objects.bcg.texture=assets.bcg
 			this.reg_btn_set_state(0)
@@ -3135,8 +3135,8 @@ trnm={
 
 		if (state==='reg_fin'){
 			objects.trnm_reg_btn.visible=false
-			objects.trnm_info1.text='Регистрация окончена!'
-			objects.trnm_info2.text='турнир начнется через 15 секунд...'
+			objects.trnm_info1.text=['Регистрация окончена!','Registration is finished!'][LANG]
+			objects.trnm_info2.text=['турнир начнется через 15 секунд...','Start in 15 seconds...!'][LANG]
 			objects.bcg.texture=assets.bcg
 			this.stop_reg_process()
 			objects.trnm_cards.forEach(c=>c.visible=false)
@@ -3146,7 +3146,7 @@ trnm={
 
 		if (state==='noplayers'){
 			objects.trnm_reg_btn.visible=false
-			objects.trnm_info1.text='Турнир не состоялся из-за недостаточного количества игроков!'
+			objects.trnm_info1.text=['Турнир не состоялся из-за недостаточного количества игроков!','No players to play!'][LANG]
 			objects.trnm_info2.text='((('
 			objects.bcg.texture=assets.bcg
 			this.stop_reg_process()
@@ -3157,7 +3157,7 @@ trnm={
 
 		if (state==='finished'){
 			objects.trnm_reg_btn.visible=false
-			objects.trnm_info1.text='Турнир окончен!'
+			objects.trnm_info1.text=['Турнир окончен!','Tournament finished!'][LANG]
 			
 			this.winner_uid=this.cached_trnm_data.players[state_data.winner].uid
 			
@@ -3180,7 +3180,7 @@ trnm={
 		
 		if (state==='started'){	
 			objects.trnm_reg_btn.visible=false
-			objects.trnm_info1.text='Турнир начался!'
+			objects.trnm_info1.text=['Турнир начался!','Tournament started!'][LANG]
 			objects.trnm_info2.text=`Раунд ${state_data.r+1}`
 			if (state_data.r===2) objects.trnm_info2.text+=' (полуфинал)'
 			if (state_data.r===3) objects.trnm_info2.text+=' (финал)'
@@ -3198,7 +3198,7 @@ trnm={
 		
 		if (state==='round_fin'){
 			objects.trnm_reg_btn.visible=false
-			objects.trnm_info1.text='Турнир начался!'
+			objects.trnm_info1.text=['Турнир начался!','Tournament started!'][LANG]
 			objects.trnm_info2.text=`Раунд ${state_data.r+1} окончен, ожидаем следующий раунд: `
 			objects.bcg.texture=assets.trnm_bcg			
 			objects.trnm_precards.forEach(c=>c.visible=false)
@@ -5984,7 +5984,7 @@ bg={
 		objects.trnm_cards.forEach(c=>c.visible=false)
 		objects.trnm_reg_btn.visible=false
 		
-		objects.trnm_info1.text='Слепая игра'
+		objects.trnm_info1.text=['Слепая игра','Blind game!'][LANG]
 		
 		//header numer of players
 		objects.trnm_info3_cont.visible=true
