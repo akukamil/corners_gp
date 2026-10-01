@@ -3625,6 +3625,9 @@ game = {
 	
 	async activate(params={}) {
 
+
+		if(gamePlatform==='CRAZYGAMES') window.CrazyGames.SDK.game.gameplayStart()
+
 		my_role = params.role
 		
 		//фиксируем айди соперника
@@ -4022,6 +4025,9 @@ game = {
 	},
 
 	async stop(result) {
+
+		if(gamePlatform==='CRAZYGAMES') window.CrazyGames.SDK.game.gameplayStop()
+
 
 		//игра закончена, показываем биг мсг
 		this.state='big_msg'
@@ -8009,6 +8015,14 @@ tut={
 		sound.play('click')
 		
 		const mx=e.data.global.x/app.stage.scale.x
+		const my=e.data.global.y/app.stage.scale.y
+		
+		//кнопка закрытия
+		if (my<80&&mx>610){
+			this.close()
+			return
+		}	
+		
 		if(mx<210) this.switch_down(-1)
 		if(mx>580) this.switch_down(1)
 			
@@ -8372,6 +8386,8 @@ auth2 = {
 			window.CrazyGames.SDK.game.addSettingsChangeListener((newSettings)=>{
 				console.log("Settings updated", newSettings);
 			});
+			
+			window.CrazyGames.SDK.game.loadingStart();
 					
 			return;
 		}
@@ -9105,9 +9121,9 @@ async function init_game_env(lang) {
 	//туториал
 	if (!my_data.games) tut.activate()	
 	
-	//ready api yandex
-	if (gamePlatform==='YANDEX')
-		window.ysdk.features.LoadingAPI.ready()
+	//ready api
+	if (gamePlatform==='YANDEX') window.ysdk.features.LoadingAPI.ready()
+	if (gamePlatform==='CRAZYGAMES') window.CrazyGames.SDK.game.loadingStop()
 }
 
 main_loop={
