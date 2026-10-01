@@ -6369,13 +6369,13 @@ pref={
 		
 		const design_data=DESIGN_DATA[this.cur_design_id]
 		if (!my_data.trnm_winner&&my_data.rating<design_data.rating){
-			this.send_info(`Только для игроков с рейтингом более ${design_data.rating}`)
+			this.send_info([`Только для игроков с рейтингом более ${design_data.rating}`,`Only for players with rating more than ${design_data.rating}`][LANG])
 			sound.play('locked')
 			return
 		}
 		
 		if (!my_data.trnm_winner&&my_data.games<design_data.games){
-			this.send_info(`Только для игроков сыгравших более ${design_data.games} игр`)
+			this.send_info([`Только для игроков сыгравших более ${design_data.games} игр`,`Only for players players who played more than ${design_data.games} games`][LANG])
 			sound.play('locked')
 			return
 		}
@@ -7774,7 +7774,7 @@ lobby={
 
 
 		if (my_data.rating<1500){
-			pmsg.add({t:'Только для игроков с рейтингом более 1500'});
+			pmsg.add({t:['Только для игроков с рейтингом более 1500','Need rating more than 1500'][LANG]});
 			sound.play('locked');
 			return
 		}
