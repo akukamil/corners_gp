@@ -3889,6 +3889,10 @@ game = {
 				
 		online_game.process_my_move(move_data)
 
+
+		//перезапускаем таймер хода и кто ходит
+		my_turn = 0;
+		
 		//сообщаем в игры о ходе
 		//bot_game.make_nn_move();
 		bot_game.make_move();
@@ -3914,8 +3918,6 @@ game = {
 			pmsg.add({t:['После 80 хода выиграет тот кто перевел больше шашек в новый дом','After 80 moves, the one who transferred more checkers to the new house will win'][LANG]});
 		}
 
-		//перезапускаем таймер хода и кто ходит
-		my_turn = 0;
 
 		//обновляем таймер
 		this.opponent.reset_timer();
@@ -7909,6 +7911,106 @@ lobby={
 
 }
 
+tut={
+	page:0,
+	header1data:[
+		['ОСНОВНАЯ ЦЕЛЬ','RULE #1'],
+		['КАК ХОДИТЬ','BASIC MOVE'],
+		['ДЛИННЫЙ ХОД','COMBO MOVE'],
+		['КАК ДВИНУТЬ ШАШКУ','HOW TO MOVE CHECKER'],
+		['ПРАВИЛО 30 ХОДОВ','ESCAPE CHALLENGE'],
+		['КАК НАЧАТЬ ИГРУ','START FIRST GAME'],
+		['КОНЕЦ ТУТОРИАЛА','FINISH']	
+	],
+	header2data: [
+		['ПЕРЕМЕСТИТЕ ВСЕ СВОИ ФИШКИ ИЗ СТАРТОВОГО УГЛА В ПРОТИВОПОЛОЖНЫЙ. ПОБЕЖДАЕТ ПЕРВЫЙ ИГРОК, КОТОРЫЙ СДЕЛАЕТ ЭТО.', 'MOVE ALL YOUR PIECES FROM YOUR STARTING CORNER INTO THE OPPOSITE CORNER. THE FIRST PLAYER TO DO SO WINS.'],
+		['ВЫ МОЖЕТЕ ПЕРЕМЕСТИТЬ СВОЮ ФИШКУ В ЛЮБУЮ НЕЗАНЯТУЮ СОСЕДНЮЮ КЛЕТКУ ПО ГОРИЗОНТАЛИ ИЛИ ВЕРТИКАЛИ', 'ON YOUR TURN, YOU CAN MOVE ONE PIECE TO AN ADJACENT EMPTY SPACE'],
+		['ПЕРЕМЕЩЕНИЕ НА БОЛЬШЕЕ РАССТОЯНИЕ ВОЗМОЖНО ЕСЛИ ЦЕЛЕВУЮ КЛЕТКУ МОЖНО ДОСТИЧЬ ПРЫЖКАМИ ЧЕРЕЗ ДРУГИЕ КЛЕТКИ', 'JUMP OVER ANY PIECE INTO THE EMPTY SPACE DIRECTLY BEYOND IT. YOU CAN MAKE SEVERAL JUMPS WITH THE SAME PIECE DURING ONE TURN.'],
+		['ЧТОБЫ СДЕЛАТЬ ХОД, НАЖМИТЕ НА ФИШКУ, А ЗАТЕМ НА ЦЕЛЕВУЮ КЛЕТКУ.', 'TO MAKE A MOVE CLICK A PIECE AND THEN CLICK TARGET CELL'],
+		['К КОНЦУ 30-ГО РАУНДА ВЫ ДОЛЖНЫ ВЫВЕСТИ ВСЕ СВОИ ФИШКИ ИЗ СТАРТОВОГО УГЛА. ЕСЛИ ХОТЯ БЫ ОДНА ФИШКА ОСТАНЕТСЯ ТАМ, ВЫ ПРОИГРАЕТЕ.', 'BY THE END OF THE 30TH ROUND, YOU MUST HAVE MOVED ALL YOUR CHECKERS OUT OF YOUR STARTING CORNER. IF ANY OF YOUR CHECKERS REMAIN THERE, YOU LOSE.'],
+		['НАЖМИТЕ НА КАРТОЧКУ ИГРОКА, ЧТОБЫ ПРИГЛАСИТЬ ЕГО.', 'TAP THE PLAYER CARD TO INVITE'],
+		['НАЖМИТЕ ЧТОБЫ ЗАВЕРШИТЬ ТУТОРИАЛ И ПРИСТУПИТЬ К ИГРЕ', 'CLICK TO FINISH TUTORIAL']
+	],
+	activePicID:0,
+	
+	async activate(){
+		
+		await main_loader.loadTut()
+		anim3.add(objects.tutCont, {alpha: [0, 1, 'linear']}, true, 1)
+		this.switch_down(0)
+	},
+	
+	setPic(picHolderID,picID){	
+		
+		
+		const holder=objects.tutPics[picHolderID]
+		const pic=assets['tutPic'+picID]
+		if(!pic) return
+		holder.texture=pic
+		const a=pic.width/pic.height
+		holder.width=holder.height*a
+		
+	},
+	
+	async switch_down(dir){
+
+		const nextPicID=this.activePicID+dir
+		
+
+		if (nextPicID<0 || nextPicID>this.header1data.length-1) return
+
+		objects.tutHeader1.text=this.header1data[nextPicID][LANG]
+		objects.tutHeader2.text=this.header2data[nextPicID][LANG]
+
+		//кнопка
+		const minX=304
+		const maxX=456
+		const stepX=(maxX-minX)/(this.header1data.length-1)
+		objects.tutBtnIcon.x=minX+stepX*nextPicID
+
+		this.activePicID=nextPicID
+		
+		const incomingX = 400 + dir * 400
+		const outgoingX = 400 - dir * 400
+
+		objects.tutPics[0].x = 400
+		objects.tutPics[1].x = incomingX
+		this.setPic(1, this.activePicID)
+
+		anim3.add(objects.tutPics[0], { x: [400, outgoingX, 'linear'] }, true, 0.2)
+		await anim3.add(objects.tutPics[1], { x: [incomingX, 400, 'linear'] }, true, 0.2)
+
+		objects.tutPics[0].x = 400
+		objects.tutPics[1].x = incomingX
+		this.setPic(0, this.activePicID)
+
+	},
+	
+	close(){
+		
+		anim3.add(objects.tutCont, {alpha: [1, 0, 'linear']}, false, 1)
+		
+	},
+	
+	bcgDown(e){
+		
+		if (anim3.any_on()) {
+			sound.play('locked');
+			return;
+		}
+		
+		const mx=e.data.global.x/app.stage.scale.x
+		if(mx<210) this.switch_down(-1)
+		if(mx>580) this.switch_down(1)
+			
+		if (this.activePicID===this.header1data.length-1)
+			if (mx>270&&mx<540)
+				this.close()
+		
+	}
+	
+}
+
 stickers = {
 
 	page:0,
@@ -8493,7 +8595,7 @@ main_loader={
 		loader.add('loader_bar_bcg',git_src+'res/common/loader_bar_bcg_img.png');
 
 		//добавляем основной загрузочный манифест
-		loader.add('main_load_list',git_src+'load_list.txt');
+		loader.add('main_load_list',git_src+'main_load_list.txt');
 
 		await new Promise(res=>loader.load(res))
 
@@ -8503,10 +8605,8 @@ main_loader={
 			assets[res_name]=res.texture||res.sound||res.data;
 		}
 
-
 		//элементы загрузки
 		objects.loader_cont=new PIXI.Container();
-
 
 		objects.bcg=new PIXI.Sprite(assets.loader_bcg);
 		objects.bcg.width=820;
@@ -8541,7 +8641,6 @@ main_loader={
 	},
 
 	async load2(){
-
 
 		const loader=new PIXI.Loader();
 
@@ -8604,6 +8703,44 @@ main_loader={
 		this.divide_texture(assets.botLevelsPack,135,195,'botLevelsImg')
 
 		//создаем спрайты и массивы спрайтов и запускаем первую часть кода
+		this.process_load_list(load_list)
+		
+		anim3.add(objects.bcg, {alpha: [1, 0, 'linear']}, false, 0.5);
+		await anim3.add(objects.loader_cont, {alpha: [1, 0, 'linear']}, false, 0.5);
+		objects.bcg.texture=assets.bcg;
+		await anim3.add(objects.bcg, {alpha: [0, 1, 'linear']}, true, 0.5);
+	},
+
+	async loadTut(){
+		
+		const loader=new PIXI.Loader()
+		const langPack=['RUS','ENG'][LANG];
+				
+		//добавляем основной загрузочный манифест
+		loader.add('tut_load_list',git_src+'tut_load_list.txt')
+		await new Promise(res=>loader.load(res))
+				
+		//добавляем из листа загрузки
+		const load_list=eval(loader.resources.tut_load_list.data);
+		for (let i = 0; i < load_list.length; i++)
+			if (load_list[i].class ==='sprite'|| load_list[i].class ==='image')
+				loader.add(load_list[i].name, git_src+`res/TUT_${langPack}/` + load_list[i].name + '.' +  load_list[i].image_format);
+		
+		await new Promise(res=> loader.load(res));
+		
+		//переносим все в ассеты
+		for (const res_name in loader.resources){
+			const res=loader.resources[res_name];
+			assets[res_name]=res.texture||res.sound||res.data;
+		}
+		
+		this.process_load_list(load_list)
+		
+	},
+
+	process_load_list(load_list){
+		
+		//создаем спрайты и массивы спрайтов и запускаем первую часть кода		
 		for (let i = 0; i < load_list.length; i++) {
 			const obj_class = load_list[i].class;
 			const obj_name = load_list[i].name;
@@ -8616,6 +8753,8 @@ main_loader={
 				break;
 
 			case "block":
+				if (obj_name==='cells')
+					console.log(load_list[i].code)
 				eval(load_list[i].code0);
 				break;
 
@@ -8624,9 +8763,9 @@ main_loader={
 				break;
 
 			case "array":
-				const a_size=load_list[i].size;
+				var a_size=load_list[i].size;
 				objects[obj_name]=[];
-				for (let n=0;n<a_size;n++)
+				for (var n=0;n<a_size;n++)
 					eval(load_list[i].code0);
 				break;
 			}
@@ -8653,18 +8792,15 @@ main_loader={
 				break;
 
 			case "array":
-				const a_size=load_list[i].size;
-					for (let n=0;n<a_size;n++)
+				var a_size=load_list[i].size;
+					for (var n=0;n<a_size;n++)
 						eval(load_list[i].code1);	;
 				break;
 			}
 		}
 
-		anim3.add(objects.bcg, {alpha: [1, 0, 'linear']}, false, 0.5);
-		await anim3.add(objects.loader_cont, {alpha: [1, 0, 'linear']}, false, 0.5);
-		objects.bcg.texture=assets.bcg;
-		await anim3.add(objects.bcg, {alpha: [0, 1, 'linear']}, true, 0.5);
 	}
+
 
 }
 
@@ -8911,6 +9047,9 @@ async function init_game_env(lang) {
 	lobby.activate()
 	
 	await trnm.check_trnm_winner()
+	
+	//туториал
+	if (!my_data.games) tut.activate()	
 	
 	//ready api yandex
 	if (gamePlatform==='YANDEX')
