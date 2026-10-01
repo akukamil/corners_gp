@@ -8241,6 +8241,19 @@ auth2 = {
 
 	},
 
+	async search_in_crazygames(){
+		if(!window.CrazyGames.SDK)
+			return {};
+		
+		let user_data='';
+		try{
+			user_data = await window.CrazyGames.SDK.user.getUser()||{}
+		}catch(e){
+			return {};
+		}
+		return user_data
+	},
+
 	search_in_local_storage() {
 
 		//ищем в локальном хранилище
