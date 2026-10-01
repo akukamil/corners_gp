@@ -4523,7 +4523,14 @@ ad={
 				await window.pikabuSDK.ads.fullscreen.show()
 		}
 		
-		
+		if (gamePlatform==='CRAZYGAMES') {
+			const callbacks = {
+				adFinished: () => console.log("End midgame ad (callback)"),
+				adError: (error) => console.log("Error midgame ad (callback)", error),
+				adStarted: () => console.log("Start midgame ad (callback)"),
+			};
+			window.CrazyGames.SDK.ad.requestAd("midgame", callbacks);		
+		}
 		
 		PIXI.sound.unmuteAll()
 		
@@ -8978,11 +8985,11 @@ async function init_game_env(lang) {
 	window.addEventListener('keydown',event=>{keyboard.keydown(event.key)})
 
 	//загрузка сокета
-	objects.id_log.text='Подключение к серверу my_ws...'
+	objects.id_log.text=['Подключение к серверу my_ws...','Connecting to game server...'][LANG]
 	await my_ws.init();
 	
 	//получаем данные
-	objects.id_log.text='Запрос к Google... '
+	objects.id_log.text=['Запрос к Google... ','Connecting to google...'][LANG]
 	const other_data=await fbs_once('players/' + my_data.uid)
 
 	//сервисное сообщение
@@ -9029,7 +9036,7 @@ async function init_game_env(lang) {
 	}
 
 	//загружаем дизайн
-	objects.id_log.text='Загрузка текстур... '
+	objects.id_log.text=['Загрузка текстур... ','Loading textures...'][LANG]
 	pref.init()
 	await pref.load_design(my_data.design_id)
 
@@ -9068,7 +9075,7 @@ async function init_game_env(lang) {
 	setInterval(function(){keep_alive()}, 40000);
 
 	//ждем загрузки чата
-	objects.id_log.text='Загрузка общего чата... '
+	objects.id_log.text=['Загрузка общего чата... ','Loading chat...'][LANG]
 	await chat.init()
 
 	//контроль за присутсвием
