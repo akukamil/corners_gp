@@ -3247,6 +3247,7 @@ trnm={
 	
 	stop_reg_process(){
 		
+		if (!this.reg_process_on) return
 		this.reg_process_on=0
 		clearInterval(this.sec_to_start_timer)
 		fbs.ref('trnm/tm_to_start').off()
@@ -3610,7 +3611,7 @@ trnm={
 		fbs.ref('trnm/state_data').off()
 		fbs.ref('trnm/tables').off()
 		fbs.ref('trnm/players').off()
-		clearInterval(this.sec_to_start_timer)
+		this.stop_reg_process()
 	}
 
 }
@@ -6930,6 +6931,7 @@ lobby={
 		//это одноразовые сообщения
 		let info_data=safe_ls('corners_info')
 		if(!(info_data?.id===this.INFO_MSG_ID)){
+			if (LANG===1) return
 			info_data={read:0,id:this.INFO_MSG_ID}
 			safe_ls('corners_info',info_data)
 			objects.lobby_info_btn.alpha=info_data.read?0.25:1
