@@ -3738,7 +3738,7 @@ game = {
 		
 		//обозначаем какой сейчас ход
 		this.round=0
-		objects.cur_move_text.text=['Ход: ','Move: '][LANG]+this.round
+		objects.cur_move_text.text=['Раунд: ','Round: '][LANG]+this.round
 
 		//включаем взаимодейтсвие с доской
 		objects.board.pointerdown = game.mouse_down_on_board.bind(game)
@@ -3906,7 +3906,7 @@ game = {
 
 		if (my_role === 'slave') {
 			this.round++;
-			objects.cur_move_text.text=['cделано ходов: ','made moves: '][LANG]+this.round;
+			objects.cur_move_text.text=['Раунд: ','Round: '][LANG]+this.round;
 			const result = brd_func.get_brd_state(g_board, this.round);
 			if (result !== '') {
 				this.stop(result);
