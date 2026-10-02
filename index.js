@@ -2256,8 +2256,9 @@ online_game = {
 
 	showThinkingTime(my,opp){
 		
-		objects.myThinkTime.text=my+' сек.'
-		objects.oppThinkTime.text=opp+' сек.'
+		const u=[' сек.',' sec.'][LANG]
+		objects.myThinkTime.text=my+u
+		objects.oppThinkTime.text=opp+u
 		anim3.add(objects.thinkTimeCont,{alpha:[0,0.9,'easeBridge']}, false, 3.5,false);
 	},
 
@@ -3166,7 +3167,7 @@ trnm={
 			
 			if (players_cache[this.winner_uid]){
 				const winner_name=players_cache[this.winner_uid].name
-				objects.trnm_info2.text=`Победитель: ${winner_name}`
+				objects.trnm_info2.text=[`Победитель: ${winner_name}`,`Winner: ${winner_name}`][LANG]
 			}else{
 				players_cache.update(this.winner_uid)
 			}				
@@ -5202,7 +5203,9 @@ chat={
 		
 		if (my_data.games<this.games_to_gif){
 			const left_to_play=this.games_to_gif-my_data.games
-			pmsg.add({t:`Только для игроков сыгравших более ${this.games_to_gif} игр.\nОсталось сыграть: ${left_to_play}`,snd:'locked'})
+			pmsg.add({t:
+			[`Только для игроков сыгравших более ${this.games_to_gif} игр.\nОсталось сыграть: ${left_to_play}`,`Need to play ${this.games_to_gif} games`][LANG]
+			,snd:'locked'})
 			return
 		}
 			
@@ -5443,7 +5446,9 @@ chat={
 
 		if (my_data.games<this.games_to_chat){
 			const left_to_play=this.games_to_chat-my_data.games
-			pmsg.add({t:`Только для игроков сыгравших более ${this.games_to_chat} игр.\nОсталось сыграть: ${left_to_play}`,snd:'locked'})
+			pmsg.add({t:
+			[`Только для игроков сыгравших более ${this.games_to_chat} игр.\nОсталось сыграть: ${left_to_play}`,`Need to play ${this.games_to_chat} games`][LANG],
+			snd:'locked'})
 			return
 		}
 
@@ -6390,7 +6395,7 @@ pref={
 		}
 		
 		if (!my_data.trnm_winner&&design_data.trnm_winner){
-			this.send_info(`Только для победителей турнира`)
+			this.send_info(['Только для победителей турнира','Only for tournament winners'][LANG])
 			sound.play('locked')
 			return
 		}
