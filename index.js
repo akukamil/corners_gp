@@ -3987,7 +3987,7 @@ game = {
 
 		if (my_role === 'master') {
 			this.round++;
-			objects.cur_move_text.text="сделано ходов: "+this.round;
+			objects.cur_move_text.text=['Раунд: ','Round: '][LANG]+this.round;
 
 			let result = brd_func.get_brd_state(g_board, this.round);
 
@@ -4279,7 +4279,7 @@ game_watching={
 		
 		gameHistForNN.push({tm:Date.now(),gameWatchEvent:1,on:this.on})
 
-		if (move) objects.cur_move_text.text=['сделано ходов: ','made moves: '][LANG]+move;
+		if (move) objects.cur_move_text.text=['Раунд: ','Round: '][LANG]+move;
 
 	},
 
