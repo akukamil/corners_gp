@@ -3542,7 +3542,7 @@ trnm={
 			fbs.ref('trnm/events').push({game_end:online_game.gid,winner:my_data.uid,table_id:this.table_id})
 		if (e===DRAW){
 			const winner=myThinkingTimeAdv>0?my_data.uid:opp_data.uid
-			fbs.ref('trnm/events').push({game_end:online_game.gid,winner,table_id:this.table_id,tm:Date.now()})			
+			fbs.ref('trnm/events').push({game_end:online_game.gid,winner,table_id:this.table_id})			
 		}
 
 	},
