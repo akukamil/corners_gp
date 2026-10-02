@@ -8692,18 +8692,18 @@ main_loader={
 		objects.loader_bar_mask.drawRect(0, 0, 240, 50);
 		objects.loader_bar_mask.endFill(0xff0000);
 		objects.loader_bar_mask.x=280;
-		objects.loader_bar_mask.y=370;
+		objects.loader_bar_mask.y=390;
 		objects.loader_bar_mask.width=0;
 
 		objects.loader_bar_frame=new PIXI.Sprite(assets.loader_bar_frame);
 		objects.loader_bar_frame.x=270;
-		objects.loader_bar_frame.y=370;
+		objects.loader_bar_frame.y=390;
 		objects.loader_bar_frame.width=260;
 		objects.loader_bar_frame.height=50;
 
 		objects.loader_bar_bcg=new PIXI.Sprite(assets.loader_bar_bcg);
 		objects.loader_bar_bcg.x=270;
-		objects.loader_bar_bcg.y=370;
+		objects.loader_bar_bcg.y=390;
 		objects.loader_bar_bcg.width=260;
 		objects.loader_bar_bcg.height=50;
 		objects.loader_bar_bcg.mask=objects.loader_bar_mask;
