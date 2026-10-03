@@ -1,10 +1,7 @@
 let M_WIDTH=800, M_HEIGHT=450;
 let app ={stage:{},renderer:{}}, assets={}, SERVER_TM=0,fbs,client_id, objects={}, state="", my_role="", game_tick=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=-5, h_state=0, gamePlatform="",git_src='', ROOM_NAME = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process={}, my_data={opp_id : ''},opp_data={}, game_name='corners';
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
-const MAX_NO_AUTH_RATING=1950;
-const MAX_NO_REP_RATING=1910;
 const MAX_NO_CONF_RATING=1800;
-const DAYS_TO_CONF_RATING=7;
 const COM_URL='https://akukamil.github.io/com'
 const RATING_FOR_ALPHA=1720
 let gameHistForNN=[]
@@ -2039,12 +2036,6 @@ online_game = {
 		my_data.totalThinkTime=0
 		//if (my_turn) my_data.totalThinkTime=-3
 		
-		//сколько игрок играл с этим соперником
-		const prv_plays=this.count_in_arr(this.last_opps,opp_data.uid)
-		this.NO_RATING_GAME=(!this.blind_game_flag&&this.prv_plays>6&&my_data.rating>MAX_NO_REP_RATING)?1:0
-		if (this.NO_RATING_GAME)
-			this.no_rating_msg_timer=setTimeout(()=>{pmsg.add({t:'Выбирайте разных соперников для получения и подтверждения рейтинга'})},5000)
-
 		//обновляем стол
 		if (params.role==='slave'){
 			fbs.ref('tables/'+this.gid+'/master').set(opp_data.uid)			
@@ -2396,20 +2387,6 @@ online_game = {
 		let auth_msg='';
 		const old_rating = my_data.rating;
 		my_data.rating = this.calc_new_rating(my_data.rating, result_number);
-		let NO_AUTH_NO_RATING=0;
-		if (my_data.rating>MAX_NO_AUTH_RATING&&!my_data.auth_mode){
-			my_data.rating=MAX_NO_AUTH_RATING;
-			NO_AUTH_NO_RATING=1;
-			auth_msg=`Рейтинг более ${MAX_NO_AUTH_RATING} не доступен игрокам без авторизации(((`;			
-		} 
-		if (this.NO_RATING_GAME) {
-			my_data.rating=old_rating;
-			auth_msg='Выбирайте разных соперников для получения рейтинга';
-		}
-
-		//максимальный рейтинг как наказание
-		if (my_data.max_rating&&my_data.rating>my_data.max_rating)
-			my_data.rating=my_data.max_rating
 
 		//записываем рейтинг в базу
 		fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating);
@@ -9054,12 +9031,6 @@ async function init_game_env(lang) {
 	objects.id_avatar.set_texture(players_cache[my_data.uid].texture)
 	objects.id_name.set2(my_data.name,150)
 	objects.id_rating.text=my_data.rating
-
-	//максимальный рейтинг как за нарушения
-	if (other_data&&other_data.max_rating&&my_data.rating>other_data.max_rating){
-		my_data.max_rating=my_data.rating=other_data.max_rating
-		pmsg.add({t:`Вам недоступен рейтинг более ${my_data.max_rating}`});
-	}
 
 	//загружаем дизайн
 	objects.id_log.text=['Загрузка текстур... ','Loading textures...'][LANG]
