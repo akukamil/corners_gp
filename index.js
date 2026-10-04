@@ -5443,7 +5443,7 @@ chat={
 				
 				this.payments.purchase({id:item_id}).then(purchase => {
 					this.unblock_chat(block_num)
-					my_ws.safe_send({cmd:'log_inst',logger:'payments',data:{game_name,uid:my_data.uid,name:my_data.name,item_id}});
+					my_ws.safe_send({cmd:'logToFile',file:'payments',data:{game_name,uid:my_data.uid,name:my_data.name,item_id}});
 				}).catch(err => {
 					pmsg.add({t:'Ошибка при покупке!'});
 				})
@@ -5453,7 +5453,7 @@ chat={
 
 				vkBridge.send('VKWebAppShowOrderBox', {type:'item',item:item_id}).then(data =>{
 					this.unblock_chat(block_num)
-					my_ws.safe_send({cmd:'log_inst',logger:'payments',data:{game_name,uid:my_data.uid,name:my_data.name,item_id}});
+					my_ws.safe_send({cmd:'logToFile',file:'payments',data:{game_name,uid:my_data.uid,name:my_data.name,item_id}});
 				}).catch((err) => {
 					pmsg.add({t:'Ошибка при покупке!'});
 				});
