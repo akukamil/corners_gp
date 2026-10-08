@@ -7932,12 +7932,16 @@ tut={
 		['НАЖМИТЕ ЧТОБЫ ЗАВЕРШИТЬ ТУТОРИАЛ И ПРИСТУПИТЬ К ИГРЕ', 'CLICK TO FINISH TUTORIAL']
 	],
 	activePicID:0,
-	
+	closeResolver:0,
 	async activate(){
 		
 		await main_loader.loadTut()
 		anim3.add(objects.tutCont, {alpha: [0, 1, 'linear']}, true, 1)
 		this.switch_down(0)
+		
+		return new Promise(r=>{
+			this.closeResolver=r
+		})
 	},
 	
 	setPic(picHolderID,picID){	
@@ -7987,6 +7991,7 @@ tut={
 	
 	close(){
 		
+		this.closeResolver(1)
 		sound.play('close')
 		anim3.add(objects.tutCont, {alpha: [1, 0, 'linear']}, false, 1)
 		
@@ -9100,6 +9105,9 @@ async function init_game_env(lang) {
 	some_process.loup_anim = function(){}
 	objects.id_loup.visible=false
 	
+	//туториал
+	if (!my_data.games) await tut.activate()		
+	
 	//отображаем лидеров вчерашнего дня
 	top3.activate()
 	
@@ -9108,8 +9116,7 @@ async function init_game_env(lang) {
 	
 	await trnm.check_trnm_winner()
 	
-	//туториал
-	if (!my_data.games) tut.activate()	
+
 	
 	//ready api
 	if (gamePlatform==='YANDEX') window.ysdk.features.LoadingAPI.ready()
