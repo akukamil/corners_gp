@@ -8650,7 +8650,7 @@ main_loader={
 		loader.add('loader_bcg',git_src+`res/common/loader_bcg_${['ru','en'][LANG]}_img.jpg`);
 		loader.add('loader_bar_frame',git_src+'res/common/loader_bar_frame_img.png');
 		loader.add('loader_bar_bcg',git_src+'res/common/loader_bar_bcg_img.png');
-		loader.add('harpseal',COM_URL+"/fonts/harpseal_numbers_48/f.fnt");
+		loader.add('harpseal',COM_URL+"/fonts/harpseal_numbers_64/f.fnt");
 
 		//добавляем основной загрузочный манифест
 		loader.add('main_load_list',git_src+'main_load_list.txt');
@@ -8693,11 +8693,11 @@ main_loader={
 		objects.loader_bar_bcg.height=50;
 		objects.loader_bar_bcg.mask=objects.loader_bar_mask;
 		
-		objects.tLoaderProgress=new PIXI.BitmapText('', {fontName: 'harpseal_numbers_48',fontSize:35,align: 'center'})
+		objects.tLoaderProgress=new PIXI.BitmapText('', {fontName: 'harpseal_numbers_64',fontSize:35,align: 'center'})
 		objects.tLoaderProgress.tint=0xF4B183
 		objects.tLoaderProgress.anchor.set(0.5,0.5)
 		objects.tLoaderProgress.x=405
-		objects.tLoaderProgress.y=420
+		objects.tLoaderProgress.y=422
 
 
 		objects.loader_cont.addChild(objects.loader_bar_bcg,objects.loader_bar_frame,objects.loader_bar_mask,objects.tLoaderProgress);
