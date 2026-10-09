@@ -8889,7 +8889,7 @@ async function init_game_env(lang) {
 	//авторизация
 	await auth2.init()
 
-	document.body.innerHTML='<style>html,body {margin: 0;padding: 0;height: 100%;}body {display: flex;align-items:center;justify-content: center;background-color: rgba(41,41,41,1)}</style>';
+	document.body.innerHTML='<style>html,body {margin: 0;padding: 0;height: 100%;}body {display: flex;align-items:center;justify-content: center;background-color: rgba(0,70,70,1)}</style>';
 
 	const dw=M_WIDTH/document.body.clientWidth;
 	const dh=M_HEIGHT/document.body.clientHeight;
