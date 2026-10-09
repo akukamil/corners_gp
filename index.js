@@ -6030,6 +6030,7 @@ bg={
 		
 		//соло бонус если нету соперника
 		if (msg.bgame===2){
+			sound.play('free_energy')
 			trnm.send_info3('Не нашли соперника, +10 к энергии!')
 			pref.change_energy(10)
 			return
@@ -8398,7 +8399,7 @@ auth2 = {
 }
 
 top3={
-
+	
 	async activate(path){
 
 		const top3=await my_ws.get(path||'day_top3')
@@ -8436,7 +8437,8 @@ top3={
 
 	process(){
 
-		objects.day_top3_sunrays.rotation+=0.01
+		objects.day_top3_sunrays.rotation=Math.sin(TM.s*0.1)
+		objects.day_top3_sunrays.scale_xy=Math.sin(TM.s*0.5)*0.1+0.7
 
 	},
 
@@ -8740,6 +8742,7 @@ main_loader={
 		loader.add('confirm_dlg',git_src+'sounds/confirm_dlg.mp3');
 		loader.add('top3',git_src+'sounds/top3.mp3');
 		loader.add('trnm_event',git_src+'sounds/trnm_event.mp3');
+		loader.add('free_energy',git_src+'sounds/free_energy.mp3');
 
 
 		//loader.add('cards_design_pack', git_src+'res/RUS/cards_designs/cards_design_pack.png');
