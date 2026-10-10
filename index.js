@@ -1,5 +1,5 @@
 let M_WIDTH=800, M_HEIGHT=450;
-let app ={stage:{},renderer:{}}, assets={}, SERVER_TM=0,fbs,client_id, objects={}, state="", my_role="", game_tick=0, my_turn=0, connected = 1, LANG = 0, min_move_amount=-5, h_state=0, gamePlatform="",git_src='', ROOM_NAME = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process={}, my_data={opp_id : ''},opp_data={}, game_name='corners';
+let app ={stage:{},renderer:{}}, assets={}, SERVER_TM=0,fbs,client_id, objects={}, state="", my_role="", game_tick=0, my_turn=0, connected = 1, LANG = 0, h_state=0, gamePlatform="",git_src='', ROOM_NAME = '', g_board=[], players="",moving_chip=null, pending_player="",tm={}, some_process={}, my_data={opp_id : ''},opp_data={}, game_name='corners';
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 const MAX_NO_CONF_RATING=1800;
 const COM_URL='https://akukamil.github.io/com'
@@ -1071,6 +1071,192 @@ big_msg = {
 brd_funcU={
 
 	move_end_callback(){},
+	moveFunc:{
+		check_in_hist(x,y, hist) {
+			for (let i=0;i<hist.length;i++)
+				if (x===hist[i][0] && y===hist[i][1])
+					return true;
+			return false;
+		},
+
+		left(ix,iy,cur_boardU,moves_hist,boards_array) {
+
+			let new_x=ix-1;
+			let new_y=iy;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return
+
+			if (cur_boardU[new_y*8+new_x]===0) {
+				const oldPos=iy*8+ix
+				cur_boardU[new_y*8+new_x]=cur_boardU[oldPos];
+				cur_boardU[oldPos]=0;
+				boards_array.push({brd:new Uint8Array(cur_boardU),x1:ix,y1:iy,x2:new_x,y2:new_y});
+				return;
+			}
+			else {
+				this.left_combo(ix,iy,cur_boardU,moves_hist,boards_array);
+			}
+		},
+
+		right(ix,iy,cur_boardU,moves_hist,boards_array) {
+			let new_x=ix+1;
+			let new_y=iy;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
+
+			if (cur_boardU[new_y*8+new_x]===0) {
+				const oldPos=iy*8+ix
+				cur_boardU[new_y*8+new_x]=cur_boardU[oldPos];
+				cur_boardU[oldPos]=0;
+				boards_array.push({brd:new Uint8Array(cur_boardU),x1:ix,y1:iy,x2:new_x,y2:new_y});
+				return
+			} else {
+				this.right_combo(ix,iy,cur_boardU,moves_hist,boards_array);
+			}
+		},
+
+		up(ix,iy,cur_boardU,moves_hist,boards_array){
+			let new_x=ix;
+			let new_y=iy-1;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
+
+			if (cur_boardU[new_y*8+new_x]===0) {
+				const oldPos=iy*8+ix
+				cur_boardU[new_y*8+new_x]=cur_boardU[oldPos];
+				cur_boardU[oldPos]=0;
+				boards_array.push({brd:new Uint8Array(cur_boardU),x1:ix,y1:iy,x2:new_x,y2:new_y});
+				return
+			} else {
+				this.up_combo(ix,iy,cur_boardU,moves_hist,boards_array);
+			}
+		},
+
+		down(ix,iy,cur_boardU,moves_hist,boards_array){
+			let new_x=ix;
+			let new_y=iy+1;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
+
+			if (cur_boardU[new_y*8+new_x]===0) {
+				const oldPos=iy*8+ix
+				cur_boardU[new_y*8+new_x]=cur_boardU[oldPos];
+				cur_boardU[oldPos]=0;
+				boards_array.push({brd:new Uint8Array(cur_boardU),x1:ix,y1:iy,x2:new_x,y2:new_y});
+				return
+			} else {
+				this.down_combo(ix,iy,cur_boardU,moves_hist,boards_array);
+			}
+		},
+
+		left_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
+
+			let new_x=ix-2;
+			let new_y=iy;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
+			if (cur_boardU[iy*8+ix-1]===0) return;
+
+			if (cur_boardU[new_y*8+new_x]===0)
+			{
+
+				if (this.check_in_hist(new_x,new_y,moves_hist)===true) return;
+
+				moves_hist.push([new_x,new_y]);
+				const oldPos=iy*8+ix
+				cur_boardU[new_y*8+new_x]=cur_boardU[oldPos];
+				cur_boardU[oldPos]=0;
+
+				boards_array.push({brd:new Uint8Array(cur_boardU),x1:moves_hist[0][0],y1:moves_hist[0][1],x2:new_x,y2:new_y});
+
+				//продолжаем попытки комбо
+				this.left_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				this.up_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				this.down_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+			}
+		},
+
+		right_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
+
+			let new_x=ix+2;
+			let new_y=iy;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
+			if (cur_boardU[iy*8+ix+1]===0) return;
+
+			if (cur_boardU[new_y*8+new_x]===0)
+			{
+
+				if (this.check_in_hist(new_x,new_y,moves_hist)===true) return;
+
+				moves_hist.push([new_x,new_y]);
+				const oldPos=iy*8+ix
+				cur_boardU[new_y*8+new_x]=cur_boardU[oldPos];
+				cur_boardU[oldPos]=0;
+
+				boards_array.push({brd:new Uint8Array(cur_boardU),x1:moves_hist[0][0],y1:moves_hist[0][1],x2:new_x,y2:new_y});
+
+				//продолжаем попытки комбо
+				this.right_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				this.up_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				this.down_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+			}
+		},
+
+		up_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
+
+			let new_x=ix;
+			let new_y=iy-2;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
+			if (cur_boardU[(iy-1)*8+ix]===0) return;
+
+			if (cur_boardU[new_y*8+new_x]===0)
+			{
+
+				if (this.check_in_hist(new_x,new_y,moves_hist)===true) return;
+
+				moves_hist.push([new_x,new_y]);
+				const oldPos=iy*8+ix
+				cur_boardU[new_y*8+new_x]=cur_boardU[oldPos];
+				cur_boardU[oldPos]=0;
+
+				boards_array.push({brd:new Uint8Array(cur_boardU),x1:moves_hist[0][0],y1:moves_hist[0][1],x2:new_x,y2:new_y});
+
+				//продолжаем попытки комбо
+				this.right_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				this.up_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				this.left_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+			}
+		},
+
+		down_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
+
+			let new_x=ix;
+			let new_y=iy+2;
+
+			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
+			if (cur_boardU[(iy+1)*8+ix]===0) return;
+
+			if (cur_boardU[new_y*8+new_x]===0)
+			{
+				if (this.check_in_hist(new_x,new_y,moves_hist)===true) return;
+
+				moves_hist.push([new_x,new_y]);
+				const oldPos=iy*8+ix
+				cur_boardU[new_y*8+new_x]=cur_boardU[oldPos];
+				cur_boardU[oldPos]=0;
+
+				boards_array.push({brd:new Uint8Array(cur_boardU),x1:moves_hist[0][0],y1:moves_hist[0][1],x2:new_x,y2:new_y});
+
+				//продолжаем попытки комбо
+				this.right_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				this.down_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+				this.left_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
+			}
+		}
+		
+	},
 	
 	show_home_area(brd,line_style={width:1.8,alpha:0.65,color:0x55ff99,cap:PIXI.LINE_CAP.ROUND}){
 
@@ -1094,7 +1280,6 @@ brd_funcU={
 			}
 		}
 		
-		
 	},
 	
 	brdToU(brd){
@@ -1110,250 +1295,35 @@ brd_funcU={
 		return moveData.x1+''+moveData.y1+''+moveData.x2+''+moveData.y2
 	},
 	
-	getChilds(board_dataU, checkers, forward){
-
-		function check_in_hist(x,y, hist) {
-			for (let i=0;i<hist.length;i++)
-				if (x===hist[i][0] && y===hist[i][1])
-					return true;
-			return false;
-		}
-
-		function left(ix,iy,cur_boardU,moves_hist,boards_array) {
-
-			let new_x=ix-1;
-			let new_y=iy;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0) {
-				cur_boardU[iy*8+ix]=0;
-				cur_boardU[new_y*8+new_x]=checkers;
-				boards_array.push({brd:new Uint8Array(cur_boardU),x1:ix,y1:iy,x2:new_x,y2:new_y});
-				return;
-			}
-			else {
-				left_combo(ix,iy,cur_boardU,moves_hist,boards_array);
-			}
-		}
-
-		function right(ix,iy,cur_boardU,moves_hist,boards_array) {
-			let new_x=ix+1;
-			let new_y=iy;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0) {
-				cur_boardU[iy*8+ix]=0;
-				cur_boardU[new_y*8+new_x]=checkers;
-				boards_array.push({brd:new Uint8Array(cur_boardU),x1:ix,y1:iy,x2:new_x,y2:new_y});
-				return
-			} else {
-				right_combo(ix,iy,cur_boardU,moves_hist,boards_array);
-			}
-		}
-
-		function up(ix,iy,cur_boardU,moves_hist,boards_array){
-			let new_x=ix;
-			let new_y=iy-1;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0) {
-				cur_boardU[iy*8+ix]=0;
-				cur_boardU[new_y*8+new_x]=checkers;
-				boards_array.push({brd:new Uint8Array(cur_boardU),x1:ix,y1:iy,x2:new_x,y2:new_y});
-				return
-			} else {
-				up_combo(ix,iy,cur_boardU,moves_hist,boards_array);
-			}
-		}
-
-		function down(ix,iy,cur_boardU,moves_hist,boards_array){
-			let new_x=ix;
-			let new_y=iy+1;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0) {
-				cur_boardU[iy*8+ix]=0;
-				cur_boardU[new_y*8+new_x]=checkers;
-				boards_array.push({brd:new Uint8Array(cur_boardU),x1:ix,y1:iy,x2:new_x,y2:new_y});
-				return
-			} else {
-				down_combo(ix,iy,cur_boardU,moves_hist,boards_array);
-			}
-		}
-
-		function left_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
-
-			let new_x=ix-2;
-			let new_y=iy;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-			if (cur_boardU[iy*8+ix-1]===0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0)
-			{
-
-				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
-
-				moves_hist.push([new_x,new_y]);
-				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
-				cur_boardU[iy*8+ix]=0;
-
-				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
-				if (cur_boardU[new_y*8+new_x]===1)
-					d_move=-d_move;
-
-				if (d_move>min_move_amount)
-					boards_array.push({brd:new Uint8Array(cur_boardU),x1:moves_hist[0][0],y1:moves_hist[0][1],x2:new_x,y2:new_y});
-
-				//продолжаем попытки комбо
-				left_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				up_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				down_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-			}
-		}
-
-		function right_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
-
-			let new_x=ix+2;
-			let new_y=iy;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-			if (cur_boardU[iy*8+ix+1]===0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0)
-			{
-
-				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
-
-				moves_hist.push([new_x,new_y]);
-				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
-				cur_boardU[iy*8+ix]=0;
-
-				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
-				if (cur_boardU[new_y*8+new_x]===1)
-					d_move=-d_move;
-
-				if (d_move>min_move_amount)
-					boards_array.push({brd:new Uint8Array(cur_boardU),x1:moves_hist[0][0],y1:moves_hist[0][1],x2:new_x,y2:new_y});
-
-				//продолжаем попытки комбо
-				right_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				up_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				down_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-			}
-		}
-
-		function up_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
-
-			let new_x=ix;
-			let new_y=iy-2;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-			if (cur_boardU[(iy-1)*8+ix]===0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0)
-			{
-
-				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
-
-				moves_hist.push([new_x,new_y]);
-				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
-				cur_boardU[iy*8+ix]=0;
-
-				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
-				if (cur_boardU[new_y*8+new_x]===1)
-					d_move=-d_move;
-
-				if (d_move>min_move_amount)
-					boards_array.push({brd:new Uint8Array(cur_boardU),x1:moves_hist[0][0],y1:moves_hist[0][1],x2:new_x,y2:new_y});
-				
-
-				//продолжаем попытки комбо
-				right_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				up_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				left_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-			}
-		}
-
-		function down_combo(ix,iy,cur_boardU,moves_hist,boards_array) {
-
-			let new_x=ix;
-			let new_y=iy+2;
-
-			if (new_x>7 || new_x<0 || new_y>7 || new_y<0) return;
-			if (cur_boardU[(iy+1)*8+ix]===0) return;
-
-			if (cur_boardU[new_y*8+new_x]===0)
-			{
-				if (check_in_hist(new_x,new_y,moves_hist)===true) return;
-
-				moves_hist.push([new_x,new_y]);
-				cur_boardU[new_y*8+new_x]=cur_boardU[iy*8+ix];
-				cur_boardU[iy*8+ix]=0;
-
-				let d_move=(new_x-moves_hist[0][0])+(new_y-moves_hist[0][1]);
-				if (cur_boardU[new_y*8+new_x]===1)
-					d_move=-d_move;
-
-				if (d_move>min_move_amount)
-					boards_array.push({brd:new Uint8Array(cur_boardU),x1:moves_hist[0][0],y1:moves_hist[0][1],x2:new_x,y2:new_y});
-
-				//продолжаем попытки комбо
-				right_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				down_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-				left_combo(new_x,new_y,cur_boardU,moves_hist,boards_array);
-			}
-		}
+	getChilds(board_dataU, checkers){
 
 		let boards_array=[];
 
-		if (forward===1) {
-
-			if (checkers===1) {
-				for (let y=0;y<8;y++) {
-					for (let x=0;x<8;x++) {
-						if (board_dataU[y*8+x]===checkers) {
-							let moves_hist=[[x,y]];
-							left	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-							up		(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-						}
-					}
-				}
-			}
-
-			if (checkers===2) {
-
-				for (let y=0;y<8;y++) {
-					for (let x=0;x<8;x++) {
-						if (board_dataU[y*8+x]===checkers) {
-							let moves_hist=[[x,y]];
-							right	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-							down	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-						}
-					}
-				}
-			}
-		} else {
-
-			for (let y=0;y<8;y++) {
-				for (let x=0;x<8;x++) {
-					if (board_dataU[y*8+x]===checkers) {
-						let moves_hist=[[x,y]];
-						right	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-						down	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-						left	(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-						up		(		x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
-					}
+		for (let y=0;y<8;y++) {
+			for (let x=0;x<8;x++) {
+				if (board_dataU[y*8+x]===checkers) {
+					let moves_hist=[[x,y]];
+					this.moveFunc.right	(	x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+					this.moveFunc.down	(	x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+					this.moveFunc.left	(	x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+					this.moveFunc.up	(	x,y,	new Uint8Array(board_dataU),	moves_hist, boards_array);
 				}
 			}
 		}
+		return boards_array
+	},
+	
+	getChildsForCell(board_dataU,cy,cx){
 
-		return boards_array;
+		let boards_array=[]
 
+		let moves_hist=[[cx,cy]];
+		this.moveFunc.right	(	cx,cy,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+		this.moveFunc.down	(	cx,cy,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+		this.moveFunc.left	(	cx,cy,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+		this.moveFunc.up	(	cx,cy,	new Uint8Array(board_dataU),	moves_hist, boards_array);
+
+		return boards_array
 	},
 	
 	Uint8Array_to_brd(brdU){
@@ -3638,7 +3608,7 @@ game = {
 		//устанаваем текстуру
 		const brd_tex=pref.design_loader.resources[design_name+'_board'].texture
 		objects.board.texture=brd_tex
-		objects.home_cfg.clear()
+
 		
 		//для проекта альфа	
 		this.errPushed=0
@@ -3765,6 +3735,24 @@ game = {
 
 	},
 
+	showValidMoves(){
+		
+		const sx=this.selectedChecker.ix
+		const sy=this.selectedChecker.iy
+		const brdUINT=brd_funcU.brdToU(g_board)
+		const validMoves=brd_funcU.getChildsForCell(brdUINT,sy,sx)
+		
+		objects.validMoves.clear()
+		objects.validMoves.beginFill(0x111111)
+		objects.validMoves.alpha=0.25
+		for (move of validMoves){
+			
+			objects.validMoves.drawCircle(move.x2*50+25,move.y2*50+25,10)
+			
+		}
+		console.log(validMoves)
+	},
+
 	mouse_down_on_board(e) {
 
 		if (anim3.any_on()) {
@@ -3793,6 +3781,7 @@ game = {
 		let new_y=Math.floor(8*(my-objects.board.y-30)/400);
 		if (pref.flipX) new_x=7-new_x
 		if (pref.flipY) new_y=7-new_y
+		objects.validMoves.clear()
 
 		//если выбрана новая шашка
 		if (!this.selectedChecker) {
@@ -3808,7 +3797,8 @@ game = {
 
 				//воспроизводим соответствующий звук
 				sound.play('move');
-
+				
+				this.showValidMoves()
 				return;
 			}
 			else
@@ -4108,8 +4098,7 @@ game_watching={
 		//устанаваем текстуру
 		const brd_tex=pref.design_loader.resources[design_name+'_board'].texture
 		objects.board.texture=brd_tex
-		objects.home_cfg.clear()				
-		
+	
 		objects.gw_master_chip.texture=brd_func.chips_tex[1]=chips_tex[1]
 		objects.gw_slave_chip.texture=brd_func.chips_tex[2]=chips_tex[2]
 
@@ -4797,7 +4786,6 @@ minimax_solver = {
 	minimax_3_single(brdU, moves) {
 
 		this.make_weights_board2(moves);
-		min_move_amount=-3;
 
 		//this.update_weights_board();
 		let m_data=''
@@ -7990,6 +7978,28 @@ tut={
 
 	},
 	
+	
+	async sendShowClick(){
+		
+		objects.tutHand.texture=assets.tutHandImg
+		await anim3.add(objects.tutHand,{x:[800, 70,'linear'],y:[450,50,'linear']}, true, 1);
+		await new Promise(r=>setTimeout(r,500)) 
+		objects.tutHand.texture=assets.tutHandClickImg
+		await new Promise(r=>setTimeout(r,150)) 
+		objects.tutHand.texture=assets.tutHandImg
+		await new Promise(r=>setTimeout(r,150)) 
+		objects.tutHand.texture=assets.tutHandClickImg
+		await new Promise(r=>setTimeout(r,150)) 
+		objects.tutHand.texture=assets.tutHandImg
+		await new Promise(r=>setTimeout(r,150)) 
+		objects.tutHand.texture=assets.tutHandClickImg
+		await new Promise(r=>setTimeout(r,150)) 
+		objects.tutHand.texture=assets.tutHandImg
+		await new Promise(r=>setTimeout(r,550)) 
+		await anim3.add(objects.tutHand,{x:[70,-100,'linear'],y:[50,-100,'linear']}, false, 0.25);
+		
+	},
+	
 	close(){
 		
 		this.closeResolver(1)
@@ -8011,7 +8021,7 @@ tut={
 		const my=e.data.global.y/app.stage.scale.y
 		
 		//кнопка закрытия
-		if (my<80&&mx>610){
+		if (my<90&&mx>600){
 			this.close()
 			return
 		}	
