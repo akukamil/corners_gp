@@ -4499,7 +4499,7 @@ ad={
 		}
 		
 		if (gamePlatform==='RUSTORE') {
-			window
+			window.AndroidBridge.showInterstitial()
 		}
 		
 		if (gamePlatform==='CRAZYGAMES') {
