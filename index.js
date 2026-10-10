@@ -4495,9 +4495,11 @@ ad={
 		}
 		
 		if (gamePlatform==='PIKABU') {
-			const canShowAd = await window.pikabuSDK.ads.fullscreen.canShow();
-			if (canShowAd)
-				await window.pikabuSDK.ads.fullscreen.show()
+			window.AndroidBridge.showInterstitial()
+		}
+		
+		if (gamePlatform==='RUSTORE') {
+			window
 		}
 		
 		if (gamePlatform==='CRAZYGAMES') {
@@ -7653,6 +7655,7 @@ lobby={
 		
 		
 		if(gamePlatform==='PIKABU') return 'statesPIKABU'
+		if(gamePlatform==='RUSTORE') return 'statesPIKABU'
 		if(gamePlatform==='CRAZYGAMES') return 'statesCRAZYGAMES'
 		
 		//номер комнаты в зависимости от рейтинга игрока
@@ -8606,6 +8609,12 @@ async function define_platform_and_language() {
 
 	if (s.includes('pikabu')) {
 		gamePlatform = 'PIKABU';
+		LANG = 0;
+		return;
+	}
+	
+	if (s.includes('rustore')) {
+		gamePlatform = 'RUSTORE';
 		LANG = 0;
 		return;
 	}
