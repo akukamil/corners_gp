@@ -7907,18 +7907,16 @@ tut={
 	page:0,
 	header1data:[
 		['ОСНОВНАЯ ЦЕЛЬ','RULE #1'],
-		['КАК ХОДИТЬ','BASIC MOVE'],
-		['ДЛИННЫЙ ХОД','COMBO MOVE'],
 		['КАК ДВИНУТЬ ШАШКУ','HOW TO MOVE CHECKER'],
+		['ДЛИННЫЙ ХОД','COMBO MOVE'],
 		['ПРАВИЛО 30 ХОДОВ','ESCAPE CHALLENGE'],
 		['КАК НАЧАТЬ ИГРУ','START FIRST GAME'],
 		['КОНЕЦ ТУТОРИАЛА','FINISH']	
 	],
 	header2data: [
 		['ПЕРЕМЕСТИТЕ ВСЕ СВОИ ФИШКИ ИЗ СТАРТОВОГО УГЛА В ПРОТИВОПОЛОЖНЫЙ. ПОБЕЖДАЕТ ПЕРВЫЙ ИГРОК, КОТОРЫЙ СДЕЛАЕТ ЭТО.', 'MOVE ALL YOUR PIECES FROM YOUR STARTING CORNER INTO THE OPPOSITE CORNER. THE FIRST PLAYER TO DO SO WINS.'],
-		['ВЫ МОЖЕТЕ ПЕРЕМЕСТИТЬ СВОЮ ФИШКУ В ЛЮБУЮ НЕЗАНЯТУЮ СОСЕДНЮЮ КЛЕТКУ ПО ГОРИЗОНТАЛИ ИЛИ ВЕРТИКАЛИ', 'ON YOUR TURN, YOU CAN MOVE ONE PIECE TO AN ADJACENT EMPTY SPACE'],
+		['ЧТОБЫ СДЕЛАТЬ ХОД, НАЖМИТЕ НА ФИШКУ, А ЗАТЕМ НА ЦЕЛЕВУЮ КЛЕТКУ. ДОПУСТИМЫЕ ХОДЫ ОТМЕЧЕНЫ ТЕМНЫМИ ТОЧКАМИ.', 'TO MAKE A MOVE CLICK A PIECE AND THEN CLICK TARGET CELL. VALID MOVES ARE MARKED WITH DARK DOT'],
 		['ПЕРЕМЕЩЕНИЕ НА БОЛЬШЕЕ РАССТОЯНИЕ ВОЗМОЖНО ЕСЛИ ЦЕЛЕВУЮ КЛЕТКУ МОЖНО ДОСТИЧЬ ПРЫЖКАМИ ЧЕРЕЗ ДРУГИЕ КЛЕТКИ', 'JUMP OVER ANY PIECE INTO THE EMPTY SPACE DIRECTLY BEYOND IT. YOU CAN MAKE SEVERAL JUMPS WITH THE SAME PIECE DURING ONE TURN.'],
-		['ЧТОБЫ СДЕЛАТЬ ХОД, НАЖМИТЕ НА ФИШКУ, А ЗАТЕМ НА ЦЕЛЕВУЮ КЛЕТКУ.', 'TO MAKE A MOVE CLICK A PIECE AND THEN CLICK TARGET CELL'],
 		['К КОНЦУ 30-ГО РАУНДА ВЫ ДОЛЖНЫ ВЫВЕСТИ ВСЕ СВОИ ФИШКИ ИЗ СТАРТОВОГО УГЛА. ЕСЛИ ХОТЯ БЫ ОДНА ФИШКА ОСТАНЕТСЯ ТАМ, ВЫ ПРОИГРАЕТЕ.', 'BY THE END OF THE 30TH ROUND, YOU MUST HAVE MOVED ALL YOUR CHECKERS OUT OF YOUR STARTING CORNER. IF ANY OF YOUR CHECKERS REMAIN THERE, YOU LOSE.'],
 		['НАЖМИТЕ НА КАРТОЧКУ ИГРОКА, ЧТОБЫ ПРИГЛАСИТЬ ЕГО.', 'TAP THE PLAYER CARD TO INVITE'],
 		['НАЖМИТЕ ЧТОБЫ ЗАВЕРШИТЬ ТУТОРИАЛ И ПРИСТУПИТЬ К ИГРЕ', 'CLICK TO FINISH TUTORIAL']
@@ -7980,8 +7978,7 @@ tut={
 		this.setPic(0, this.activePicID)
 
 	},
-	
-	
+		
 	async sendShowClick(){
 		
 		objects.tutHand.texture=assets.tutHandImg
@@ -8007,7 +8004,7 @@ tut={
 		
 		this.closeResolver(1)
 		sound.play('close')
-		anim3.add(objects.tutCont, {alpha: [1, 0, 'linear']}, false, 1)
+		anim3.add(objects.tutCont, {alpha: [1, 0, 'linear']}, false, 0.25)
 		
 	},
 	
