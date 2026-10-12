@@ -3643,8 +3643,8 @@ game = {
 		this.move_processor=this.process_my_move
 		
 
-		//убираем бонусы
-		//objects.bonuses.forEach(b=>b.visible=false)
+		//убираем бонусы ходы
+		objects.validMoves.clear()
 		
 		//обновляем данные соперника на всякий случай
 		await players_cache.update(opp_data.uid)
@@ -3785,7 +3785,7 @@ game = {
 		let new_y=Math.floor(8*(my-objects.board.y-30)/400);
 		if (pref.flipX) new_x=7-new_x
 		if (pref.flipY) new_y=7-new_y
-		objects.validMoves.clear()
+		
 
 		//если выбрана новая шашка
 		if (!this.selectedChecker) {
@@ -3816,12 +3816,20 @@ game = {
 		if (this.selectedChecker) {
 
 			//если нажали на выделенную шашку то отменяем выделение
-			if (new_x===this.selectedChecker.ix && new_y===this.selectedChecker.iy)
-			{
+			if (new_x===this.selectedChecker.ix && new_y===this.selectedChecker.iy) {
 				sound.play('move');
 				this.selectedChecker=0;
 				objects.selected_frame.visible=false;
+				objects.validMoves.clear()
 				return;
+			}
+			
+			//если нажали на другую свою шашку то отменяем выбор 
+			const checkerSpr=brd_func.getCheckerByPos(new_x,new_y,objects.checkers)
+			if (checkerSpr?.m_id===1){
+				this.selectedChecker=0
+				this.mouse_down_on_board(e)
+				return
 			}
 
 			//формируем объект содержащий информацию о ходе
@@ -3832,7 +3840,7 @@ game = {
 
 			//проверка
 			if (!online_game.validate_move(m_data)){
-				pmsg.add({t:["Нельзя повторять ходы","Invalid move"][LANG]});
+				pmsg.add({t:["Нельзя повторять ходы",'Can not repeat oppponent moves!'][LANG]});
 				return;
 			}
 
@@ -3840,7 +3848,7 @@ game = {
 			{
 				//убираем выделение
 				objects.selected_frame.visible=false;
-
+				objects.validMoves.clear()
 				//отменяем выделение
 				this.selectedChecker=0;
 
@@ -3849,7 +3857,7 @@ game = {
 			}
 			else
 			{
-				pmsg.add({t:["Так нельзя ходить","Invalid move"][LANG]});
+				pmsg.add({t:["Так нельзя ходить","Invalid move! Check dark dotes, those are valid moves."][LANG]});
 			}
 		}
 
@@ -6910,6 +6918,9 @@ lobby={
 			this.info_btn_down(1)
 		}	
 
+		if (!my_data.games)
+			tut.sendShowClick()
+
 	},
 
 	pref_btn_down(){
@@ -7909,6 +7920,7 @@ lobby={
 
 tut={
 	page:0,
+	clickShown:0,
 	header1data:[
 		['ОСНОВНАЯ ЦЕЛЬ','RULE #1'],
 		['КАК ДВИНУТЬ ШАШКУ','HOW TO MOVE CHECKER'],
@@ -7985,22 +7997,24 @@ tut={
 		
 	async sendShowClick(){
 		
+		if (this.clickShown) return
+		this.clickShown=1
 		objects.tutHand.texture=assets.tutHandImg
-		await anim3.add(objects.tutHand,{x:[800, 70,'linear'],y:[450,50,'linear']}, true, 1);
-		await new Promise(r=>setTimeout(r,500)) 
+		await anim3.add(objects.tutHand,{x:[800, 70,'linear'],y:[450,50,'linear']}, true, 0.5);
+		await new Promise(r=>setTimeout(r,300)) 
 		objects.tutHand.texture=assets.tutHandClickImg
-		await new Promise(r=>setTimeout(r,150)) 
+		await new Promise(r=>setTimeout(r,100)) 
 		objects.tutHand.texture=assets.tutHandImg
-		await new Promise(r=>setTimeout(r,150)) 
+		await new Promise(r=>setTimeout(r,100)) 
 		objects.tutHand.texture=assets.tutHandClickImg
-		await new Promise(r=>setTimeout(r,150)) 
+		await new Promise(r=>setTimeout(r,100)) 
 		objects.tutHand.texture=assets.tutHandImg
-		await new Promise(r=>setTimeout(r,150)) 
+		await new Promise(r=>setTimeout(r,100)) 
 		objects.tutHand.texture=assets.tutHandClickImg
-		await new Promise(r=>setTimeout(r,150)) 
+		await new Promise(r=>setTimeout(r,100)) 
 		objects.tutHand.texture=assets.tutHandImg
-		await new Promise(r=>setTimeout(r,550)) 
-		await anim3.add(objects.tutHand,{x:[70,-100,'linear'],y:[50,-100,'linear']}, false, 0.25);
+		await new Promise(r=>setTimeout(r,350)) 
+		await anim3.add(objects.tutHand,{x:[70,-100,'linear'],y:[50,-100,'linear']}, false, 0.15);
 		
 	},
 	
@@ -9141,15 +9155,14 @@ async function init_game_env(lang) {
 	if (!my_data.games) await tut.activate()		
 	
 	//отображаем лидеров вчерашнего дня
-	top3.activate()
+	if (my_data.games)
+		top3.activate()
 	
 	//lobby.perm_room='statesNIGHT'
 	lobby.activate()
 	
 	await trnm.check_trnm_winner()
-	
-
-	
+		
 	//ready api
 	if (gamePlatform==='YANDEX') window.ysdk.features.LoadingAPI.ready()
 	if (gamePlatform==='CRAZYGAMES') window.CrazyGames.SDK.game.loadingStop()
