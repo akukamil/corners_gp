@@ -3747,7 +3747,11 @@ game = {
 		objects.validMoves.alpha=0.25
 		for (move of validMoves){
 			
-			objects.validMoves.drawCircle(move.x2*50+25,move.y2*50+25,10)
+			//отображение в соответстии с транформером
+			const tx=pref.flipX?7-move.x2:move.x2
+			const ty=pref.flipY?7-move.y2:move.y2
+			
+			objects.validMoves.drawCircle(tx*50+25,ty*50+25,10)
 			
 		}
 		console.log(validMoves)
