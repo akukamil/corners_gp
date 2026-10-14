@@ -8631,7 +8631,7 @@ async function define_platform_and_language(p) {
 
 	let s = window.location.href
 
-	if (p==='playgama'){		
+	if (p==='playgama'||s.includes('playgama')){		
 		gamePlatform = 'PG';
 		LANG = 1;
 		return
