@@ -4467,7 +4467,9 @@ keyboard={
 }
 
 ad={
-
+	
+	pg_ad_resolver:0,
+	
 	async show() {
 
 		PIXI.sound.muteAll()
@@ -4504,6 +4506,13 @@ ad={
 			if (typeof Android !== 'undefined') {
 				Android.showAdFromJs();
 			}
+		}
+		
+		if (game_platform==='PG') {
+			await new Promise(res=>{
+				this.pg_ad_resolver=res
+				bridge.advertisement.showInterstitial()
+			})	
 		}
 		
 		if (gamePlatform==='PIKABU') {
@@ -4564,6 +4573,16 @@ ad={
 
 		return 'err'
 
+	},
+
+	reg_pg_ad(){
+		
+		bridge.advertisement.on(
+		bridge.EVENT_NAME.INTERSTITIAL_STATE_CHANGED, 
+			state => {
+				if(state==='closed'||state==='failed') this.pg_ad_resolver(1)
+			}
+		)		
 	}
 }
 
