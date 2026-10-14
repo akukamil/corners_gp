@@ -8346,6 +8346,18 @@ auth2 = {
 			return;
 		}
 
+		if (game_platform === 'PG') {			
+								
+			try {
+				await bridge.initialize()			
+			} catch (e) { alert(e)};
+			
+			my_data.uid = this.search_in_local_storage() || this.get_random_uid_for_local('PG_');
+			my_data.name = bridge.player.name||this.get_random_name(my_data.uid);
+			my_data.orig_pic_url = 'mavatar'+my_data.uid;				
+			ad.reg_pg_ad()
+		}
+
 		if (gamePlatform === 'VK' || gamePlatform==='OK') {
 
 			await this.load_script('https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js')||await this.load_script('https://akukamil.github.io/common/vkbridge.js');
@@ -8595,9 +8607,15 @@ language_dialog = {
 
 }
 
-async function define_platform_and_language() {
+async function define_platform_and_language(p) {
 
-	let s = window.location.href;
+	let s = window.location.href
+
+	if (p==='playgama'){		
+		game_platform = 'PG';
+		LANG = 1;
+		return
+	}
 
 	if (s.includes('yandex')||s.includes('app-id=163940')) {
 
@@ -8921,12 +8939,12 @@ main_loader={
 
 }
 
-async function init_game_env(lang) {
+async function init_game_env(p) {
 
 	//git_src="https://akukamil.github.io/corners_gp/"
 	git_src=""
 
-	await define_platform_and_language();
+	await define_platform_and_language(p);
 	console.log(gamePlatform, LANG);
 
 	//авторизация
@@ -9164,6 +9182,7 @@ async function init_game_env(lang) {
 	await trnm.check_trnm_winner()
 		
 	//ready api
+	if (gamePlatform==='PG') bridge.platform.sendMessage("game_ready")
 	if (gamePlatform==='YANDEX') window.ysdk.features.LoadingAPI.ready()
 	if (gamePlatform==='CRAZYGAMES') window.CrazyGames.SDK.game.loadingStop()
 }
