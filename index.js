@@ -9189,6 +9189,11 @@ async function init_game_env(p) {
 	some_process.loup_anim = function(){}
 	objects.id_loup.visible=false
 	
+	//ready api
+	if (gamePlatform==='PG') bridge.platform.sendMessage("game_ready")
+	if (gamePlatform==='YANDEX') window.ysdk.features.LoadingAPI.ready()
+	if (gamePlatform==='CRAZYGAMES') window.CrazyGames.SDK.game.loadingStop()	
+	
 	//туториал
 	if (!my_data.games) await tut.activate()		
 	
@@ -9201,10 +9206,7 @@ async function init_game_env(p) {
 	
 	await trnm.check_trnm_winner()
 		
-	//ready api
-	if (gamePlatform==='PG') bridge.platform.sendMessage("game_ready")
-	if (gamePlatform==='YANDEX') window.ysdk.features.LoadingAPI.ready()
-	if (gamePlatform==='CRAZYGAMES') window.CrazyGames.SDK.game.loadingStop()
+
 }
 
 main_loop={
