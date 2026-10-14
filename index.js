@@ -8346,7 +8346,7 @@ auth2 = {
 			return;
 		}
 
-		if (game_platform === 'PG') {			
+		if (gamePlatform === 'PG') {			
 								
 			try {
 				await bridge.initialize()			
@@ -8612,7 +8612,7 @@ async function define_platform_and_language(p) {
 	let s = window.location.href
 
 	if (p==='playgama'){		
-		game_platform = 'PG';
+		gamePlatform = 'PG';
 		LANG = 1;
 		return
 	}
