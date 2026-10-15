@@ -6929,7 +6929,7 @@ lobby={
 		
 		//это одноразовые сообщения
 		let info_data=safe_ls('corners_info')
-		if(!(info_data?.id===this.INFO_MSG_ID)){
+		if(!(info_data?.id===this.INFO_MSG_ID)&&my_data.games){
 			if (LANG===1) return
 			info_data={read:0,id:this.INFO_MSG_ID}
 			safe_ls('corners_info',info_data)
