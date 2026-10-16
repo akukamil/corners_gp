@@ -4508,7 +4508,7 @@ ad={
 			}
 		}
 		
-		if (game_platform==='PG') {
+		if (gamePlatform==='PG') {
 			await new Promise(res=>{
 				this.pg_ad_resolver=res
 				bridge.advertisement.showInterstitial()
