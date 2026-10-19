@@ -6294,9 +6294,9 @@ pref={
 				
 				//закончились монеты
 				if (my_data.energy<=0){	
-					pmsg.add({t:`У вас закончилась энергия. Ваш рейтинг понижен до ${MAX_NO_CONF_RATING}`,timeout:6000})
-					my_data.rating=MAX_NO_CONF_RATING
-					fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating)
+					pmsg.add({t:`У вас закончилась энергия.`,timeout:6000})
+					//my_data.rating=MAX_NO_CONF_RATING
+					//fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating)
 				}
 			}
 			
