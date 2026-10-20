@@ -6275,6 +6275,7 @@ pref={
 		//return
 		
 		if(!SERVER_TM) return
+		if (my_data.energy<=0) return			
 		
 		//если нет данных (новый игрок)
 		if (!my_data.e_prv_tm) {
@@ -6283,21 +6284,19 @@ pref={
 			return
 		}
 			
+			
 		const d=SERVER_TM-my_data.e_prv_tm
 		const int_passed=Math.floor(d/(1000*60*60))
 		if (int_passed>0){
 
 			//уменьшаем только для рейтинговых игроков
-			if (my_data.rating>MAX_NO_CONF_RATING){
-				
-				this.change_energy(-int_passed)	
-				
-				//закончились монеты
-				if (my_data.energy<=0){	
-					pmsg.add({t:`У вас закончилась энергия.`,timeout:6000})
-					//my_data.rating=MAX_NO_CONF_RATING
-					//fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating)
-				}
+			this.change_energy(-int_passed)	
+			
+			//закончились монеты
+			if (my_data.energy<=0){	
+				pmsg.add({t:'У вас закончилась энергия.',timeout:6000})
+				//my_data.rating=MAX_NO_CONF_RATING
+				//fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating)
 			}
 			
 			my_data.e_prv_tm=SERVER_TM
