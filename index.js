@@ -3737,6 +3737,7 @@ game = {
 
 	showValidMoves(){
 		
+		if (!pref.hints) return
 		const sx=this.selectedChecker.ix
 		const sy=this.selectedChecker.iy
 		const brdUINT=brd_funcU.brdToU(g_board)
@@ -5747,7 +5748,7 @@ lb={
 	},
 
 	shift(dy){
-
+		return
 		this.start_y+=dy
 		if (this.start_y>-5)
 			this.start_y=-5
@@ -5782,7 +5783,7 @@ lb={
 
 	async update() {
 
-		let leaders=await fbs.ref('players').orderByChild('rating').limitToLast(20).once('value');
+		let leaders=await fbs.ref('players').orderByChild('rating').limitToLast(30).once('value');
 		leaders=leaders.val();
 
 		const top={
@@ -5803,11 +5804,14 @@ lb={
 		Object.keys(leaders).forEach(uid => {
 
 			const leader_data=leaders[uid];
-			const leader_params={uid,name:leader_data.name, rating:leader_data.rating, pic_url:leader_data.pic_url};
-			leaders_array.push(leader_params);
+			if (leader_data.energy){				
+				const leader_params={uid,name:leader_data.name, rating:leader_data.rating, pic_url:leader_data.pic_url};
+				leaders_array.push(leader_params);
 
-			//добавляем в кэш
-			players_cache.update_params(uid,leader_params);
+				//добавляем в кэш
+				players_cache.update_params(uid,leader_params);				
+			}
+
 		});
 
 		//сортируем....
@@ -5816,16 +5820,18 @@ lb={
 		//заполняем имя и рейтинг
 		for (let place in top){
 			const target=top[place];
-			const leader=leaders_array[place];
+			const leader=leaders_array[place]
+			if(!leader) continue
 			target.t_name.set2(leader.name,place>2?190:130);
 			target.t_rating.text=leader.rating;
 		}
 
 		//заполняем аватар
 		for (let place in top){
-			const target=top[place];
-			const leader=leaders_array[place];
-			await players_cache.update(leader.uid,{source:'lb'});
+			const target=top[place]
+			const leader=leaders_array[place]
+			if(!leader) continue
+			await players_cache.update(leader.uid,{source:'lb'})
 			target.avatar.set_texture(players_cache[leader.uid].texture)
 		}
 
@@ -6128,6 +6134,7 @@ pref={
 	avatar_swtich_cur:0,
 	hours_to_nick_change:0,
 	hours_to_photo_change:0,
+	hints:1,
 	loading:0,
 	flipIndex:0,
 	flipX:0,
@@ -6144,6 +6151,9 @@ pref={
 
 		//обновляем кнопки
 		this.update_buttons()
+		
+		//кнопка подсказок
+		objects.prefHintBtn.texture=assets[['prefHintBtnOffImg','prefHintBtn'][this.hints]]
 		
 		//заполняем имя, аватар, рейтинг
 		objects.pref_name.set2(my_data.name,260);
@@ -6164,6 +6174,8 @@ pref={
 		//загружаем ориентацию доски
 		this.flipIndex=safe_ls('cornersFlipIndex')||0
 		this.flipConfDown(0)
+
+		this.hints=safe_ls('cornersHints')??1
 
 		let i=0
 		setInterval(()=>{
@@ -6292,7 +6304,7 @@ pref={
 			//уменьшаем только для рейтинговых игроков
 			this.change_energy(-int_passed)	
 			
-			//закончились монеты
+			//закончилась энергия
 			if (my_data.energy<=0){	
 				pmsg.add({t:'У вас закончилась энергия.',timeout:6000})
 				//my_data.rating=MAX_NO_CONF_RATING
@@ -6568,6 +6580,18 @@ pref={
 
 		pin_panel.activate();
 
+	},
+
+	hintBtnDown(){
+		
+		this.hints=1-this.hints
+		safe_ls('cornersHints',this.hints)
+		objects.prefHintBtn.texture=assets[['prefHintBtnOffImg','prefHintBtn'][this.hints]]
+		
+		if (this.hints) this.send_info(['Подсказки ходов включены','Hints enabled'][LANG])
+		if (!this.hints) this.send_info(['Подсказки ходов отключены','Hints disabled'][LANG])
+		
+		sound.play('click')
 	},
 
 	sound_btn_down(){
@@ -6866,7 +6890,7 @@ lobby={
 	state_listener_timeout:0,
 	perm_room:'',
 	trnm_check_tm:0,
-	INFO_MSG_ID:4,
+	INFO_MSG_ID:6,
 
 	activate() {
 
@@ -6928,13 +6952,8 @@ lobby={
 		
 		//это одноразовые сообщения
 		let info_data=safe_ls('corners_info')
-		if(!(info_data?.id===this.INFO_MSG_ID)&&my_data.games){
-			if (LANG===1) return
-			info_data={read:0,id:this.INFO_MSG_ID}
-			safe_ls('corners_info',info_data)
-			objects.lobby_info_btn.alpha=info_data.read?0.25:1
-			this.info_btn_down(1)
-		}	
+		const newInfoMsg=(info_data?.id!==this.INFO_MSG_ID)&&my_data.games
+		objects.lobby_info_btn.alpha=newInfoMsg?1:0.25
 
 		if (!my_data.games)
 			tut.sendShowClick()
@@ -7914,10 +7933,15 @@ lobby={
 
 	info_btn_down(force_show){
 
-		if (!force_show&&anim3.any_on()) {
+		if (anim3.any_on()) {
 			sound.play('locked');
 			return
 		};
+		
+		info_data={read:1,id:this.INFO_MSG_ID}
+		safe_ls('corners_info',info_data)
+		objects.lobby_info_btn.alpha=0.25
+		
 		sound.play('click');
 		anim3.add(objects.info_cont, {alpha: [0, 1, 'linear']}, true, 0.25);
 
@@ -8961,7 +8985,7 @@ main_loader={
 async function init_game_env(p) {
 
 	git_src="https://akukamil.github.io/corners_gp/"
-	//git_src=""
+	git_src=""
 
 	await define_platform_and_language(p);
 	console.log(gamePlatform, LANG);
