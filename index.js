@@ -3802,7 +3802,7 @@ game = {
 
 				//воспроизводим соответствующий звук
 				sound.play('move');
-				
+				anim3.add(this.selectedChecker, {scale_xy:[0.666, 0.6, 'ease2back']}, true, 0.1)
 				this.showValidMoves()
 				return;
 			}
