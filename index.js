@@ -9220,6 +9220,7 @@ async function init_game_env(p) {
 	if (gamePlatform==='PG') bridge.platform.sendMessage("game_ready")
 	if (gamePlatform==='YANDEX') window.ysdk.features.LoadingAPI.ready()
 	if (gamePlatform==='CRAZYGAMES') window.CrazyGames.SDK.game.loadingStop()	
+	if (gamePlatform==='PIKABU') window.pikabuSDK.gameStarted()
 	
 	//туториал
 	if (!my_data.games) await tut.activate()		
