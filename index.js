@@ -4517,7 +4517,11 @@ ad={
 		}
 		
 		if (gamePlatform==='PIKABU') {
-			window.AndroidBridge.showInterstitial()
+						
+			const canShowAd = await window.pikabuSDK.ads.fullscreen.canShow()
+			if (!canShowAd)
+				return false
+			window.pikabuSDK.ads.fullscreen.show();
 		}
 		
 		if (gamePlatform==='RUSTORE') {
