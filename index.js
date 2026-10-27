@@ -9146,6 +9146,7 @@ async function init_game_env(p) {
 		my_data.pic_url=my_data.orig_pic_url
 
 	//получаем серверное время
+	objects.id_log.text=['Получаем серверное время... ','Getting server time...'][LANG]
 	SERVER_TM=await my_ws.get_tms() || await fbs_once('tm') 
 
 	//загружаем мои данные в кэш
@@ -9187,8 +9188,8 @@ async function init_game_env(p) {
 	//читаем последних соперников
 	online_game.read_last_opps()
 
-	objects.id_log.text=['Получаем серверное время... ','Getting server time...'][LANG]
-	SERVER_TM=await my_ws.get_tms()
+	
+
 
 	//сообщение для дубликатов
 	fbs.ref('inbox/'+my_data.uid).set({client_id,tm:Date.now()})
