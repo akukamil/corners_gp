@@ -4525,7 +4525,8 @@ ad={
 		}
 		
 		if (gamePlatform==='RUSTORE') {
-			window.AndroidBridge.showInterstitial()
+			
+			//window.AndroidBridge.showInterstitial()
 		}
 		
 		if (gamePlatform==='CRAZYGAMES') {
@@ -5199,7 +5200,7 @@ chat={
 	},
 
 	gif_btn_down(){
-		
+
 		if (anim3.any_on()) {
 			sound.play('locked');
 			return
@@ -5840,7 +5841,6 @@ lb={
 		}
 
 	}
-
 
 }
 
@@ -7338,13 +7338,11 @@ lobby={
 			card.avatar1_frame.visible = true
 			card.avatar2_frame.visible = true
 
-
 			card.rating_text1.text = params.rating1
 			card.rating_text2.text = params.rating2
 
 			card.name1 = params.name1;
 			card.name2 = params.name2;
-
 
 			const a_tex1=players_cache[card.uid1].texture
 			if (a_tex1)
@@ -7384,12 +7382,8 @@ lobby={
 				if (card.uid2===uid)
 					card.avatar2.set_texture(pdata.texture)
 			}
-		}
+		}	
 		
-		
-		//обновляем сообщение
-		if(objects.inst_msg_cont.visible&&objects.inst_msg_cont.uid===uid)
-			objects.inst_msg_avatar.set_texture(pdata.texture||PIXI.Texture.WHITE)
 	},
 
 	card_down(card_id) {
