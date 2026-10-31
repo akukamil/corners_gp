@@ -5753,7 +5753,7 @@ lb={
 	},
 
 	shift(dy){
-		return
+
 		this.start_y+=dy
 		if (this.start_y>-5)
 			this.start_y=-5
@@ -5808,14 +5808,12 @@ lb={
 		const leaders_array=[];
 		Object.keys(leaders).forEach(uid => {
 
-			const leader_data=leaders[uid];
-			if (leader_data.energy){				
-				const leader_params={uid,name:leader_data.name, rating:leader_data.rating, pic_url:leader_data.pic_url};
-				leaders_array.push(leader_params);
+			const leader_data=leaders[uid];		
+			const leader_params={uid,name:leader_data.name, rating:leader_data.rating, pic_url:leader_data.pic_url};
+			leaders_array.push(leader_params);
 
-				//добавляем в кэш
-				players_cache.update_params(uid,leader_params);				
-			}
+			//добавляем в кэш
+			players_cache.update_params(uid,leader_params);				
 
 		});
 
@@ -6291,7 +6289,6 @@ pref={
 		//return
 		
 		if(!SERVER_TM) return
-		if (my_data.energy<=0) return			
 		
 		//если нет данных (новый игрок)
 		if (!my_data.e_prv_tm) {
@@ -6306,13 +6303,16 @@ pref={
 		if (int_passed>0){
 
 			//уменьшаем только для рейтинговых игроков
-			this.change_energy(-int_passed)	
-			
-			//закончилась энергия
-			if (my_data.energy<=0){	
-				pmsg.add({t:'У вас закончилась энергия.',timeout:6000})
-				//my_data.rating=MAX_NO_CONF_RATING
-				//fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating)
+			if (my_data.rating>MAX_NO_CONF_RATING){
+				
+				this.change_energy(-int_passed)	
+				
+				//закончились монеты
+				if (my_data.energy<=0){	
+					pmsg.add({t:`У Вас закончилась энергия. Ваш рейтинг понижен до ${MAX_NO_CONF_RATING}`,timeout:6000,snd:'noenergy'})
+					my_data.rating=MAX_NO_CONF_RATING
+					fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating)
+				}
 			}
 			
 			my_data.e_prv_tm=SERVER_TM
@@ -8845,6 +8845,7 @@ main_loader={
 		loader.add('top3',git_src+'sounds/top3.mp3');
 		loader.add('trnm_event',git_src+'sounds/trnm_event.mp3');
 		loader.add('free_energy',git_src+'sounds/free_energy.mp3');
+		loader.add('noenergy',git_src+'sounds/noenergy.mp3');
 
 
 		//loader.add('cards_design_pack', git_src+'res/RUS/cards_designs/cards_design_pack.png');
