@@ -3414,6 +3414,11 @@ trnm={
 			return
 		}		
 		
+		if (my_data.games<1000){
+			this.send_info3('Участие в турнире недоступно!')
+			return
+		}	
+		
 		if (this.state!=='reg') return
 		
 		this.regDown=1		
