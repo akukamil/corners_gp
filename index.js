@@ -1887,6 +1887,8 @@ brd_func={
 			sound.play('move');
 		}
 
+		anim3.add(chipSpr, {scale_xy:[0.666, 0.75,'ease2back']}, true, 0.16);
+
 		chipSpr.ready=true;
 		this.moveOn=0
 	},
