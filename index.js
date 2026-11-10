@@ -4,7 +4,7 @@ const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 const MAX_NO_CONF_RATING=1800;
 const COM_URL='https://akukamil.github.io/com'
 const RATING_FOR_ALPHA=1720
-let gameHistForNN=[]
+let brdHistForTraining=[]
 
 let TM={s:0,ms:0}
 
@@ -46,6 +46,16 @@ function getMaxByProp(items,prop){
 	}	
 	return maxItem	
 	
+}
+
+function generateRandomBase62(length) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * 62);
+        result += chars[randomIndex];
+    }
+    return result;
 }
 
 DESIGN_DATA={
@@ -181,7 +191,7 @@ class lb_player_card_class extends PIXI.Container{
 		this.bcgFrame.width = 390
 		this.bcgFrame.height = 80
 
-		this.place=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 25,align: 'center'})
+		this.place=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 25,align: 'center'})
 		this.place.tint=0xffffff
 		this.place.x=38
 		this.place.y=40
@@ -194,12 +204,12 @@ class lb_player_card_class extends PIXI.Container{
 		this.avatar.width=this.avatar.height=54	
 		
 
-		this.name=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 22,align: 'center'})
+		this.name=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 22,align: 'center'})
 		this.name.tint=0xEBE3B9
 		this.name.x=115
 		this.name.y=30
 
-		this.rating=new PIXI.BitmapText('', {fontName: 'bahnschrift48',fontSize: 30,align: 'center'})
+		this.rating=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 30,align: 'center'})
 		this.rating.x=315
 		this.rating.tint=0xFFFF00
 		this.rating.y=25
@@ -579,25 +589,6 @@ class trnm_precard_class extends PIXI.Container{
 	}
 
 
-}
-
-async function saveGameHist(data){
-	
-	return;
-	try {
-		const response = await fetch('https://mtserver2.ru:443/save', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				gameData: data
-			})
-		});
-
-	} catch (error) {
-
-	}
 }
 
 const anim3={
@@ -1887,6 +1878,8 @@ brd_func={
 			sound.play('move');
 		}
 
+		anim3.add(chipSpr, {scale_xy:[0.666, 0.75,'ease2back']}, true, 0.16);
+
 		chipSpr.ready=true;
 		this.moveOn=0
 	},
@@ -1961,6 +1954,8 @@ online_game = {
 		this.on=1
 		
 		const tm=Date.now()
+		
+		brdHistForTraining=[]
 		
 		this.my_moves_hist=[]
 		this.opp_moves_hist=[]
@@ -2278,6 +2273,10 @@ online_game = {
 			this.showThinkingTime(my_data.totalThinkTime,oppThinkingTime)
 		}
 		opp_data.totalThinkTime=oppThinkingTime
+		
+		if (my_role==='master')
+			brdHistForTraining.push({brdStr:brd_func.brd_to_str(g_board),round:game.round+1})
+			
 	},
 
 	validate_move(m_data){
@@ -2387,15 +2386,11 @@ online_game = {
 		crystalsCollected+=result_number===WIN?5:3
 				
 		//проект альфа
-		/*if (my_data.rating>RATING_FOR_ALPHA&&my_role==='slave'){
-						
-			if (['my_finished_first','opp_left_after_30','my_more_fin_after_80'].includes(result)){
-				gameHistForNN[0].resStr=result
-				gameHistForNN[0].res=result_number
-				saveGameHist(gameHistForNN)
-			}			
-		
-		}*/
+		if (my_data.rating>1500&&my_role==='master'&&brdHistForTraining.length>20){			
+			const fileName=generateRandomBase62(6)+'.log'
+			saveToFileOnServer('cornersStates',fileName,brdHistForTraining)		
+			brdHistForTraining=[]
+		}
 		
 		//если это турнир
 		if (this.trnm){
@@ -3414,6 +3409,11 @@ trnm={
 			return
 		}		
 		
+		if (my_data.games<1000){
+			this.send_info3('Участие в турнире недоступно!')
+			return
+		}	
+		
 		if (this.state!=='reg') return
 		
 		this.regDown=1		
@@ -3612,7 +3612,6 @@ game = {
 		
 		//для проекта альфа	
 		this.errPushed=0
-		gameHistForNN=[{rating:my_data.rating,name:my_data.name}]
 
 		//турнирная игра или слепая игра
 		this.trnm=params.trnm	
@@ -3666,8 +3665,6 @@ game = {
 		objects.my_avatar.texture=players_cache[my_data.uid].texture
 		anim3.add(objects.my_card_cont, {x:[-100, objects.my_card_cont.sx, 'linear'],alpha: [0, 1, 'linear']}, true, 0.5)
 
-
-		gameHistForNN[0].opp_name=player_data.name
 		sound.play('note')
 
 		//это если перешли из бот игры
@@ -3870,7 +3867,7 @@ game = {
 		brd_func.start_gentle_move(moves);
 
 		//для проекта альфа
-		gameHistForNN.push({tm:Date.now(),brd:brd_func.copyBrd(g_board),my_move:move_data})
+		//gameHistForNN.push({tm:Date.now(),brd:brd_func.copyBrd(g_board),my_move:move_data})
 		
 		//making move without animation
 		brd_func.applyMoveStr(move_data,g_board)
@@ -3936,9 +3933,6 @@ game = {
 		//защита от двойных ходов
 		if (my_turn === 1) return
 		
-
-		gameHistForNN.push({tm:Date.now(),brd:brd_func.copyBrd(g_board),opp_move:moveStr,source})		
-
 		//воспроизводим уведомление о том что соперник произвел ход
 		sound.play('receive_move');
 
@@ -4001,7 +3995,6 @@ game = {
 			
 		if (moves[0]===0){
 			this.errPushed=1
-			saveToFileOnServer('cornersFail',my_role+online_game.gid,gameHistForNN)
 			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'ERR',tm:Date.now()});
 			//fbs.ref('mErrors2').push(gameHistForNN)
 			return
@@ -4257,7 +4250,7 @@ game_watching={
 		brd_func.applyMoveStr(moveStr,g_board);		
 		brd_func.update_board(g_board);		
 		
-		gameHistForNN.push({tm:Date.now(),gameWatchEvent:1,on:this.on})
+		//gameHistForNN.push({tm:Date.now(),gameWatchEvent:1,on:this.on})
 
 		if (move) objects.cur_move_text.text=['Раунд: ','Round: '][LANG]+move;
 
@@ -4955,8 +4948,8 @@ function process_new_message(msg) {
 				game.stop('opp_giveup');
 			
 			//получение сообщение с сдаче
-			if (msg.message==='ERR')
-				saveToFileOnServer('cornersFail',my_role+online_game.gid,gameHistForNN)
+			//if (msg.message==='ERR')
+				//saveToFileOnServer('cornersFail',my_role+online_game.gid,gameHistForNN)
 			
 			//запрос на ничью
 			if (msg.message==='DRAWREQ')
