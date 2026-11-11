@@ -2387,7 +2387,7 @@ online_game = {
 				
 		//проект альфа
 		if (my_data.rating>1500&&my_role==='master'&&brdHistForTraining.length>20){			
-			const fileName=generateRandomBase62(6)+'.log'
+			const fileName=generateRandomBase62(8)+'.log'
 			saveToFileOnServer('cornersStates',fileName,brdHistForTraining)		
 			brdHistForTraining=[]
 		}
