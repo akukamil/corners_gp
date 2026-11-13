@@ -2274,8 +2274,8 @@ online_game = {
 		}
 		opp_data.totalThinkTime=oppThinkingTime
 		
-		if (my_role==='master')
-			brdHistForTraining.push({brdStr:brd_func.brd_to_str(g_board),round:game.round+1})
+		//if (my_role==='master')
+		//	brdHistForTraining.push({brdStr:brd_func.brd_to_str(g_board),round:game.round+1})
 			
 	},
 
