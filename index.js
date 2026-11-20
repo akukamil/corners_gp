@@ -2887,9 +2887,13 @@ bot_game = {
 			sound.play('lose');			
 		}else{						
 			sound.play('win')
-			if (this.level===2)	crystalsCollected=1;
+			if (this.level===2)	{
+				crystalsCollected=1
+				saveToFileOnServer('botLoses',generateRandomBase62(6),botGameHist)				
+			}
 			if(gamePlatform==='CRAZYGAMES') window.CrazyGames.SDK.game.happytime();
-			saveToFileOnServer('botLoses',generateRandomBase62(6),botGameHist)
+			
+
 		}
 
 		//if nn still loading
