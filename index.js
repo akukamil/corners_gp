@@ -2889,7 +2889,8 @@ bot_game = {
 			sound.play('win')
 			if (this.level===2)	{
 				crystalsCollected=1
-				saveToFileOnServer('botLoses',generateRandomBase62(6),botGameHist)				
+				botGameHist[0].finType=result
+				saveToFileOnServer('botLoses',generateRandomBase62(7),botGameHist)				
 			}
 			if(gamePlatform==='CRAZYGAMES') window.CrazyGames.SDK.game.happytime();
 			
