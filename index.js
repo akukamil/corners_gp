@@ -2850,6 +2850,9 @@ bot_game = {
 		await this.vNet.init('bestV.onnx')
 		await this.pNet.init('bestP.onnx')	
 		delete some_process.nn_loading
+		objects.nnLoadingCircle.texture=assets.nnLoadingCompleteImg
+		objects.nnLoadingCircle.angle=0
+		await anim3.add(objects.nnLoadingCircle, {scale_xy: [0.62,0.7, 'ease2back']}, true, 0.55);
 		anim3.add(objects.nnLoadingCont, {y: [ objects.nnLoadingCont.y,450, 'linear']}, false, 0.25);
 		this.nnLoading=0
 		
@@ -2893,8 +2896,6 @@ bot_game = {
 				saveToFileOnServer('botLoses',generateRandomBase62(7),botGameHist)				
 			}
 			if(gamePlatform==='CRAZYGAMES') window.CrazyGames.SDK.game.happytime();
-			
-
 		}
 
 		//if nn still loading
@@ -2902,9 +2903,7 @@ bot_game = {
 			delete some_process.nn_loading
 			anim3.add(objects.nnLoadingCont, {y: [ objects.nnLoadingCont.y,-180, 'linear']}, false, 0.25);
 		}
-		
-
-		
+				
 		await big_msg.show({t1:result_info, t2:')))',t3:'',fb:this.level===2,crystals:crystalsCollected})
 		pref.change_crystals(crystalsCollected)		
 
@@ -2961,7 +2960,7 @@ bot_game = {
 
 	async make_move() {
 						
-		for (let i=0;i<200;i++){
+		for (let i=0;i<500;i++){
 			if (anim3.any_on()===false && this.pNet.session) break
 			await new Promise(r=>setTimeout(r,500))				
 		}			
