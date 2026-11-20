@@ -4,7 +4,10 @@ const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 const MAX_NO_CONF_RATING=1800;
 const COM_URL='https://akukamil.github.io/com'
 const RATING_FOR_ALPHA=1720
-let brdHistForTraining=[]
+const encodeMove = (x1, y1, x2, y2) => (x1 << 9) | (y1 << 6) | (x2 << 3) | y2
+const base64='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789()'
+let gameHistForNN=[]
+let botGameHist=[]
 
 let TM={s:0,ms:0}
 
@@ -29,8 +32,42 @@ async function saveToFileOnServer(folderName,fileName,data){
 	
 }
 
+function generateRandomBase62(length) {
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * 62);
+        result += base64[randomIndex];
+    }
+    return result;
+}
+
 function sortByProp(items,prop){		
 	items.sort((a,b)=>b[prop]-a[prop])		
+}
+
+function sample(items,param,temp=0.1){
+	
+	if(temp===0)
+		return items[0]
+
+	const scores = items.map(item => item[param]);
+	const maxScore = Math.max(...scores);
+	const expScores = scores.map(score => Math.exp((score - maxScore) / temp))
+	const sumExpScores = expScores.reduce((a, b) => a + b, 0)
+	const probabilities = expScores.map(exp => exp / sumExpScores)
+
+	const random = Math.random();
+	let cumulativeProbability = 0
+
+	for (let i = 0; i < items.length; i++) {
+		cumulativeProbability += probabilities[i];
+			if (random <= cumulativeProbability) {
+				return items[i];
+		}
+	}
+
+	// Fallback for rounding issues
+	return items[0];
 }
 
 function getMaxByProp(items,prop){
@@ -46,16 +83,6 @@ function getMaxByProp(items,prop){
 	}	
 	return maxItem	
 	
-}
-
-function generateRandomBase62(length) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(Math.random() * 62);
-        result += chars[randomIndex];
-    }
-    return result;
 }
 
 DESIGN_DATA={
@@ -81,6 +108,116 @@ my_log={
 fbs_once=async function(path){		
 	const info=await fbs.ref(path).get();
 	return info.val();
+}
+
+class nn_class{
+	
+	constructor(){
+		
+		this.session=0
+		this.logits=0
+		this.stateValue=0
+		
+	}	
+	
+	async init(fileName){
+		
+		this.session = await ort.InferenceSession.create(fileName)
+		console.log(fileName,'onnx_session started')
+	}
+	
+	async calcP(brdU,checkersToMove,round){
+				
+		/*
+		!!!!!!!!!!! Policy network was trained on #2 and outputs logits for #2
+		*/
+		
+		const nnBoard = checkersToMove === 1 ? brd_funcU.invBrdU(brdU) : brdU;
+		const boardInput = brd_funcU.createBoardInputForNN(nnBoard,round);
+		
+		const globals = [
+			Math.min(1,round/29),
+			brd_funcU.countBottomRight(nnBoard,1) / 12.0,
+			brd_funcU.countTopLeft(nnBoard,2) / 12.0,
+			brd_funcU.countTopLeft(nnBoard,1) / 12.0,
+			brd_funcU.countBottomRight(nnBoard,2) / 12.0
+		]
+		
+		const res = await this.session.run({
+			boards: new ort.Tensor('float32', boardInput, [1, 8, 8, 3]),
+			globals: new ort.Tensor('float32', Float32Array.from(globals), [1, 5])
+		})	
+		
+		return res.policy.data	
+	}
+
+	async getBrdVal(brdU,checkersPersp,round){
+
+		const boardInput = brd_funcU.createBoardInputForNN(brdU,round);
+		
+		const brdI=brd_funcU.UtoBrd(brdU)
+
+		const globals = [
+			Math.min(1,round/29),
+			brd_funcU.countBottomRight(brdU,1) / 12.0,
+			brd_funcU.countTopLeft(brdU,2) / 12.0,
+			brd_funcU.countTopLeft(brdU,1) / 12.0,
+			brd_funcU.countBottomRight(brdU,2) / 12.0
+		]
+
+		const res = await this.session.run({
+			boards: new ort.Tensor('float32', boardInput, [1, 8, 8, 3]),
+			globals: new ort.Tensor('float32', Float32Array.from(globals), [1, 5])
+		})
+		
+		const [win2_block, win1_block, draw_block , win2_race, win1_race, draw_race] = res.value.data;	
+		//const val = res.value.data;	
+		//return [val,1]
+				
+		const raceAdvantageP2 = win2_race - win1_race
+		const blockAdvantageP2 = round>=29 ? 0 : (win2_block - win1_block)		
+	
+		let valP2 = blockAdvantageP2+raceAdvantageP2
+		return [checkersPersp === 1 ? -valP2 : valP2,{win2_block, win1_block, draw_block , win2_race, win1_race, draw_race}];
+
+	}
+		
+	async getValidMoves(brdU,checkersToMove,round){
+		/*
+			Getting moves from neural network
+			By default nn output moves for checkers #2
+		*/
+		
+		/*
+			Getting moves from neural network
+			NN was trained on #2 moves and output moves for checkers #2
+			calcP invert board for #1
+		*/		
+		const logits=await this.calcP(brdU, checkersToMove, round)
+		
+		//this is true moves even for #1
+		const validMoves = brd_funcU.getChilds(brdU, checkersToMove)
+		
+		const len = validMoves.length;
+
+		if (checkersToMove === 2) {
+			for (let i = 0; i < len; i++) {
+				const move = validMoves[i];
+				const moveId = encodeMove(move.x1, move.y1, move.x2, move.y2);
+				move.pVal = logits[moveId];
+			}
+		} else {
+			for (let i = 0; i < len; i++) {
+				const move = validMoves[i]
+				const moveId = encodeMove(7 - move.x1, 7 - move.y1, 7 - move.x2, 7 - move.y2)
+				move.pVal = logits[moveId]
+			}
+		}
+
+		sortByProp(validMoves, 'pVal');
+		return validMoves;
+	}
+
 }
 
 class player_mini_card_class extends PIXI.Container {
@@ -209,10 +346,10 @@ class lb_player_card_class extends PIXI.Container{
 		this.name.x=115
 		this.name.y=30
 
-		this.rating=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 30,align: 'center'})
+		this.rating=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 25,align: 'center'})
 		this.rating.x=315
 		this.rating.tint=0xFFFF00
-		this.rating.y=25
+		this.rating.y=27
 		
 		//this.alpha=1
 		
@@ -589,6 +726,25 @@ class trnm_precard_class extends PIXI.Container{
 	}
 
 
+}
+
+async function saveGameHist(data){
+	
+	return;
+	try {
+		const response = await fetch('https://mtserver2.ru:443/save', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				gameData: data
+			})
+		});
+
+	} catch (error) {
+
+	}
 }
 
 const anim3={
@@ -1317,7 +1473,7 @@ brd_funcU={
 		return boards_array
 	},
 	
-	Uint8Array_to_brd(brdU){
+	UtoBrd(brdU){
 		
 		const brd = [[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]]
 		for (let y=0;y<8;y++)
@@ -1341,7 +1497,21 @@ brd_funcU={
 		return invBrd	
 
 	},
-			
+		
+	strToBrdU(str){
+
+		const brdU =new Uint8Array(64)
+
+		//декодируем строку в доску
+		for (let i=0;i<24;i++){
+			const ind=base64.indexOf(str[i]);
+			const y=Math.floor(ind/8);
+			const x=ind%8;
+			brdU[y*8+x]=1+(i>=12);
+		}
+		return brdU;
+	},
+		
 	countTopLeft(brdU,checkers) {
 		let cnt=0;
 		for (let y=0;y<3;y++)
@@ -1360,7 +1530,7 @@ brd_funcU={
 		return cnt;
 	},
 
-	finished1(brdU) {
+	fin1(brdU) {
 		for (let y=0;y<3;y++)
 			for (let x=0;x<4;x++)
 				if (brdU[y*8+x]!==1)
@@ -1368,7 +1538,7 @@ brd_funcU={
 		return 1;
 	},
 
-	finished2(brdU) {
+	fin2(brdU) {
 		for (let y=5;y<8;y++)
 			for (let x=4;x<8;x++)
 				if (brdU[y*8+x]!==2)
@@ -1392,33 +1562,74 @@ brd_funcU={
 		return 0;
 	},
 
-	get_brd_state(brdU, moves) {
+	createBoardInputForNN(brdU,round) {
+		
+		const CHANNELS = 3;
 
-		const w1=this.finished1(brdU);
-		const w2=this.finished2(brdU);
-		if (w1 === 1 && w2 === 1) return 'both_finished'
-		if (w1 === 1) return 'my_finished_first'
-		if (w2 === 1) return 'opp_finished_first'
+		const data = new Float32Array(8 * 8 * CHANNELS);
 
-		const any1home30 = this.any1home(brdU)*(moves >= 30);
-		const any2home30 = this.any2home(brdU)*(moves >= 30);
+		function setValue(row, col, channel, value) {
+			const index = ((row * 8 + col) * CHANNELS) + channel;
+			data[index] = value;
+		}
 
-		if (any1home30 === 1 && any2home30 === 1) return 'both_left_after_30'
-		if (any1home30 === 1) return 'my_left_after_30'
-		if (any2home30 === 1) return 'opp_left_after_30'
+		//это просто расположение углов (нулевая плоскость)
+		const roundInp = Math.min(1,round/ 29.0)
+		for (let y = 0; y < 3; y++) {
+			for (let x = 0; x < 4; x++) {
+				setValue(y, x, 0, 1);
+				setValue(7 - y, 7 - x, 0, 1);
+			}
+		}
+
+		//это сами шашки (нейронная сеть считает ход от верхнего левого угла, где 2 шашки находятся)
+		for (let y = 0; y < 8; y++) {
+			for (let x = 0; x < 8; x++) {				
+				const piece = brdU[y*8+x]			  
+				if (piece === 1) setValue(y, x, 1, 1.0)
+				if (piece === 2) setValue(y, x, 2, 1.0)
+			}
+		}
+
+		return data;
+	},	
+
+	get_brd_state(brdU, round) {
+
+		//Game result in perspective of #1
+		const w1=this.fin1(brdU);
+		const w2=this.fin2(brdU);
+		if (w1===1 && w2===1) return [0,'fin0']
+		if (w1===1) return [1,'fin1']
+		if (w2===1) return [2,'fin2']
+
+		const any1home30 = this.any1home(brdU)*(round >= 30);
+		const any2home30 = this.any2home(brdU)*(round >= 30);
+
+		if (any1home30 === 1 && any2home30 === 1) {
+			
+			const numHome1=this.countBottomRight(brdU,1)	
+			const numHome2=this.countTopLeft(brdU,2)
+			if (numHome1>numHome2) return [2,'win2_30']
+			if (numHome1<numHome2) return [1,'win1_30']
+			return [0,'win0_30']
+			
+		}
+		if (any1home30 === 1) return [2,'win2_30']
+		if (any2home30 === 1) return [1,'win1_30']
 
 		//это случай если игра дошла до 80 хода
-		if (moves >= 80) {
-
+		if (round >= 80) {
+			
 			const fin1=this.countTopLeft(brdU,1)
 			const fin2=this.countBottomRight(brdU,2)
 
-			if (fin1	>	fin2)	return 'my_more_fin_after_80';
-			if (fin1	<	fin2)	return 'opp_more_fin_after_80';
-			if (fin1	===	fin2)	return 'same_fin_after_80';
+			if (fin1>fin2) return [1,'fin1_80']
+			if (fin1<fin2) return [2,'fin2_80']
+			if (fin1===fin2) return [0,'fin0_80']
 		}
 
-		return '';
+		return null;
 	}
 }
 
@@ -1429,8 +1640,7 @@ brd_func={
 	chips_tex:[0,0,0],
 	moves:[],
 	moveOn:0,
-	base64:'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789()',
-	
+		
 	boards_cfg:[
 	   [[2,2,2,2,0,0,0,0],
 		[2,2,2,2,0,0,0,0],
@@ -1494,7 +1704,7 @@ brd_func={
 			for (let y=0;y<8;y++)
 				for (let x=0;x<8;x++)
 					if (brd[y][x]===p)
-						b_str+=this.base64[x+y*8]
+						b_str+=base64[x+y*8]
 
 		if (move) b_str+=move
 		return b_str;
@@ -1506,7 +1716,7 @@ brd_func={
 
 		//декодируем строку в доску
 		for (let i=0;i<24;i++){
-			const ind=this.base64.indexOf(str[i]);
+			const ind=base64.indexOf(str[i]);
 			const y=Math.floor(ind/8);
 			const x=ind%8;
 			t_board[y][x]=1+(i>=12);
@@ -1573,6 +1783,20 @@ brd_func={
 		}
 	},
 	
+	invBrd(board) {
+
+		const inv_brd=brd_func.copyBrd(board);
+		for (let y = 0; y < 8; y++) {
+			for (let x = 0; x < 8; x++) {
+				inv_brd[y][x] = board[7-y][7-x];
+				if (inv_brd[y][x] !== 0)
+					inv_brd[y][x] = 3 - inv_brd[y][x];
+			}
+		}
+		return inv_brd;
+
+	},
+	
 	countTopLeft(brd,checkers) {
 		let cnt=0;
 		for (let y=0;y<3;y++)
@@ -1610,7 +1834,7 @@ brd_func={
 				
 	},
 
-	finished1(brd) {
+	fin1(brd) {
 		for (let y=0;y<8;y++)
 			for (let x=0;x<8;x++)
 				if (this.init_brd_cfg[y][x]===2&&brd[y][x]!==1)
@@ -1618,7 +1842,7 @@ brd_func={
 		return 1
 	},
 
-	finished2(brd) {
+	fin2(brd) {
 		for (let y=0;y<8;y++)
 			for (let x=0;x<8;x++)
 				if (this.init_brd_cfg[y][x]===1&&brd[y][x]!==2)
@@ -1641,6 +1865,39 @@ brd_func={
 					return 1
 		return 0
 	},
+	
+	createBoardInputForNN(brd) {
+		
+		const BOARD_SIZE = 8;
+		const CHANNELS = 3;
+
+		// Shape: [1, 8, 8, 3]
+		const data = new Float32Array(1 * BOARD_SIZE * BOARD_SIZE * CHANNELS);
+
+		function setValue(row, col, channel, value) {
+			const index = ((row * BOARD_SIZE + col) * CHANNELS) + channel;
+			data[index] = value;
+		}
+
+		//это просто расположение углов (нулевая плоскость)
+		for (let y = 0; y < 3; y++) {
+			for (let x = 0; x < 4; x++) {
+				setValue(y, x, 0, 1.0);
+				setValue(7 - y, 7 - x, 0, -1.0);
+			}
+		}
+
+		//это сами шашки (нейронная сеть считает ход от верхнего левого угла, где 2 шашки находятся)
+		for (let y = 0; y < 8; y++) {
+			for (let x = 0; x < 8; x++) {				
+				const piece = brd[y][x]			  
+				if (piece === 1) setValue(y, x, 1, 1.0)
+				if (piece === 2) setValue(y, x, 2, 1.0)
+			}
+		}
+
+		return data;
+	},	
 	
 	get_moves_path(mData,board){
 
@@ -1877,7 +2134,7 @@ brd_func={
 			await anim3.add(chipSpr, {x:[chipSpr.x, tar_x,'linear'], y: [chipSpr.y, tar_y, 'linear']}, true, 0.16);
 			sound.play('move');
 		}
-
+		
 		anim3.add(chipSpr, {scale_xy:[0.666, 0.75,'ease2back']}, true, 0.16);
 
 		chipSpr.ready=true;
@@ -1886,18 +2143,18 @@ brd_func={
 	
 	get_brd_state(brd, moves) {
 
-		const w1=this.finished1(brd);
-		const w2=this.finished2(brd);
-		if (w1===1 && w2===1) return 'both_finished'
-		if (w1===1) return 'my_finished_first'
-		if (w2===1) return 'opp_finished_first'
+		const w1=this.fin1(brd);
+		const w2=this.fin2(brd);
+		if (w1===1 && w2===1) return 'fin0'
+		if (w1===1) return 'fin1'
+		if (w2===1) return 'fin2'
 
 		const any1home30 = this.any1home(brd)*(moves >= 30);
 		const any2home30 = this.any2home(brd)*(moves >= 30);
 
-		if (any1home30 === 1 && any2home30 === 1) return 'both_left_after_30'
-		if (any1home30 === 1) return 'my_left_after_30'
-		if (any2home30 === 1) return 'opp_left_after_30'
+		if (any1home30 === 1 && any2home30 === 1) return 'win0_30'
+		if (any1home30 === 1) return 'win2_30'
+		if (any2home30 === 1) return 'win1_30'
 
 		//это случай если игра дошла до 80 хода
 		if (moves >= 80) {
@@ -1905,9 +2162,9 @@ brd_func={
 			const fin1=this.countTopLeft(brd,1)
 			const fin2=this.countBottomRight(brd,2)
 
-			if (fin1>fin2) return 'my_more_fin_after_80'
-			if (fin1<fin2) return 'opp_more_fin_after_80'
-			if (fin1===fin2) return 'same_fin_after_80'
+			if (fin1>fin2) return 'fin1_80'
+			if (fin1<fin2) return 'fin2_80'
+			if (fin1===fin2) return 'fin0_80'
 		}
 
 		return '';
@@ -1954,8 +2211,6 @@ online_game = {
 		this.on=1
 		
 		const tm=Date.now()
-		
-		brdHistForTraining=[]
 		
 		this.my_moves_hist=[]
 		this.opp_moves_hist=[]
@@ -2273,10 +2528,6 @@ online_game = {
 			this.showThinkingTime(my_data.totalThinkTime,oppThinkingTime)
 		}
 		opp_data.totalThinkTime=oppThinkingTime
-		
-		//if (my_role==='master')
-		//	brdHistForTraining.push({brdStr:brd_func.brd_to_str(g_board),round:game.round+1})
-			
 	},
 
 	validate_move(m_data){
@@ -2325,16 +2576,16 @@ online_game = {
 			['my_giveup' ,LOSE, ['Вы сдались!','You have given up!']],
 			['timer_error' ,LOSE, ['Ошибка таймера!','Timer error!']],
 			['opp_giveup' ,WIN , ['Вы выиграли!\nСоперник сдался','You win!\nYour opponent has given up!']],
-			['both_finished',DRAW, ['Ничья','Draw!']],
+			['fin0',DRAW, ['Ничья','Draw!']],
 			['draw',DRAW, ['Ничья','Draw!']],
-			['my_finished_first',WIN , ['Вы выиграли!\nБыстрее соперника перевели свои шашки.','You win!\nYou finished faster than your opponent.']],
-			['opp_finished_first',LOSE, ['Вы проиграли!\nСоперник оказался быстрее вас.','You lose!\nOpponent was faster than you']],
-			['both_left_after_30',DRAW, ['Ничья\nНикто не успел вывести все шашки из дома.','Draw!\nNo one managed to get out of the house']],
-			['my_left_after_30',LOSE, ['Вы проиграли!\nНе успели вывести свои шашки за 30 ходов.','You lose!\nYou did not managed to leave house in 30 moves']],
-			['opp_left_after_30',WIN , ['Вы выиграли!\nСоперник не успел вывести свои шашки за 30 ходов.','You win!\nOpponent did not managed to leave house in 30 moves']],
-			['my_more_fin_after_80',WIN , ['Вы выиграли!\nПеревели больше шашек в новый дом.','You win!You have transferred more checkers to a new house.']],
-			['opp_more_fin_after_80',LOSE, ['Вы проиграли!\nСоперник перевел больше шашек в новый дом.','You lose!\nOpponent transferred more checkers to a new house']],
-			['same_fin_after_80',DRAW , ['Ничья\nОдинаковое количество шашек в новом доме','Draw!\nThe same number of transferred checkers']],
+			['fin1',WIN , ['Вы выиграли!\nБыстрее соперника перевели свои шашки.','You win!\nYou finished faster than your opponent.']],
+			['fin2',LOSE, ['Вы проиграли!\nСоперник оказался быстрее вас.','You lose!\nOpponent was faster than you']],
+			['win0_30',DRAW, ['Ничья\nНикто не успел вывести все шашки из дома.','Draw!\nNo one managed to get out of the house']],
+			['win2_30',LOSE, ['Вы проиграли!\nНе успели вывести свои шашки за 30 ходов.','You lose!\nYou did not managed to leave house in 30 moves']],
+			['win1_30',WIN , ['Вы выиграли!\nСоперник не успел вывести свои шашки за 30 ходов.','You win!\nOpponent did not managed to leave house in 30 moves']],
+			['fin1_80',WIN , ['Вы выиграли!\nПеревели больше шашек в новый дом.','You win!You have transferred more checkers to a new house.']],
+			['fin2_80',LOSE, ['Вы проиграли!\nСоперник перевел больше шашек в новый дом.','You lose!\nOpponent transferred more checkers to a new house']],
+			['fin0_80',DRAW , ['Ничья\nОдинаковое количество шашек в новом доме','Draw!\nThe same number of transferred checkers']],
 			['my_no_sync',NOSYNC , ['Похоже вы не захотели начинать игру.','It looks like you did not want to start the game']],
 			['opp_no_sync',NOSYNC , ['Похоже соперник не смог начать игру.','It looks like the opponent could not start the game']],
 			['my_no_connection',LOSE , ['Потеряна связь!\nИспользуйте надежное интернет соединение.','Lost connection!\nUse a reliable internet connection']],
@@ -2386,11 +2637,15 @@ online_game = {
 		crystalsCollected+=result_number===WIN?5:3
 				
 		//проект альфа
-		if (my_data.rating>1500&&my_role==='master'&&brdHistForTraining.length>20){			
-			const fileName=generateRandomBase62(8)+'.log'
-			saveToFileOnServer('cornersStates',fileName,brdHistForTraining)		
-			brdHistForTraining=[]
-		}
+		/*if (my_data.rating>RATING_FOR_ALPHA&&my_role==='slave'){
+						
+			if (['fin1','win1_30','fin1_80'].includes(result)){
+				gameHistForNN[0].resStr=result
+				gameHistForNN[0].res=result_number
+				saveGameHist(gameHistForNN)
+			}			
+		
+		}*/
 		
 		//если это турнир
 		if (this.trnm){
@@ -2447,21 +2702,106 @@ online_game = {
 
 }
 
+simpleHeuristic={
+	
+	goodFor1base:[
+		[15.23,15.85,14.73,12.78,9.8,8.81,6.82,4.83],
+		[14.73,15.35,14.73,12.78,9.8,8.81,7.82,5.33],
+		[13.04,13.35,13.04,12.35,9.49,8.57,7.63,5.66],
+		[10.15,10.35,10.15,9.64,8.94,8.13,7.26,5.35],
+		[9.21,9.35,9.21,8.81,8.24,7.53,6.74,4.9],
+		[8.24,8.35,8.24,7.92,5.44,4.83,4.12,3.35],
+		[6.26,7.35,7.26,6.99,4.58,3.05,2.41,1.71],
+		[4.27,4.85,5.27,5.55,3.69,2.21,0.65,0]
+	],
+	goodFor2base:[
+		[0,0.65,2.21,3.69,5.55,5.27,4.85,4.27],
+		[1.71,2.41,3.05,4.58,6.99,7.26,7.35,6.26],
+		[3.35,4.12,4.83,5.44,7.92,8.24,8.35,8.24],
+		[4.9,6.74,7.53,8.24,8.81,9.21,9.35,9.21],
+		[5.35,7.26,8.13,8.94,9.64,10.15,10.35,10.15],
+		[5.66,7.63,8.57,9.49,12.35,13.04,13.35,13.04],
+		[5.33,7.82,8.81,9.8,12.78,14.73,15.35,14.73],
+		[4.83,6.82,8.81,9.8,12.78,14.73,15.85,15.23]
+	],
+	goodFor1:[
+		[15.23,15.85,14.73,12.78,9.8,8.81,6.82,4.83],
+		[14.73,15.35,14.73,12.78,9.8,8.81,7.82,5.33],
+		[13.04,13.35,13.04,12.35,9.49,8.57,7.63,5.66],
+		[10.15,10.35,10.15,9.64,8.94,8.13,7.26,5.35],
+		[9.21,9.35,9.21,8.81,8.24,7.53,6.74,4.9],
+		[8.24,8.35,8.24,7.92,5.44,4.83,4.12,3.35],
+		[6.26,7.35,7.26,6.99,4.58,3.05,2.41,1.71],
+		[4.27,4.85,5.27,5.55,3.69,2.21,0.65,0]
+	],
+	goodFor2:[
+		[0,0.65,2.21,3.69,5.55,5.27,4.85,4.27],
+		[1.71,2.41,3.05,4.58,6.99,7.26,7.35,6.26],
+		[3.35,4.12,4.83,5.44,7.92,8.24,8.35,8.24],
+		[4.9,6.74,7.53,8.24,8.81,9.21,9.35,9.21],
+		[5.35,7.26,8.13,8.94,9.64,10.15,10.35,10.15],
+		[5.66,7.63,8.57,9.49,12.35,13.04,13.35,13.04],
+		[5.33,7.82,8.81,9.8,12.78,14.73,15.35,14.73],
+		[4.83,6.82,8.81,9.8,12.78,14.73,15.85,15.23]
+	],
+	getBrdVal(brdU,checkers,round){
+			
+		let val1=0
+		let val2=0
+
+		//нахождение дома с раундом становится более опасно
+		for (let y=5;y<8;y++)
+			for (let x=4;x<8;x++)	
+				this.goodFor1[y][x]=this.goodFor1base[y][x]-round*0.25
+
+		for (let y=0;y<8;y++)
+			for (let x=0;x<8;x++)
+				this.goodFor2[y][x]=this.goodFor1[7-y][7-x]
+
+		for (let y=0;y<8;y++){
+			for (let x=0;x<8;x++){				
+				if (brdU[y*8+x]===1) val1+=this.goodFor1[y][x]
+				if (brdU[y*8+x]===2) val2+=this.goodFor2[y][x]				
+			}			
+		}			
+		
+		if (checkers===2) return val2-val1
+		return val1-val2
+
+	},
+	getValidMoves(brdU,checkersToMove,round){
+		
+		//getting valid moves
+		const valid_moves=brd_funcU.getChilds(brdU,checkersToMove)
+		const validMovesData=[]		
+
+		for (const move of valid_moves){
+			move.pVal=this.getBrdVal(move.brd,checkersToMove,round)		
+			validMovesData.push(move)
+		}		
+
+		sortByProp(validMovesData,'pVal')			
+		return validMovesData
+		
+	}
+	
+}
+
 bot_game = {
 
 	on:0,
 	me_conf_play : 0,
 	opp_conf_play : 0,
-	bestPnet:0,
-	bestVnet:0,
-	onnx_loading:0,
+	vNet:0,
+	pNet:0,
+	nnLoading:0,
 	level:0,
 	temp:1,
 	fin_moves:[[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,2,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,2,5,3,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,3,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[5,2,5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,5,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,4,4,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,4,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[3,4,4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,4,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,2,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,2,5,3,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,3,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,4,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,4,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,3,5,4,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,3,5,4,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,4,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,4,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[4,6,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,4,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[3,5,4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[4,7,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,4,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,4,5,5,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,7],[3,6,4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,3,5,4,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,4,5,5,5,6,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,5,5,6,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,6,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6],[3,7,4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6],[5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,2,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,3,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,2,6,3,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,3,6,5,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,3,6,5,6,6,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,3,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,4,4,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,3,5,4,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,4,5,5,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,4,5,5,5,6,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,5,5,6,5,7,6,6,6,7,7,4,7,5,7,6,7,7],[4,3,4,4,5,4,5,5,5,6,5,7,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,4,5,5,5,6,5,7,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,7,5,4,5,5,5,6,5,7,6,5,6,6,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,3,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,3,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,2,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,2,6,3,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,3,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,3,6,4,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,3,6,4,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,3,6,4,6,6,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,3,7,4,7,6,7,7],[5,3,5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[3,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,3,5,4,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[3,5,4,5,5,4,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,5,5,6,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,3,6,6,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,5,5,6,5,7,6,6,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,6,5,7,6,4,6,7,7,4,7,5,7,6,7,7],[4,4,4,5,5,4,5,5,5,6,5,7,6,4,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,3,6,4,6,6,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,5,5,6,5,7,6,4,6,6,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,4,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[3,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,3,5,4,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,6,4,6,5,4,5,5,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,6,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,3,6,5,6,7,7,4,7,5,7,6,7,7],[4,4,4,6,5,4,5,5,5,6,5,7,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,3,6,4,6,7,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,6,5,7,6,4,6,7,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,6,5,7,6,4,6,5,7,4,7,5,7,6,7,7],[4,5,4,6,5,4,5,5,5,6,5,7,6,4,6,5,7,4,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,3,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,3,7,4,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[3,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,3,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,4,4,7,5,5,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,3,5,4,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,6,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,7,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[3,7,4,7,5,4,5,5,5,6,6,4,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,3,6,5,6,6,7,4,7,5,7,6,7,7],[4,4,4,7,5,4,5,5,5,6,5,7,6,5,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,3,6,4,6,6,7,4,7,5,7,6,7,7],[4,5,4,7,5,4,5,5,5,6,5,7,6,4,6,6,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,4,7,5,7,6,7,7],[4,6,4,7,5,4,5,5,5,6,5,7,6,4,6,5,7,4,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,3,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,3,7,4,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,3,7,5,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,5,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,3,7,5,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,2,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,5,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,2,7,3,7,5,7,7],[5,3,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,3,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,5,5,4,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,6,5,4,5,5,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,7,5,4,5,5,5,6,6,4,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[4,4,5,4,5,5,5,6,5,7,6,5,6,6,6,7,7,3,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,4,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,6,6,7,7,3,7,4,7,6,7,7],[4,5,5,4,5,5,5,6,5,7,6,4,6,6,6,7,7,3,7,4,7,6,7,7],[4,6,5,4,5,5,5,6,5,7,6,4,6,5,6,7,7,3,7,4,7,6,7,7],[4,7,5,4,5,5,5,6,5,7,6,4,6,5,6,6,7,3,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,2,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,3,6,4,6,5,6,6,6,7,7,4,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,5,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,2,7,3,7,6,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,5,7,7],[5,4,5,5,5,6,5,7,6,4,6,5,6,6,6,7,7,3,7,4,7,5,7,6]],
 	
 	async activate() {
 
-		this.on=1;
+		this.on=1
 
 		//устанавливаем локальный и удаленный статус
 		set_state({state:'b'});
@@ -2477,7 +2817,7 @@ bot_game = {
 		//инициируем доску в зависимости от рейтинга
 		g_board = brd_func.get_def_brd()
 
-		this.temp=[2,1,0.1,0.1][this.level]
+		this.temp=[2,1,0,0][this.level]
 
 		game.state='bot'
 								
@@ -2488,74 +2828,47 @@ bot_game = {
 		brd_func.set_brd_cfg(0)
 		brd_func.update_board(g_board);
 		
-		if (this.onnx_loading) return
-		this.onnx_loading=1
-		this.bestPnet = await ort.InferenceSession.create('bestRP.onnx', {executionProviders: ['webgpu', 'wasm']});
-		//this.bestVnet = await ort.InferenceSession.create('bestV.onnx', {executionProviders: ['webgpu', 'wasm']});
+		//one time nn load
+		if (!this.pNet?.session && !this.nnLoading)
+			this.loadNN()
+
 	},
 	
-	async getNNstateVal(brd,round){
+	async loadNN(){		
 		
-		const brd_data=this.createBoardInputU(brd,round)
-		
-		
-		const roundInp = Math.min(round, 29) / 29   
-		const raceFlag = +(round<29)
-		const home1num=brd_funcU.countBottomRight(brd,1)		
-		const home2num=brd_funcU.countTopLeft(brd,2)
-		const fin1num=brd_funcU.countTopLeft(brd,1)
-		const fin2num=brd_funcU.countBottomRight(brd,2)
-		
-		const globalData = new Float32Array([
-			roundInp,
-			raceFlag,
-			home1num/12.0,
-			home2num/12.0,
-			fin1num/12.0,
-			fin2num/12.0
-		]);
-				
-		const boardTensor = new ort.Tensor("float32",brd_data,[1, 8, 8, 3])		
-		const globalDataTensor  = new ort.Tensor("float32",globalData,[1, 6])
-		
-		const CONVERSION_MAP=[
-			'fin2_30',
-			'fin1_30',
-			'fin_30',
-			'fin2',
-			'fin1',
-			'fin1_fin2'
-		]
-		
-		const feeds = {'board':boardTensor,'global_features':globalDataTensor}
-		const res = await this.bestVnet.run(feeds)
-		const finProbs=res.output_0.data
-		const origProbs=Object.fromEntries(CONVERSION_MAP.map((key, index) => [key, +finProbs[index].toFixed(3)]))
-		const origProbsSorted = Object.fromEntries(Object.entries(origProbs).sort(([, a], [, b]) => b-a));
-		
-		const valP2 = origProbs.fin2_30+origProbs.fin2-origProbs.fin1_30-origProbs.fin1
+		this.nnLoading=1
+		this.vNet=new nn_class()
+		this.pNet=new nn_class()
 
-		const bestVal=Math.max(...finProbs)
-		const bestInd=finProbs.indexOf(bestVal)
-		return [valP2,origProbsSorted]
-		//console.log(res.output_0.data[0])
+		while(1){
+			if (!anim3.any_on()) break
+			await new Promise(r=>setTimeout(r,250))				
+		}
+		some_process.nn_loading=function(d){objects.nnLoadingCircle.rotation=TM.s*5}
+		await anim3.add(objects.nnLoadingCont, {y: [450, objects.nnLoadingCont.sy, 'linear']}, true, 0.25);
+		objects.nnLoadingCont.visible=true
+		await this.vNet.init('bestV.onnx')
+		await this.pNet.init('bestP.onnx')	
+		delete some_process.nn_loading
+		anim3.add(objects.nnLoadingCont, {y: [ objects.nnLoadingCont.y,450, 'linear']}, false, 0.25);
+		this.nnLoading=0
 		
 	},
-
+	
 	async stop(result) {
 
 		this.on=0
 
 		const res_array = [
-			['both_finished',DRAW, ['Ничья','Draw']],
-			['my_finished_first',WIN , ['Вы выиграли!\nБыстрее соперника перевели свои шашки.','You win!\nYou finished faster than your opponent.']],
-			['opp_finished_first',LOSE, ['Вы проиграли!\nСоперник оказался быстрее вас.','You lose!\nOpponent was faster than you']],
-			['both_left_after_30',LOSE, ['Вы проиграли!\nНе успели вывести свои шашки за 30 ходов.','You lose!\nYou did not managed to leave house in 30 moves']],
-			['my_left_after_30',LOSE, ['Вы проиграли!\nНе успели вывести свои шашки за 30 ходов.','You lose!\nYou did not managed to leave house in 30 moves']],
-			['opp_left_after_30',WIN , ['Вы выиграли!\nСоперник не успел вывести свои шашки за 30 ходов.','You win!\nOpponent did not managed to leave house in 30 moves']],
-			['my_more_fin_after_80',WIN , ['Вы выиграли!\nПеревели больше шашек в новый дом.','You win!You have transferred more checkers to a new house.']],
-			['opp_more_fin_after_80',LOSE, ['Вы проиграли!\nСоперник перевел больше шашек в новый дом.','You lose!\nOpponent transferred more checkers to a new house']],
-			['same_fin_after_80',DRAW , ['Ничья\nОдинаковое количество шашек в новом доме','Draw!\nThe same number of transferred checkers']],
+			['fin0',DRAW, ['Ничья','Draw']],
+			['fin1',WIN , ['Вы выиграли!\nБыстрее соперника перевели свои шашки.','You win!\nYou finished faster than your opponent.']],
+			['fin2',LOSE, ['Вы проиграли!\nСоперник оказался быстрее вас.','You lose!\nOpponent was faster than you']],
+			['win0_30',DRAW, ['Ничья\nНикто не успел вывести все шашки из дома.','Draw!\nNo one managed to get out of the house']],
+			['win2_30',LOSE, ['Вы проиграли!\nНе успели вывести свои шашки за 30 ходов.','You lose!\nYou did not managed to leave house in 30 moves']],
+			['win1_30',WIN , ['Вы выиграли!\nСоперник не успел вывести свои шашки за 30 ходов.','You win!\nOpponent did not managed to leave house in 30 moves']],
+			['fin1_80',WIN , ['Вы выиграли!\nПеревели больше шашек в новый дом.','You win!You have transferred more checkers to a new house.']],
+			['fin2_80',LOSE, ['Вы проиграли!\nСоперник перевел больше шашек в новый дом.','You lose!\nOpponent transferred more checkers to a new house']],
+			['fin0_80',DRAW , ['Ничья\nОдинаковое количество шашек в новом доме','Draw!\nThe same number of transferred checkers']],
 			['my_stop',DRAW , ['Вы отменили игру.','You canceled the game']]
 		];
 
@@ -2576,9 +2889,18 @@ bot_game = {
 			sound.play('win')
 			if (this.level===2)	crystalsCollected=1;
 			if(gamePlatform==='CRAZYGAMES') window.CrazyGames.SDK.game.happytime();
+			saveToFileOnServer('botLoses',generateRandomBase62(6),botGameHist)
 		}
 
-		await big_msg.show({t1:result_info, t2:')))',t3:'',fb:1,crystals:crystalsCollected})
+		//if nn still loading
+		if (objects.nnLoadingCont.visible){
+			delete some_process.nn_loading
+			anim3.add(objects.nnLoadingCont, {y: [ objects.nnLoadingCont.y,-180, 'linear']}, false, 0.25);
+		}
+		
+
+		
+		await big_msg.show({t1:result_info, t2:')))',t3:'',fb:this.level===2,crystals:crystalsCollected})
 		pref.change_crystals(crystalsCollected)		
 
 	},
@@ -2615,6 +2937,7 @@ bot_game = {
 
 	isBrdOnFinLine(brdU) {
 
+		//fin moves starts with finish in 0 moves, 1 move, 2 moves
 		for (let i=0;i<this.fin_moves.length;i++) {
 			let found=1;
 			for (let c=0;c<12;c++) {
@@ -2626,113 +2949,136 @@ bot_game = {
 					break;
 				}
 			}
-
 			if (found) return i+1
 		}
 		return 0
 	},
 
 	async make_move() {
+						
+		for (let i=0;i<200;i++){
+			if (anim3.any_on()===false && this.pNet.session) break
+			await new Promise(r=>setTimeout(r,500))				
+		}			
 			
-		if (this.bestPnet) {
-			this.make_nn_move(this.temp)
-			return
-		}
-
-		if(!this.on) return;
-
-		for (let i=0;i<10;i++){
-			if (anim3.any_on()===false) break
-			await new Promise(r=>setTimeout(r,250))				
-		}
-		
-		if(!this.on) return;	
-
-		const brdUINT=brd_funcU.brdToU(g_board)
-		
-		if(this.check_fin_moves(brdUINT)) return
-		
-		const moveStr=minimax_solver.minimax_3_single(brdUINT, game.round)
-		
-		await new Promise(r=>setTimeout(r,150))
-		
-		if(this.on)
-			game.onReceiveMove({d:moveStr,source:'bot'})
+		//this.makeVNetMove(this.temp)
+		this.make_nn_move2()
 
 	},
 
-	async make_nn_move(temp=1){
+	async make_nn_move2(){
 		
-		if(!this.on) return;
 		
-		for (let i=0;i<10;i++){
-			if (anim3.any_on()===false) break
-			await new Promise(r=>setTimeout(r,250))				
-		}
-		
+		if(!this.on) return		
+					
 		//провряем конечные ходы
-		if(this.check_fin_moves(brd_funcU.brdToU(g_board))) return
+		const fin2num=brd_func.countBottomRight(g_board,2)
 		
-		const brd_data=this.createBoardInput(g_board)
-		const made_moves_for_nn=new Float32Array([(29-game.round) /29.0])
-		const boardTensor = new ort.Tensor("float32",brd_data,[1, 8, 8, 3])		
-		const moveNumberTensor = new ort.Tensor("float32",made_moves_for_nn,[1, 1])
+		if(fin2num>8&&this.check_fin_moves(brd_funcU.brdToU(g_board))){
+			console.log('FIN MOVES!!!')
+			return	
+		} 
 		
-		if (game.round>30) temp=0.3
+		const brdU=brd_funcU.brdToU(g_board)
+		const childs=await this.getChildsMM({brdValueProvider:this.vNet,childsGenerator:this.pNet,brd:brdU,checkersToMove:2,round:game.round,depth:3,kTop:5})			
+		const move=sample(childs,'val',this.temp)		
 		
-		const feeds = {'board':boardTensor,'move_number':moveNumberTensor};
-		const results = await this.bestPnet.run(feeds);
-		const logits = results['policy'].data;		
-		const brdUINT=brd_funcU.brdToU(g_board)
-		const valid_moves=brd_funcU.getChilds(brdUINT,2,0)
-		const valid_moves_id=[]
-
-		for (const move of valid_moves){
-			const move_id=(move.x1 << 9) | (move.y1 << 6) | (move.x2 << 3) | move.y2			
-			valid_moves_id.push(move_id)
-		}			
-		
-		//getting valid moves and their values
-		const validLogits=[]		
-		for (let i=0;i<4096;i++)
-			if (valid_moves_id.includes(i))
-				validLogits.push({val:logits[i],index:i})						
-		
-		validLogits.sort((a,b)=>b.val-a.val)	
-		
-		const prob=this.softmax(validLogits,'val',temp)
-		const max_logit_index=validLogits[this.sample(prob)].index
-
-		const m_data=[]
-		m_data[0] = (max_logit_index >> 9) & 7;
-		m_data[1] = (max_logit_index >> 6) & 7;
-		m_data[2] = (max_logit_index >> 3) & 7;
-		m_data[3] = max_logit_index & 7;
-		
+		console.log(childs[0].val)
+		await new Promise(r=>setTimeout(r,250))	
 		if(this.on)
-			game.onReceiveMove({d:m_data,source:'bot'})
+			game.onReceiveMove({d:brd_funcU.moveToStr(move),source:'bot'})		
+	},
+
+	async getChildsMM(params) {
+
+		//this function must return childs of board state and value for each child
+		const negamax = async (brdU, player, round, currentDepth) => {
 			
+			//on round 30 need to check escape phase 
+			if (player===1&&round>=29){
+
+				const state=brd_funcU.get_brd_state(brdU,30)
+				if (state!==null){
+					const winner=state[0]	
+					if (winner===2) return -1
+					if (winner===1) return 1
+					if (winner===0) return 0
+				}
+			}
+
+			if (currentDepth >= params.depth){
+				const valData=await params.brdValueProvider.getBrdVal(brdU, player, round)			
+				return valData[0]			
+			}
+
+
+			const childs = await params.childsGenerator.getValidMoves(brdU, player, round)
+			childs.length = Math.min(childs.length, params.kTop)
+
+			const nextPlayer = 3 - player
+			const nextRound = nextPlayer === 1 ? round + 1 : round
+
+			let bestVal = -Infinity
+			for (const child of childs) {
+				const val = -await negamax(child.brd, nextPlayer, nextRound, currentDepth + 1)
+				bestVal = Math.max(bestVal, val)
+			}
+			return bestVal
+		}
+
+		const childs = await params.childsGenerator.getValidMoves(params.brd, params.checkersToMove, params.round)
+		childs.length = Math.min(childs.length, params.kTop)
+
+		const nextPlayer = 3 - params.checkersToMove
+		const nextRound = nextPlayer === 1 ? params.round + 1 : params.round
+
+		for (const child of childs)			
+			child.val = -await negamax(child.brd, nextPlayer, nextRound, 1)			
+
+		sortByProp(childs, 'val')
+
+		return childs
 	},
 	
-	async makeValueNetMove(){
+	async makePNetMove(){
+		
+		//провряем конечные ходы
+		if(game.round>40&&this.check_fin_moves(brd_funcU.brdToU(g_board))){
+			console.log('FIN MOVES!!!')
+			return	
+		} 
+		
+		const brdU=brd_funcU.brdToU(g_board)
+		const validMoves=await this.pNet.getValidMoves(brdU,2,game.round)
+		if(this.on)
+			game.onReceiveMove({d:brd_funcU.moveToStr(validMoves[0]),source:'bot'})	
+		
+	},
+	
+	async makeVNetMove(){
 		
 		
 		//провряем конечные ходы
-		if(game.round>40&&this.check_fin_moves(brd_funcU.brdToU(g_board))) return
+		if(game.round>40&&this.check_fin_moves(brd_funcU.brdToU(g_board))){
+			console.log('FIN MOVES!!!')
+			return
+		}
 		
+		console.log('------------------start move----------------------')
 		const brdU=brd_funcU.brdToU(g_board)
 		const childs=brd_funcU.getChilds(brdU,2)
 		for (const child of childs){
-			const [val,origProbs]=await this.getNNstateVal(child.brd,game.round)		
-			child.val=val	
-			child.origProbs=origProbs		
+			
+			const res=await this.vNet.getBrdVal(child.brd,2,game.round)		
+			child.val=res[0]				
+			child.valDesk=res[1]				
 		}
 
 		
-		
 		sortByProp(childs,'val')
 		const moveStr=brd_funcU.moveToStr(childs[0])
-		console.log(childs[0].val,childs[0].origProbs)
+		console.log(childs[0].val)
+		console.log(childs[0].valDesk)
 		await new Promise(r=>setTimeout(r,150))
 		if(this.on)
 			game.onReceiveMove({d:moveStr,source:'bot'})
@@ -2766,6 +3112,7 @@ bot_game = {
 		let bestToFinNum=9999
 		let bestToFinMove=''
 		
+		//checking depth 1
 		for (let c0=0;c0<childs0.length;c0++){			
 			const moveData0=childs0[c0]
 			const brd0=moveData0.brd
@@ -2778,6 +3125,8 @@ bot_game = {
 		}
 		if (bestToFinMove) {game.onReceiveMove({d:bestToFinMove,source:'bot'});return 1}
 		
+		
+		//checking depth 2
 		bestToFinNum=9999
 		bestToFinMove=''
 		for (let c0=0;c0<childs0.length;c0++){			
@@ -2804,66 +3153,6 @@ bot_game = {
 
 	reset_timer() {
 
-	},
-
-	createBoardInput(brd) {
-	  const BOARD_SIZE = 8;
-	  const CHANNELS = 3;
-
-	  // Shape: [1, 8, 8, 3]
-	  const data = new Float32Array(1 * BOARD_SIZE * BOARD_SIZE * CHANNELS);
-
-	  function setValue(row, col, channel, value) {
-		const index = ((row * BOARD_SIZE + col) * CHANNELS) + channel;
-		data[index] = value;
-	  }
-
-	  for (let y = 0; y < 3; y++) {
-		for (let x = 0; x < 4; x++) {
-		  setValue(y,x,0,1.0);
-		  setValue(7-y,7-x,0,-1.0);
-		}
-	  }
-
-	  for (let y = 0; y < 8; y++) {
-		for (let x = 0; x < 8; x++) {
-		  const piece = brd[y][x]
-		  if (piece === 1) setValue(y, x, 1, 1.0)
-		  if (piece === 2) setValue(y, x, 2, 1.0)
-		}
-	  }
-
-	  return data;
-	},
-	
-	createBoardInputU(brdU,round) {
-	  const BOARD_SIZE = 8;
-	  const CHANNELS = 3;
-
-	  // Shape: [1, 8, 8, 3]
-	  const data = new Float32Array(1 * BOARD_SIZE * BOARD_SIZE * CHANNELS);
-
-	  function setValue(row, col, channel, value) {
-		const index = ((row * BOARD_SIZE + col) * CHANNELS) + channel;
-		data[index] = value;
-	  }
-
-	  for (let y = 0; y < 3; y++) {
-		for (let x = 0; x < 4; x++) {
-		  setValue(y,x,0,1.0);
-		  setValue(7-y,7-x,0,-1.0);
-		}
-	  }
-
-	  for (let y = 0; y < 8; y++) {
-		for (let x = 0; x < 8; x++) {
-			const piece = brdU[y*8+x]
-			if (piece === 1) setValue(y, x, 1, 1.0)
-			if (piece === 2) setValue(y, x, 2, 1.0)
-		}
-	  }
-
-	  return data;
 	},
 
 	clear() {
@@ -3407,12 +3696,12 @@ trnm={
 		if (this.myBlocked===1){
 			this.send_info3('Участие в турнире недоступно!')
 			return
-		}		
-		
+		}	
+
 		if (my_data.games<1000){
 			this.send_info3('Участие в турнире недоступно!')
 			return
-		}	
+		}			
 		
 		if (this.state!=='reg') return
 		
@@ -3613,6 +3902,7 @@ game = {
 		//для проекта альфа	
 		this.errPushed=0
 
+
 		//турнирная игра или слепая игра
 		this.trnm=params.trnm	
 		this.bgame=params.bgame	
@@ -3665,6 +3955,8 @@ game = {
 		objects.my_avatar.texture=players_cache[my_data.uid].texture
 		anim3.add(objects.my_card_cont, {x:[-100, objects.my_card_cont.sx, 'linear'],alpha: [0, 1, 'linear']}, true, 0.5)
 
+		//проверка игры с ботом
+		botGameHist=[{rating:my_data.rating,name:my_data.name}]
 		sound.play('note')
 
 		//это если перешли из бот игры
@@ -3752,7 +4044,7 @@ game = {
 			objects.validMoves.drawCircle(tx*50+25,ty*50+25,10)
 			
 		}
-		console.log(validMoves)
+		//console.log(validMoves)
 	},
 
 	mouse_down_on_board(e) {
@@ -3861,34 +4153,32 @@ game = {
 
 	},
 	
-	async process_my_move(move_data, moves) {
+	async process_my_move(moveStr, moves) {
 
 		//делаем перемещение шашки
 		brd_func.start_gentle_move(moves);
-
-		//для проекта альфа
-		//gameHistForNN.push({tm:Date.now(),brd:brd_func.copyBrd(g_board),my_move:move_data})
 		
 		//making move without animation
-		brd_func.applyMoveStr(move_data,g_board)
+		brd_func.applyMoveStr(moveStr,g_board)
 				
-		online_game.process_my_move(move_data)
-
+		if (this.opponent===bot_game)
+			botGameHist.push({moveStr})	
+				
+		online_game.process_my_move(moveStr)
 
 		//перезапускаем таймер хода и кто ходит
 		my_turn = 0;
 		
 		//сообщаем в игры о ходе
-		//bot_game.make_nn_move();
 		bot_game.make_move();
 
 		if (my_role === 'slave') {
 			this.round++;
 			objects.cur_move_text.text=['Раунд: ','Round: '][LANG]+this.round;
 			const result = brd_func.get_brd_state(g_board, this.round);
-			if (result !== '') {
-				this.stop(result);
-				return;
+			if (result) {
+				this.stop(result)
+				return
 			}
 		}
 
@@ -3919,7 +4209,7 @@ game = {
 		
 		for (let i=0;i<10;i++){
 			if (!brd_func.moveOn) break
-			await new Promise(r=>setTimeout(r,250))				
+			await new Promise(r=>setTimeout(r,1250))				
 		}
 		
 		if (brd_func.moveOn){
@@ -3929,15 +4219,14 @@ game = {
 		//это чтобы не принимать ходы если игры нет (то есть выключен таймер)
 		if (!['online','bot'].includes(game.state)) return;
 
-
 		//защита от двойных ходов
-		if (my_turn === 1) return
+		if (my_turn) return
 		
 		//воспроизводим уведомление о том что соперник произвел ход
 		sound.play('receive_move');
 
 		//обозначаем кто ходит
-		my_turn = 1;
+		my_turn = 1
 
 		//обозначаем что соперник сделал ход и следовательно подтвердил согласие на игру
 		this.opponent.opp_conf_play = 1;
@@ -3956,22 +4245,18 @@ game = {
 		//applying move to chip and board data
 		brd_func.applyMoveStr(moveStr,g_board)
 
+		if (this.opponent===bot_game)
+			botGameHist.push({moveStr})		
+
 		//сообщаем в онлайн игру о ходе
 		online_game.onReceiveMove(moveStr,data.t);
 	
-
 		if (my_role === 'master') {
 			this.round++;
-			objects.cur_move_text.text=['Раунд: ','Round: '][LANG]+this.round;
+			objects.cur_move_text.text=['Раунд: ','Round: '][LANG]+this.round
+			const result = brd_func.get_brd_state(g_board, this.round)
+			if (result) this.stop(result)
 
-			let result = brd_func.get_brd_state(g_board, this.round);
-
-			//бота нельзя блокировать
-			//if (result === 'opp_left_after_30')	result = '';
-
-			if (result !== '') {
-				this.stop(result);
-			}
 		}
 
 	},
@@ -3995,6 +4280,7 @@ game = {
 			
 		if (moves[0]===0){
 			this.errPushed=1
+			saveToFileOnServer('cornersFail',my_role+online_game.gid,gameHistForNN)
 			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:'ERR',tm:Date.now()});
 			//fbs.ref('mErrors2').push(gameHistForNN)
 			return
@@ -4144,15 +4430,15 @@ game_watching={
 				'my_giveup' :LOSE,
 				'timer_error':LOSE,
 				'opp_giveup':WIN,
-				'both_finished':DRAW,
-				'my_finished_first':WIN,
-				'opp_finished_first':LOSE,
-				'both_left_after_30':DRAW,
-				'my_left_after_30':LOSE,
-				'opp_left_after_30':WIN,
-				'my_more_fin_after_80':WIN,
-				'opp_more_fin_after_80':LOSE,
-				'same_fin_after_80':DRAW,
+				'fin0':DRAW,
+				'fin1':WIN,
+				'fin2':LOSE,
+				'win0_30':DRAW,
+				'win2_30':LOSE,
+				'win1_30':WIN,
+				'fin1_80':WIN,
+				'fin2_80':LOSE,
+				'fin0_80':DRAW,
 				'my_no_sync':NOSYNC,
 				'opp_no_sync':NOSYNC,
 				'my_no_connection':LOSE,
@@ -4250,7 +4536,7 @@ game_watching={
 		brd_func.applyMoveStr(moveStr,g_board);		
 		brd_func.update_board(g_board);		
 		
-		//gameHistForNN.push({tm:Date.now(),gameWatchEvent:1,on:this.on})
+		gameHistForNN.push({tm:Date.now(),gameWatchEvent:1,on:this.on})
 
 		if (move) objects.cur_move_text.text=['Раунд: ','Round: '][LANG]+move;
 
@@ -4948,8 +5234,8 @@ function process_new_message(msg) {
 				game.stop('opp_giveup');
 			
 			//получение сообщение с сдаче
-			//if (msg.message==='ERR')
-				//saveToFileOnServer('cornersFail',my_role+online_game.gid,gameHistForNN)
+			if (msg.message==='ERR')
+				saveToFileOnServer('cornersFail',my_role+online_game.gid,gameHistForNN)
 			
 			//запрос на ничью
 			if (msg.message==='DRAWREQ')
@@ -8802,7 +9088,7 @@ main_loader={
 		objects.tLoaderProgress.y=422
 
 
-		objects.loader_cont.addChild(objects.loader_bar_bcg,objects.loader_bar_frame,objects.loader_bar_mask,objects.tLoaderProgress);
+		objects.loader_cont.addChild(objects.loader_bar_frame,objects.loader_bar_bcg,objects.loader_bar_mask,objects.tLoaderProgress);
 		app.stage.addChild(objects.bcg,objects.loader_cont);
 
 	},
@@ -9176,8 +9462,6 @@ async function init_game_env(p) {
 	//читаем последних соперников
 	online_game.read_last_opps()
 
-	
-
 
 	//сообщение для дубликатов
 	fbs.ref('inbox/'+my_data.uid).set({client_id,tm:Date.now()})
@@ -9215,11 +9499,15 @@ async function init_game_env(p) {
 	if (!my_data.games) await tut.activate()		
 	
 	//отображаем лидеров вчерашнего дня
-	if (my_data.games)
-		top3.activate()
+	if (my_data.games) top3.activate()
 	
 	//lobby.perm_room='statesNIGHT'
 	lobby.activate()
+	
+	//players_cache.bot={};
+	//players_cache.bot.name=['Бот','Bot'][LANG];			
+	//players_cache.bot.texture=assets.pc_icon;
+	//game.activate({opp:bot_game, role:'master',opp_uid:'bot'});
 	
 	await trnm.check_trnm_winner()
 		
