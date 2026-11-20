@@ -4162,7 +4162,7 @@ game = {
 		brd_func.applyMoveStr(moveStr,g_board)
 				
 		if (this.opponent===bot_game)
-			botGameHist.push({moveStr})	
+			botGameHist.push(moveStr)	
 				
 		online_game.process_my_move(moveStr)
 
@@ -4246,7 +4246,7 @@ game = {
 		brd_func.applyMoveStr(moveStr,g_board)
 
 		if (this.opponent===bot_game)
-			botGameHist.push({moveStr})		
+			botGameHist.push(moveStr)		
 
 		//сообщаем в онлайн игру о ходе
 		online_game.onReceiveMove(moveStr,data.t);
