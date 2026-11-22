@@ -2893,7 +2893,7 @@ bot_game = {
 			if (this.level===2)	{
 				crystalsCollected=1
 				botGameHist[0].finType=result
-				saveToFileOnServer('botLoses',generateRandomBase62(7),botGameHist)				
+				saveToFileOnServer('botLoses',generateRandomBase62(8),botGameHist)				
 			}
 			if(gamePlatform==='CRAZYGAMES') window.CrazyGames.SDK.game.happytime();
 		}
